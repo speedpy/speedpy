@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.utils.crypto import get_random_string
+from django.conf import settings
 from allauth.account.models import EmailAddress
 import os
 
@@ -11,7 +12,7 @@ User = get_user_model()
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         email = 'admin@example.com'
-        new_password = os.environ.get('DEFAULT_ADMIN_PASSWORD')
+        new_password = settings.DEFAULT_ADMIN_PASSWORD
         if not new_password:
             new_password = get_random_string(10)
         try:

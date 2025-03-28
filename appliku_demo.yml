@@ -6,6 +6,8 @@ build_settings:
       value: 'true'
     - name: DEFAULT_ADMIN_PASSWORD
       value: 'adminadmin'
+    - name: DEMO_MODE
+      value: 'true'
 
 services:
   - name: web
