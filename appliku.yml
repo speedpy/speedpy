@@ -1,23 +1,32 @@
 build_settings:
-  build_image: python-3.13-node-20.18
   build_command: npm i && npm run tailwind:build
+  build_image: python-3.13-node-20.18
   environment_variables:
-    - name: APPLIKU
-      value: 'true'
-
-services:
-  - name: web
-    command: bash web.sh
-
-  - name: worker
-    command: bash celery-worker.sh
-
-  - name: beat
-    command: bash celery-beat.sh
-
-  - name: release
-    command: bash release.sh
-
+  - from_database:
+      name: db
+      property: private_connection_url
+    name: DATABASE_URL
+  - from_database:
+      name: redis
+      property: private_connection_url
+    name: REDIS_URL
+  expose_web_port: false
+  is_static_site: false
+  output_directory: ''
+  skip_release_command: false
+cronjobs: {}
 databases:
-  - type: postgresql_17
-  - type: redis_7
+  db:
+    type: postgresql_17
+  redis:
+    type: redis_7
+services:
+  beat:
+    command: bash celery-beat.sh
+  release:
+    command: bash release.sh
+  web:
+    command: bash web.sh
+  worker:
+    command: bash celery-worker.sh
+volumes: {}
