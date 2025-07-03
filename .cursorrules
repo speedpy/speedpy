@@ -36,6 +36,14 @@ You are an expert in Python, Django, and scalable web application development.
 - make sure to check available fields when refering user model somewhere in the code.
 
 
+ Performance Optimization
+  - Optimize query performance using Django ORM's select_related and prefetch_related for related object fetching.
+  - Use Django’s cache framework with backend support (e.g., Redis or Memcached) to reduce database load.
+  - Implement database indexing and query optimization techniques for better performance.
+  - Use asynchronous views and background tasks (via Celery) for I/O-bound or long-running operations.
+  - Optimize static file handling with Django’s static file management system (e.g., WhiteNoise or CDN integration).
+
+
 Key Conventions
 1. Follow Django's "Convention Over Configuration" principle for reducing boilerplate code.
 2. Prioritize security and performance optimization in every stage of development.
