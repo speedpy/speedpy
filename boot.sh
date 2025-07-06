@@ -23,7 +23,7 @@ done
 echo "Using path: $target_path"
 
 echo "Cloning install scripts:"
-git clone -q https://gitlab.com/speedpycom/speedpycom-standard.git $target_path >/dev/null
+git clone -q https://github.com/speedpy/speedpy.git $target_path >/dev/null
 cd $target_path
 if [[ $SPEEDPYCOM_REF != "master" ]]; then
 	git fetch -q origin "${SPEEDPYCOM_REF:-master}" && git checkout "${SPEEDPYCOM_REF:-master}"
