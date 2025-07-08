@@ -34,7 +34,7 @@ services:
     volumes:
       - ./media:/usr/share/nginx/html
     ports:
-      - "9001:80"
+      - "127.0.0.1:9001:80"
   #  tailwind:
   #    image: node:20.11-bullseye
   #    volumes:
