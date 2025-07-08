@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Generate random port between 9000 and 9999
-WEB_PORT=$((9000 + RANDOM % 1000))
+WEB_PORT=$((9000 + $RANDOM % 1000))
 echo " * Using random port: $WEB_PORT"
 
 # Update docker-compose.yml with the random port
