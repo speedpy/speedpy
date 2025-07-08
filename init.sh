@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Generate random port between 9000 and 9999
+WEB_PORT=$((9000 + RANDOM % 1000))
+echo " * Using random port: $WEB_PORT"
+
+# Update docker-compose.yml with the random port
+sed -i.bak "s/127.0.0.1:9000:9000/127.0.0.1:$WEB_PORT:9000/g" docker-compose.yml
 
 open_url() {
     url=$1
@@ -55,7 +61,7 @@ echo " * Starting the project..."
 docker compose up -d
 sleep 1
 
-count=0; max_retries=5; until curl -s -f -o /dev/null "http://127.0.0.1:9000" || [ $count -ge $max_retries ]; do echo "Waiting... $((count+1))/$max_retries"; count=$((count+1)); sleep 1; done; if [ $count -lt $max_retries ]; then echo "Site is up!"; else echo "App is still down after $max_retries retries"; exit 1; fi
+count=0; max_retries=5; until curl -s -f -o /dev/null "http://127.0.0.1:$WEB_PORT" || [ $count -ge $max_retries ]; do echo "Waiting... $((count+1))/$max_retries"; count=$((count+1)); sleep 1; done; if [ $count -lt $max_retries ]; then echo "Site is up!"; else echo "App is still down after $max_retries retries"; exit 1; fi
 
-open_url http://127.0.0.1:9000
-echo "Open your browser at http://127.0.0.1:9000"
+open_url http://127.0.0.1:$WEB_PORT
+echo "Open your browser at http://127.0.0.1:$WEB_PORT"
