@@ -33,7 +33,7 @@ echo "✓ Git is properly configured!"
 
 # Check Docker
 if command -v docker &> /dev/null; then
-    echo "Docker is installed"
+    echo "✓ Docker is installed"
     if ! docker info &> /dev/null; then
       echo "Error: Docker daemon is not running"
       if grep -qi microsoft /proc/version; then
@@ -48,4 +48,15 @@ else
     exit 1
 fi
 
-echo "All required tools are installed"
+# Check Docker Compose
+if docker compose version &> /dev/null; then
+    echo "✓ Docker Compose is available"
+else
+    echo "Error: Docker Compose is not available"
+    echo "Install Docker Compose or ensure Docker Desktop includes it"
+    exit 1
+fi
+
+echo "✓ All required tools are installed"
+
+
