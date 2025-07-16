@@ -132,7 +132,6 @@ app.
 Here is the tree with key files and directories listed:
 
 ```
-├── Procfile
 ├── README.md
 ├── mainapp
 │   ├── __init__.py
