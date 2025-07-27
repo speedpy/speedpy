@@ -140,11 +140,9 @@ ACCOUNT_FORMS = {
     "change_password": "usermodel.forms.UsermodelChangePasswordForm",
     "add_email": "usermodel.forms.UsermodelAddEmailForm",
 }
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*']
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 ACCOUNT_ADAPTER = "usermodel.adapters.CustomAccountAdapter"
