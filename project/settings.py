@@ -190,11 +190,9 @@ REQUIRE_DPA_ACCEPTANCE = True
 TOS_LINK = env("TOS_LINK", default="/")
 DPA_LINK = env("DPA_LINK", default="/")
 
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
-SHOW_TOOLBAR_CALLBACK = lambda request: DEBUG
-
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG,
+}
 EMAIL_BACKEND = "post_office.EmailBackend"
 
 POST_OFFICE = {
