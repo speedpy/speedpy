@@ -5,7 +5,7 @@ WEB_PORT=$(shuf -i 9000-9500 -n 1)
 echo " * Using random port for Django: $WEB_PORT"
 
 # Update docker-compose.yml with the random port
-sed -i.bak "s/127.0.0.1:9000:9000/127.0.0.1:$WEB_PORT:9000/g" docker-compose.yml
+sed -i.bak "s/9000/$WEB_PORT/g" docker-compose.yml
 
 
 # Generate random port between 9000 and 9999
