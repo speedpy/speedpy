@@ -12,12 +12,14 @@ This is a standard project to start your Django based webapps.
 
 ## Requirements
 
-You must have Docker installed on your machine
+- You must have Docker installed on your machine.
+- Linux or Mac
+- Git installed and configured (`user.name` and `user.email`)
+- 
 
 ## How to use
 
 ### If you have already cloned the repo
-This project uses Makefile.
 
 To initialize environment please type in terminal in the root of the project:
 
@@ -262,6 +264,8 @@ Templates for the app go into the root `templates` directory under `mainapp` sub
 The root `templates` directory is great because you can override templates from other apps.
 
 ## Deploy with Appliku
+
+Already includes `appliku.yml` file which will automatically configure your application within Appliku.
 
 * Create your app
 * Change the build image to Python 3.12 + node 20.10
