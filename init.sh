@@ -26,12 +26,13 @@ if [ -f "docker-compose.yml.bak" ]; then
 else
   echo "docker-compose.yml.bak does not exist. No action taken."
 fi
+cp docker-compose.yml docker-compose.yml.bak
 # Generate random port between 9000 and 9999
 WEB_PORT=$(shuf -i 9000-9500 -n 1)
 echo " * Using random port for Django: $WEB_PORT"
 
 # Update docker-compose.yml with the random port
-sed -i.bak "s/9000/$WEB_PORT/g" docker-compose.yml
+sed -i "s/9000/$WEB_PORT/g" docker-compose.yml
 
 
 # Generate random port between 9000 and 9999
@@ -39,7 +40,7 @@ NGINX_PORT=$(shuf -i 9501-9999 -n 1)
 echo " * Using random port for nginx: $NGINX_PORT"
 
 # Update docker-compose.yml with the random port
-sed -i.bak "s/127.0.0.1:9001:80/127.0.0.1:$NGINX_PORT:80/g" docker-compose.yml
+sed -i "s/127.0.0.1:9001:80/127.0.0.1:$NGINX_PORT:80/g" docker-compose.yml
 
 
 open_url() {
