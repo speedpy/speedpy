@@ -1,5 +1,31 @@
 #!/bin/sh
 
+
+# Get a list of all remote names
+remotes=$(git remote)
+
+if [ -z "$remotes" ]; then
+  echo "No Git remotes found to delete."
+else
+  echo "Deleting the following Git remotes:"
+  echo "$remotes"
+  echo ""
+
+  # Loop through each remote and remove it
+  for remote in $remotes; do
+    git remote remove "$remote"
+    echo "Removed remote: $remote"
+  done
+  echo ""
+  echo "All Git remotes have been deleted."
+fi
+
+if [ -f "docker-compose.yml.bak" ]; then
+  cp docker-compose.yml.bak docker-compose.yml
+  echo "Copied docker-compose.yml.bak to docker-compose.yml"
+else
+  echo "docker-compose.yml.bak does not exist. No action taken."
+fi
 # Generate random port between 9000 and 9999
 WEB_PORT=$(shuf -i 9000-9500 -n 1)
 echo " * Using random port for Django: $WEB_PORT"
