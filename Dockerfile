@@ -15,14 +15,14 @@ ENV NODE_VERSION=20.18.0
 RUN mkdir /nvm
 ENV NVM_DIR=/nvm
 RUN apt install -y curl
-RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.40.1/install.sh | bash
+RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.40.3/install.sh | bash
 RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
 ENV PATH="${NVM_DIR}/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 RUN node --version
 RUN npm --version
-RUN npm install --global yarn@1.22.21
+RUN npm install --global yarn@1.22.22
 
 WORKDIR /code/
 COPY requirements.txt /code/

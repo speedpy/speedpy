@@ -6,7 +6,7 @@ celery[redis]==5.5.3
 crispy-tailwind==1.0.3
 django-allauth[socialaccount]==65.10.0
 django-crispy-forms==2.4
-django-debug-toolbar==4.4.6
+django-debug-toolbar==6.0.0
 django-environ==0.12.0
 django-extensions==4.1
 django-post_office==3.10.0
