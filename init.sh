@@ -70,7 +70,7 @@ echo " * Starting the project..."
 docker compose up -d
 sleep 1
 
-count=0; max_retries=5; until curl -s -f -o /dev/null "http://127.0.0.1:$WEB_PORT" || [ $count -ge $max_retries ]; do echo "Waiting... $((count+1))/$max_retries"; count=$((count+1)); sleep 1; done; if [ $count -lt $max_retries ]; then echo "Site is up!"; else echo "App is still down after $max_retries retries"; exit 1; fi
+count=0; max_retries=5; until curl -s -f -o /dev/null "http://127.0.0.1:$WEB_PORT" || [ $count -ge $max_retries ]; do echo "Waiting... $((count+1))/$max_retries"; count=$((count+1)); sleep 1; done; if [ $count -lt $max_retries ]; then echo "Site is up!"; else echo "App seems to be still down after $max_retries retries";  fi
 
 open_url http://127.0.0.1:$WEB_PORT
 echo "Open your browser at http://127.0.0.1:$WEB_PORT"
