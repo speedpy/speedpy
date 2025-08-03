@@ -19,7 +19,7 @@ services:
     env_file:
       - .env
     ports:
-      - "127.0.0.1:9470:9000"
+      - "127.0.0.1:9000:9000"
     volumes:
       - .:/code
     links:
@@ -34,7 +34,7 @@ services:
     volumes:
       - ./media:/usr/share/nginx/html
     ports:
-      - "127.0.0.1:9824:80"
+      - "127.0.0.1:9001:80"
   #  tailwind:
   #    image: node:20.11-bullseye
   #    volumes:
