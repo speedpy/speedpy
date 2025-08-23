@@ -1,6 +1,5 @@
 #!/bin/sh
 
-
 # Get a list of all remote names
 remotes=$(git remote)
 
@@ -28,43 +27,42 @@ else
 fi
 cp docker-compose.yml docker-compose.yml.bak
 # Generate random port between 9000 and 9999
-WEB_PORT=$(shuf -i 9000-9500 -n 1)
+
+WEB_PORT=$((9000 + RANDOM % 501))
 echo " * Using random port for Django: $WEB_PORT"
 
 # Update docker-compose.yml with the random port
 sed -i "s/9000/$WEB_PORT/g" docker-compose.yml
 
-
-# Generate random port between 9000 and 9999
-NGINX_PORT=$(shuf -i 9501-9999 -n 1)
+# Generate random port between 9501 and 9999
+NGINX_PORT=$((9501 + RANDOM % 499))
 echo " * Using random port for nginx: $NGINX_PORT"
 
 # Update docker-compose.yml with the random port
 sed -i "s/127.0.0.1:9001:80/127.0.0.1:$NGINX_PORT:80/g" docker-compose.yml
 
-
 open_url() {
-    url=$1
+  url=$1
 
-    case "$(uname -s)" in
-        Linux*)
-            if grep -qi microsoft /proc/version; then
-                # WSL
-                cmd.exe /c start "$url" >/dev/null 2>&1
-            else
-                # Regular Linux
-                xdg-open "$url" >/dev/null 2>&1
-            fi
-            ;;
-        Darwin*)
-            # macOS
-            open "$url" >/dev/null 2>&1
-            ;;
-        *)
-            echo "Unsupported operating system"
-            exit 1
-            ;;
-    esac
+  case "$(uname -s)" in
+  Linux*)
+    if grep -qi microsoft /proc/version; then
+      # WSL
+      cmd.exe /c start "$url" >/dev/null 2>&1
+    else
+      # Regular Linux
+      xdg-open "$url" >/dev/null 2>&1
+    fi
+    ;;
+  Darwin*)
+    # macOS
+    open "$url" >/dev/null 2>&1
+    ;;
+  *)
+    echo "Unsupported operating system"
+    exit 1
+    ;;
+  esac
 }
 . ./pre_check.sh
 USE_TTY=""
@@ -87,7 +85,7 @@ docker compose run --rm ${USE_TTY} web bash -c "npm i && npm run tailwind:build"
 echo " * Initializing the project"
 docker compose run --rm ${USE_TTY} web python manage.py makemigrations
 docker compose run --rm ${USE_TTY} web python manage.py migrate
-docker compose run --rm ${USE_TTY} web python manage.py makesuperuser > local_password.txt
+docker compose run --rm ${USE_TTY} web python manage.py makesuperuser >local_password.txt
 cat local_password.txt
 echo " * Created local superuser credentials are stored in local_password.txt file for your convenience"
 git add .
@@ -97,7 +95,15 @@ echo " * Starting the project..."
 docker compose up -d
 sleep 1
 
-count=0; max_retries=5; until curl -s -f -o /dev/null "http://127.0.0.1:$WEB_PORT" || [ $count -ge $max_retries ]; do echo "Waiting... $((count+1))/$max_retries"; count=$((count+1)); sleep 1; done; if [ $count -lt $max_retries ]; then echo "Site is up!"; else echo "App seems to be still down after $max_retries retries";  fi
+count=0
+max_retries=5
+until curl -s -f -o /dev/null "http://127.0.0.1:$WEB_PORT" || [ $count -ge $max_retries ]; do
+  echo "Waiting... $((count + 1))/$max_retries"
+  count=$((count + 1))
+  sleep 1
+done
+if [ $count -lt $max_retries ]; then echo "Site is up!"; else echo "App seems to be still down after $max_retries retries"; fi
 
 open_url http://127.0.0.1:$WEB_PORT
 echo "Open your browser at http://127.0.0.1:$WEB_PORT"
+
