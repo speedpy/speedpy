@@ -28,18 +28,27 @@ fi
 cp docker-compose.yml docker-compose.yml.bak
 # Generate random port between 9000 and 9999
 
+
 WEB_PORT=$((9000 + RANDOM % 501))
 echo " * Using random port for Django: $WEB_PORT"
 
 # Update docker-compose.yml with the random port
-sed -i "s/9000/$WEB_PORT/g" docker-compose.yml
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  sed -i '' "s/9000/$WEB_PORT/g" docker-compose.yml
+else
+  sed -i "s/9000/$WEB_PORT/g" docker-compose.yml
+fi
 
 # Generate random port between 9501 and 9999
 NGINX_PORT=$((9501 + RANDOM % 499))
 echo " * Using random port for nginx: $NGINX_PORT"
 
 # Update docker-compose.yml with the random port
-sed -i "s/127.0.0.1:9001:80/127.0.0.1:$NGINX_PORT:80/g" docker-compose.yml
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  sed -i '' "s/127.0.0.1:9001:80/127.0.0.1:$NGINX_PORT:80/g" docker-compose.yml
+else
+  sed -i "s/127.0.0.1:9001:80/127.0.0.1:$NGINX_PORT:80/g" docker-compose.yml
+fi
 
 open_url() {
   url=$1
@@ -106,4 +115,3 @@ if [ $count -lt $max_retries ]; then echo "Site is up!"; else echo "App seems to
 
 open_url http://127.0.0.1:$WEB_PORT
 echo "Open your browser at http://127.0.0.1:$WEB_PORT"
-
