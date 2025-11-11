@@ -1,9 +1,13 @@
 import os
+import logging, logging.config
+import structlog
 from celery import Celery
 from celery.schedules import crontab
 from kombu import Queue
 from .settings import BASE_DIR
 import environ
+from celery.signals import setup_logging
+from django_structlog.celery.steps import DjangoStructLogInitStep
 
 env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
@@ -11,6 +15,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 
 app = Celery("project")
+app.steps["worker"].add(DjangoStructLogInitStep)
 app.autodiscover_tasks()
 app.conf.broker_url = env("REDIS_URL", default=None)
 app.conf.accept_content = ["application/json"]
@@ -62,3 +67,54 @@ Run every 10 minutes
     }
 """
 app.conf.beat_schedule = {}
+
+@setup_logging.connect
+def receiver_setup_logging(
+    loglevel, logfile, format, colorize, **kwargs
+):  # pragma: no cover
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "json_formatter": {
+                    "()": structlog.stdlib.ProcessorFormatter,
+                    "processor": structlog.processors.JSONRenderer(),
+                },
+                "plain_console": {
+                    "()": structlog.stdlib.ProcessorFormatter,
+                    "processor": structlog.dev.ConsoleRenderer(),
+                },
+                "key_value": {
+                    "()": structlog.stdlib.ProcessorFormatter,
+                    "processor": structlog.processors.KeyValueRenderer(
+                        key_order=["timestamp", "level", "event", "logger"]
+                    ),
+                },
+            },
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "plain_console",
+                }
+            },
+            "loggers": {"": {"handlers": ["console"], "level": "DEBUG"}},
+        }
+    )
+
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.stdlib.filter_by_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ],
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        cache_logger_on_first_use=True,
+    )
