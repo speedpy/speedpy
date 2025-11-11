@@ -1,7 +1,8 @@
-#!/bin/sh
+#!/bin/bash
+set -e  # Exit on error
 
 # Get a list of all remote names
-remotes=$(git remote)
+remotes=$(git remote 2>/dev/null || echo "")
 
 if [ -z "$remotes" ]; then
   echo "No Git remotes found to delete."
@@ -12,20 +13,22 @@ else
 
   # Loop through each remote and remove it
   for remote in $remotes; do
-    git remote remove "$remote"
+    git remote remove "$remote" || true
     echo "Removed remote: $remote"
   done
   echo ""
   echo "All Git remotes have been deleted."
 fi
 
-if [ -f "docker-compose.yml.bak" ]; then
-  cp docker-compose.yml.bak docker-compose.yml
-  echo "Copied docker-compose.yml.bak to docker-compose.yml"
+# Backup docker-compose.yml before modifications
+if [ ! -f "docker-compose.yml.bak" ]; then
+  cp docker-compose.yml docker-compose.yml.bak
+  echo "Created backup: docker-compose.yml.bak"
 else
-  echo "docker-compose.yml.bak does not exist. No action taken."
+  # Restore from backup for clean slate
+  cp docker-compose.yml.bak docker-compose.yml
+  echo "Restored docker-compose.yml from backup"
 fi
-cp docker-compose.yml docker-compose.yml.bak
 # Generate random port between 9000 and 9999
 
 
@@ -51,7 +54,7 @@ else
 fi
 
 open_url() {
-  url=$1
+  local url="$1"
 
   case "$(uname -s)" in
   Linux*)
@@ -73,11 +76,20 @@ open_url() {
     ;;
   esac
 }
-. ./pre_check.sh
+# Source pre-check script if it exists
+if [ -f "./pre_check.sh" ]; then
+  . ./pre_check.sh
+fi
+
+# Configure TTY for docker compose
 USE_TTY=""
-test -t 1 && USE_TTY="-T"
+if [ -t 1 ]; then
+  USE_TTY="-T"
+fi
 echo "USE_TTY=${USE_TTY}"
-git init -b master
+
+# Initialize git repository
+git init -b master >/dev/null 2>&1 || true
 
 cp .docker.env .env
 echo " * docker compose down -v --remove-orphans"
@@ -106,12 +118,16 @@ sleep 1
 
 count=0
 max_retries=5
-until curl -s -f -o /dev/null "http://127.0.0.1:$WEB_PORT" || [ $count -ge $max_retries ]; do
+until curl -s -f -o /dev/null "http://127.0.0.1:$WEB_PORT" || [ "$count" -ge "$max_retries" ]; do
   echo "Waiting... $((count + 1))/$max_retries"
   count=$((count + 1))
   sleep 1
 done
-if [ $count -lt $max_retries ]; then echo "Site is up!"; else echo "App seems to be still down after $max_retries retries"; fi
+if [ "$count" -lt "$max_retries" ]; then
+  echo "Site is up!"
+else
+  echo "App seems to be still down after $max_retries retries"
+fi
 
-open_url http://127.0.0.1:$WEB_PORT
+open_url "http://127.0.0.1:$WEB_PORT"
 echo "Open your browser at http://127.0.0.1:$WEB_PORT"
