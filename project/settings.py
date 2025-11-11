@@ -1,6 +1,7 @@
 from pathlib import Path
 import environ
 import os
+import structlog
 from django.urls import reverse_lazy
 
 env = environ.Env(
