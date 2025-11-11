@@ -29,6 +29,21 @@ else
   cp docker-compose.yml.bak docker-compose.yml
   echo "Restored docker-compose.yml from backup"
 fi
+
+# Generate unique suffix based on directory path for Docker image names
+# This prevents image name conflicts when running multiple instances in different directories
+UNIQUE_SUFFIX="_$(pwd | md5sum | cut -c1-8)"
+echo " * Using unique image suffix: $UNIQUE_SUFFIX"
+
+# Replace the placeholder image name in docker-compose.yml with unique suffix
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  # macOS sed syntax
+  sed -i '' "s/speedpy-image-suffix/speedpy${UNIQUE_SUFFIX}/g" docker-compose.yml
+else
+  # Linux sed syntax
+  sed -i "s/speedpy-image-suffix/speedpy${UNIQUE_SUFFIX}/g" docker-compose.yml
+fi
+
 # Generate random port between 9000 and 9999
 
 

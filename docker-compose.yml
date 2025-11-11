@@ -1,8 +1,20 @@
+x-app: &app
+  build: .
+  restart: always
+  image: speedpy-image-suffix
+  volumes:
+    - .:/code
+  links:
+    - db
+    - redis
+  depends_on:
+    - db
+    - redis
 services:
   redis:
     image: redis
-#    ports:
-#      - "6379:6379"
+  #    ports:
+  #      - "6379:6379"
 
   db:
     image: postgres
@@ -10,24 +22,13 @@ services:
       - POSTGRES_USER=speedpycom
       - POSTGRES_PASSWORD=speedpycom
       - POSTGRES_DB=speedpycom
-#    ports:
-#      - "5432:5432"
+  #    ports:
+  #      - "5432:5432"
   web:
-    build: .
-    restart: always
+    <<: *app
     command: python manage.py runserver 0.0.0.0:9000
-    env_file:
-      - .env
     ports:
       - "127.0.0.1:9000:9000"
-    volumes:
-      - .:/code
-    links:
-      - db
-      - redis
-    depends_on:
-      - db
-      - redis
 
   media:
     image: nginx
@@ -43,34 +44,13 @@ services:
   #      - NODE_ENV=development
   #    command: /bin/bash -c 'cd /code/ && npm install && npm run tailwind:watch'
   celery:
-    build: .
-    restart: always
+    <<: *app
     command: celery -A project.celeryapp:app  worker -Q default -n speedpycom.%%h --loglevel=DEBUG --max-memory-per-child=512000 --concurrency=1
-    env_file:
-      - .env
-    volumes:
-      - .:/code
-    links:
-      - db
-      - redis
-    depends_on:
-      - db
-      - redis
 
   celery-beat:
-    build: .
-    restart: always
+    <<: *app
     command: celery -A project.celeryapp:app beat -S redbeat.RedBeatScheduler  --loglevel=DEBUG --pidfile /tmp/celerybeat.pid
-    env_file:
-      - .env
-    volumes:
-      - .:/code
-    links:
-      - db
-      - redis
-    depends_on:
-      - db
-      - redis
+
 #  celery-flower:
 #    build: .
 #    restart: always
