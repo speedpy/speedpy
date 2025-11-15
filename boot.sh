@@ -13,7 +13,6 @@ EOF
 
 echo "$ascii_art"
 echo "=> SpeedPy.com Django-based Boilerplate requires Docker installed."
-. ./pre_check.sh
 
 echo "Enter project name (press Enter for auto-generated name):"
 read -r project_name
