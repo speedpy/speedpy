@@ -12,7 +12,7 @@ git_version=$(git --version)
 echo "✓ Git is installed: $git_version"
 
 # Check global user name
-git_user=$(git config --global user.name)
+git_user=$(git config --global user.name || true)
 if [ -z "$git_user" ]; then
     echo "Error: Git global user.name is not set"
     echo "Set it using: git config --global user.name \"Your Name\""
@@ -21,7 +21,7 @@ fi
 echo "✓ Git user.name is set to: $git_user"
 
 # Check global email
-git_email=$(git config --global user.email)
+git_email=$(git config --global user.email || true)
 if [ -z "$git_email" ]; then
     echo "Error: Git global user.email is not set"
     echo "Set it using: git config --global user.email \"your.email@example.com\""
