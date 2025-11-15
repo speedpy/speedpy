@@ -1,5 +1,5 @@
 #!/bin/bash
-ascii_art=$(cat <<'EOF'
+cat <<'EOF'
    _____                     _ _____
   / ____|                   | |  __ \
  | (___  _ __   ___  ___  __| | |__) |   _
@@ -9,9 +9,6 @@ ascii_art=$(cat <<'EOF'
         | |                           __/ |
         |_|                          |___/
 EOF
-)
-
-echo "$ascii_art"
 echo "=> SpeedPy.com Django-based Boilerplate requires Docker installed."
 
 echo "Enter project name (press Enter for auto-generated name):"
