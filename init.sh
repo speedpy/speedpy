@@ -38,10 +38,10 @@ echo " * Using unique image suffix: $UNIQUE_SUFFIX"
 # Replace the placeholder image name in docker-compose.yml with unique suffix
 if [[ "$OSTYPE" == "darwin"* ]]; then
   # macOS sed syntax
-  sed -i '' "s/speedpy-image-suffix/speedpy${UNIQUE_SUFFIX}/g" docker-compose.yml
+  sed -i '' "s/-image-suffix/speedpy${UNIQUE_SUFFIX}/g" docker-compose.yml
 else
   # Linux sed syntax
-  sed -i "s/speedpy-image-suffix/speedpy${UNIQUE_SUFFIX}/g" docker-compose.yml
+  sed -i "s/-image-suffix/speedpy${UNIQUE_SUFFIX}/g" docker-compose.yml
 fi
 
 # Generate random port between 9000 and 9999

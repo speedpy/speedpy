@@ -1,7 +1,7 @@
 x-app: &app
   build: .
   restart: always
-  image: speedpy-image-suffix
+
   volumes:
     - .:/code
   links:
@@ -26,6 +26,7 @@ services:
   #      - "5432:5432"
   web:
     <<: *app
+    image: speedpy-web-image-suffix
     command: python manage.py runserver 0.0.0.0:9000
     ports:
       - "127.0.0.1:9000:9000"
@@ -45,10 +46,12 @@ services:
   #    command: /bin/bash -c 'cd /code/ && npm install && npm run tailwind:watch'
   celery:
     <<: *app
+    image: speedpy-celery-image-suffix
     command: celery -A project.celeryapp:app  worker -Q default -n speedpycom.%%h --loglevel=DEBUG --max-memory-per-child=512000 --concurrency=1
 
   celery-beat:
     <<: *app
+    image: speedpy-celery-beat-image-suffix
     command: celery -A project.celeryapp:app beat -S redbeat.RedBeatScheduler  --loglevel=DEBUG --pidfile /tmp/celerybeat.pid
 
 #  celery-flower:
