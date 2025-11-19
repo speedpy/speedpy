@@ -39,6 +39,5 @@ cd "$target_path" || { echo "Error: Failed to change to directory $target_path";
 if [[ $SPEEDPYCOM_REF != "master" ]]; then
 	git fetch -q origin "${SPEEDPYCOM_REF:-master}" && git checkout "${SPEEDPYCOM_REF:-master}"
 fi
-rm -rf .git
 echo "Initializing project setup (init.sh) ..."
 bash init.sh
