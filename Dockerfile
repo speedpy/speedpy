@@ -1,4 +1,4 @@
-FROM python:3.13.9-bullseye
+FROM python:3.13.9-bookworm
 SHELL ["/bin/bash", "--login", "-c"]
 ENV PIP_NO_CACHE_DIR off
 ENV PIP_DISABLE_PIP_VERSION_CHECK on
