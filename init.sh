@@ -4,22 +4,14 @@ set -e  # Exit on error
 # Get a list of all remote names
 remotes=$(git remote 2>/dev/null || echo "")
 
-if [ -z "$remotes" ]; then
-  echo "No Git remotes found to delete."
-else
-  echo "Deleting the following Git remotes:"
-  echo "$remotes"
-  echo ""
-
-  # Loop through each remote and remove it
-  for remote in $remotes; do
-    git remote remove "$remote" || true
-    echo "Removed remote: $remote"
-  done
-  echo ""
-  echo "All Git remotes have been deleted."
+# Rename origin to speedpy if it exists
+if echo "$remotes" | grep -q "^origin$"; then
+  git remote rename origin speedpy
+  echo "Renamed remote 'origin' to 'speedpy'"
 fi
+echo "Creating a speedpy branch for future updates. "
 
+git branch speedpy
 # Backup docker-compose.yml before modifications
 if [ ! -f "docker-compose.yml.bak" ]; then
   cp docker-compose.yml docker-compose.yml.bak
@@ -102,9 +94,6 @@ if [ -t 1 ]; then
   USE_TTY="-T"
 fi
 echo "USE_TTY=${USE_TTY}"
-
-# Initialize git repository
-git init -b master >/dev/null 2>&1 || true
 
 cp .docker.env .env
 echo " * docker compose down -v --remove-orphans"
