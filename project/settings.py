@@ -19,6 +19,7 @@ DEBUG = env("DEBUG", default=False)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
+ADMIN_URL = env.str("ADMIN_URL", default="admin/")
 # Application definition
 
 INSTALLED_APPS = [
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     "usermodel.apps.UsermodelConfig",
     "speedpycom",
     "mainapp.apps.MainappConfig",
+    "django_recaptcha",
 ]
 
 MIDDLEWARE = [
@@ -76,6 +78,8 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "project.context_processors.demo_mode",
+                "project.context_processors.site_url",
+                "project.context_processors.og_tags",
             ],
         },
     },
@@ -144,8 +148,8 @@ ACCOUNT_FORMS = {
     "change_password": "usermodel.forms.UsermodelChangePasswordForm",
     "add_email": "usermodel.forms.UsermodelAddEmailForm",
 }
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*']
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*"]
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
@@ -233,13 +237,23 @@ DPA_LINK = env("DPA_LINK", default="/")
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG,
 }
-EMAIL_BACKEND = "post_office.EmailBackend"
+email_config = env.email_url("EMAIL_URL", default="smtp://user:password@localhost:25")
 
+EMAIL_BACKEND = "post_office.EmailBackend"
+EMAIL_HOST = email_config["EMAIL_HOST"]
+EMAIL_PORT = email_config["EMAIL_PORT"]
+EMAIL_HOST_USER = email_config["EMAIL_HOST_USER"]
+EMAIL_HOST_PASSWORD = email_config["EMAIL_HOST_PASSWORD"]
+EMAIL_USE_TLS = email_config.get("EMAIL_USE_TLS", False)
+EMAIL_USE_SSL = email_config.get("EMAIL_USE_SSL", False)
+DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="admin@example.com")
 POST_OFFICE = {
     "BACKENDS": {
-        "default": "django_ses.SESBackend",
+        # "default": "django_ses.SESBackend",
+        "default": "django.core.mail.backends.smtp.EmailBackend",
     },
     "DEFAULT_PRIORITY": "now",
+    "CELERY_ENABLED": True,
 }
 
 AWS_SES_REGION_NAME = "eu-central-1"
@@ -252,3 +266,17 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="support@example.com")
 
 DEFAULT_ADMIN_PASSWORD = env("DEFAULT_ADMIN_PASSWORD", default=None)
 DEMO_MODE = env.bool("DEMO_MODE", default=False)  # fills login and password on login form for demo purposes
+RECAPTCHA_PUBLIC_KEY = env("RECAPTCHA_PUBLIC_KEY", default="")
+RECAPTCHA_PRIVATE_KEY = env("RECAPTCHA_PRIVATE_KEY", default="")
+RECAPTCHA_REQUIRED_SCORE = env.float("RECAPTCHA_REQUIRED_SCORE", default=0.5)
+SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
+
+LOGO_PATH = "static/mainapp/speedpy_logo.png"
+TITLE = "SpeedPy"
+TAGLINE = "Django-based SaaS boilerplate"
+DEFAULT_SCHEMA = "https://" if not DEBUG else "http://"
+try:
+
+    SITE_URL = DEFAULT_SCHEMA + env("SITE_URL", default=ALLOWED_HOSTS[0])
+except IndexError:
+    SITE_URL = DEFAULT_SCHEMA + "localhost"

@@ -19,3 +19,4 @@ pyjwt[crypto]==2.10.1
 requests==2.32.5
 whitenoise==6.11.0
 django-structlog[commands,celery]==10.0.0
+django-recaptcha==4.1.0

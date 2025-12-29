@@ -1,0 +1,87 @@
+<div x-data="colorPicker('{{ widget.value|default:'#000000' }}')" class="color-picker-wrapper">
+    <div class="flex align-items-center gap-3">
+        <!-- Color visual picker -->
+        <input
+            type="color"
+            x-model="colorValue"
+            @input="updateFromColor($event.target.value)"
+            class="form-control form-control-color p-1"
+            style="width: 50px; height: 38px; cursor: pointer;"
+            :value="colorValue">
+
+        <!-- Hex text input (this is the actual Django form field) -->
+        <input
+            type="text"
+            name="{{ widget.name }}"
+            x-model="hexValue"
+            @input="updateFromHex($event.target.value)"
+            class="form-control font-monospace text-uppercase"
+            style="max-width: 120px;"
+            placeholder="#FFFFFF"
+            pattern="^#[0-9A-Fa-f]{6}$"
+            maxlength="7"
+            {% if widget.is_required %}required{% endif %}
+            {{ widget.attrs|safe }}>
+    </div>
+</div>
+
+<script>
+function colorPicker(initialValue) {
+    return {
+        colorValue: initialValue || '#000000',
+        hexValue: (initialValue || '#000000').toUpperCase(),
+
+        init() {
+            // Ensure initial values are synced
+            this.colorValue = this.hexValue;
+        },
+
+        updateFromColor(value) {
+            this.hexValue = value.toUpperCase();
+            this.colorValue = value;
+        },
+
+        updateFromHex(value) {
+            // Clean the input
+            let cleaned = value.trim().toUpperCase();
+
+            // Add # if missing
+            if (cleaned && !cleaned.startsWith('#')) {
+                cleaned = '#' + cleaned;
+            }
+
+            // Validate hex format
+            if (/^#[0-9A-F]{6}$/.test(cleaned)) {
+                this.colorValue = cleaned;
+                this.hexValue = cleaned;
+            } else if (/^#[0-9A-F]{0,5}$/.test(cleaned)) {
+                // Valid partial hex, update hexValue but not colorValue yet
+                this.hexValue = cleaned;
+            } else {
+                // Invalid format, just update hexValue for user feedback
+                this.hexValue = cleaned;
+            }
+        }
+    }
+}
+</script>
+
+<style>
+.color-picker-wrapper .form-control-color {
+    border: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.color-picker-wrapper .form-control-color::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+
+.color-picker-wrapper .form-control-color::-webkit-color-swatch {
+    border: none;
+    border-radius: 0.25rem;
+}
+
+.color-picker-wrapper .form-control-color::-moz-color-swatch {
+    border: none;
+    border-radius: 0.25rem;
+}
+</style>

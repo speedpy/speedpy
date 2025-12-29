@@ -1,5 +1,6 @@
 {% load static %}
-<html class="{% block extra_html_class %}{% endblock %}">
+<!doctype html>
+<html lang="en" class="{% block extra_html_class %}{% endblock %}">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,9 +9,28 @@
     <link rel="shortcut icon" href="{% static "mainapp/speedpy_favicon.png" %}" type="image/png">
     <link rel="stylesheet" href="{% static "mainapp/styles.css" %}"/>
     <!-- og tags -->
-    <meta property="og:title" content="{% block og_title %}SpeedPy Django SaaS Boilerplate{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}SpeedPy is a Django SaaS Boilerplate. It is a great starting point for your next Django SaaS project.{% endblock %}">
-    <meta property="og:image" content="{% static "mainapp/og.jpg" %}">
+    <meta property="og:title" content="{% if og_title %}{{ og_title }}{% else %}{{ SITE_TITLE }}{% endif %}">
+    <meta property="og:description"
+          content="{% if og_description %}{{ og_description }}{% else %}{{ TAGLINE }}{% endif %}">
+    {% if og_image %}
+        <meta property="og:image"
+              content="{{ og_image }}">
+    {% else %}
+        <meta property="og:image"
+              content="{{ SITE_URL }}{% url "default-og-image" %}">
+    {% endif %}
+    <!-- Twitter Card tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% if og_title %}{{ og_title }}{% else %}{{ SITE_TITLE }}{% endif %}">
+    <meta name="twitter:description"
+          content="{% if og_description %}{{ og_description }}{% else %}{{ TAGLINE }}{% endif %}">
+    {% if og_image %}
+        <meta name="twitter:image" content="{{ og_image }}">
+    {% else %}
+        <meta name="twitter:image" content="{{ SITE_URL }}{% url "default-og-image" %}">
+    {% endif %}
+    <meta name="twitter:site" content="@speedpycom">
+    <meta name="twitter:creator" content="@speedpycom">
     <script defer src="{% static "vendors/alpine.min.js" %}"></script>
     {% block extra_head %}{% endblock %}
 </head>
