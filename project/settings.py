@@ -198,6 +198,8 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
+logger = structlog.get_logger()
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Internationalization
@@ -275,8 +277,13 @@ LOGO_PATH = "static/mainapp/speedpy_logo.png"
 TITLE = "SpeedPy"
 TAGLINE = "Django-based SaaS boilerplate"
 DEFAULT_SCHEMA = "https://" if not DEBUG else "http://"
+SITE_URL = None
 try:
-
-    SITE_URL = DEFAULT_SCHEMA + env("SITE_URL", default=ALLOWED_HOSTS[0])
+    first_host = ALLOWED_HOSTS[0]
+    if first_host != "*":
+        SITE_URL = DEFAULT_SCHEMA + env("SITE_URL", default=ALLOWED_HOSTS[0])
 except IndexError:
-    SITE_URL = DEFAULT_SCHEMA + "localhost"
+    pass
+
+if not SITE_URL:
+    logger.warning("SITE_URL not set")

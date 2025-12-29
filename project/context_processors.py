@@ -6,7 +6,8 @@ def demo_mode(request):
 
 
 def site_url(request):
-    return {"SITE_URL": getattr(settings, "SITE_URL", "http://localhost")}
+    default_url = f"{request.scheme}://{request.get_host()}"
+    return {"SITE_URL": getattr(settings, "SITE_URL", default_url)}
 
 
 def og_tags(request):
