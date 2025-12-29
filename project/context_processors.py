@@ -2,6 +2,17 @@ from django.conf import settings
 
 
 def demo_mode(request):
+    return {"DEMO_MODE": getattr(settings, "DEMO_MODE", False)}
+
+
+def site_url(request):
+    default_url = f"{request.scheme}://{request.get_host()}"
+    return {"SITE_URL": getattr(settings, "SITE_URL", default_url)}
+
+
+def og_tags(request):
     return {
-        'DEMO_MODE': getattr(settings, 'DEMO_MODE', False)
+        "SITE_TITLE": getattr(settings, "TITLE", ""),
+        "TAGLINE": getattr(settings, "TAGLINE", ""),
+        "LOGO_PATH": getattr(settings, "LOGO_PATH", ""),
     }
