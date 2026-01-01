@@ -41,6 +41,9 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.gitlab",
     "debug_toolbar",
     "post_office",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
     "usermodel.apps.UsermodelConfig",
     "speedpycom",
     "mainapp.apps.MainappConfig",
@@ -55,6 +58,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
@@ -287,3 +291,7 @@ except IndexError:
 
 if not SITE_URL:
     logger.warning("SITE_URL not set")
+
+# OTP Configuration
+OTP_TOTP_ISSUER = env.str("OTP_TOTP_ISSUER", default="uptimefor.me")
+OTP_LOGIN_URL = reverse_lazy("account_login_otp")

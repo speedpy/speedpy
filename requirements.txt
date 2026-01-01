@@ -20,3 +20,17 @@ requests==2.32.5
 whitenoise==6.11.0
 django-structlog[commands,celery]==10.0.0
 django-recaptcha==4.1.0
+# API
+djangorestframework==3.16.1
+drf-spectacular==0.29.0
+# Authentication & Security
+django-otp==1.6.3
+qrcode==8.2
+django-fernet-encrypted-fields
+# Monitoring
+httpx==0.28.1
+dnspython==2.8.0
+# Payments
+django-paddle-billing==0.1.14
+# Utilities
+python-slugify==8.0.4
