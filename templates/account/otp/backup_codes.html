@@ -1,0 +1,78 @@
+{% extends "account/base_manage.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Backup Codes" %}{% endblock %}
+
+{% block main_content %}
+    <div class="sm:w-full sm:max-w-2xl">
+        <h2 class="text-xl font-bold tracking-tight text-gray-900 px-6 pt-6 sm:px-12">
+            {% trans "Backup Codes" %}
+        </h2>
+    </div>
+
+    <div class="sm:mx-auto sm:w-full px-6 py-8 sm:px-12">
+
+        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">
+                        {% trans "Save these codes in a safe place" %}
+                    </h3>
+                    <p class="mt-1 text-sm text-blue-700">
+                        {% trans "Each code can be used once to sign in if you don't have access to your authenticator app. You won't be able to see these codes again after leaving this page." %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <div class="grid grid-cols-2 gap-3 p-6 bg-gray-50 border-2 border-gray-200 rounded-lg">
+                {% for code in backup_codes %}
+                    <div class="font-mono text-sm font-semibold text-gray-900 p-2 bg-white border border-gray-300 rounded text-center">
+                        {{ code }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="printCodes()"
+                    class="py-2 px-4 text-sm font-medium text-blue-600 bg-white border border-blue-600 rounded-lg hover:bg-blue-50">
+                {% trans "Print Codes" %}
+            </button>
+            <button onclick="copyCodes()"
+                    class="py-2 px-4 text-sm font-medium text-blue-600 bg-white border border-blue-600 rounded-lg hover:bg-blue-50">
+                {% trans "Copy to Clipboard" %}
+            </button>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-gray-200">
+            <a href="{% url 'account_otp_settings' %}"
+               class="inline-flex items-center py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                {% trans "Done" %}
+            </a>
+        </div>
+
+    </div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+function printCodes() {
+    window.print();
+}
+
+function copyCodes() {
+    const codes = [{% for code in backup_codes %}'{{ code }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const text = codes.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+        alert('{% trans "Backup codes copied to clipboard!" %}');
+    });
+}
+</script>
+{% endblock %}

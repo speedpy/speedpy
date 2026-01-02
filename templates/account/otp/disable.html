@@ -1,0 +1,21 @@
+{% extends "account/base_manage.html" %}
+{% load i18n crispy_forms_tags %}
+
+{% block head_title %}{% trans "Disable Two-Factor Authentication" %}{% endblock %}
+
+{% block main_content %}
+    <div class="sm:w-full sm:max-w-2xl">
+        <h2 class="text-xl font-bold tracking-tight text-gray-900 px-6 pt-6 sm:px-12">
+            {% trans "Disable Two-Factor Authentication" %}
+        </h2>
+    </div>
+
+    <div class="sm:mx-auto sm:w-full px-6 py-8 sm:px-12">
+
+        <form method="post">
+            {% csrf_token %}
+            {% crispy form %}
+        </form>
+
+    </div>
+{% endblock %}
