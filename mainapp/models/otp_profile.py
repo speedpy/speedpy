@@ -2,9 +2,9 @@ import uuid
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from speedpycom.models import BaseModel
 
-
-class UserOTPProfile(models.Model):
+class UserOTPProfile(BaseModel):
     """Track user OTP preferences and metadata"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(
@@ -27,9 +27,6 @@ class UserOTPProfile(models.Model):
     enabled_at = models.DateTimeField(null=True, blank=True)
     disabled_at = models.DateTimeField(null=True, blank=True)
     last_used_at = models.DateTimeField(null=True, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'mainapp_user_otp_profile'

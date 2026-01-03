@@ -1,0 +1,139 @@
+
+{% extends "mainapp/layouts/sidebar_layout.html" %}
+
+
+{% block head_title %}{{ team.name }} - Dashboard{% endblock %}
+
+{% block main_content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Team Navigation -->
+        <div class="flex justify-end gap-4 mb-6">
+            <a href="{% url 'team_members' team_id=team.id %}"
+               class="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors">
+                Team members
+            </a>
+            <a href="#" class="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors">
+                Billing
+            </a>
+            {% if user_role == 'owner' or user_role == 'admin' %}
+            <a href="{% url 'team_settings' team_id=team.id %}"
+               class="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors">
+                Team Settings
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Team Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <!-- Team Logo -->
+            {% if team.logo %}
+                <img src="{{ team.logo.url }}"
+                     alt="{{ team.name }}"
+                     class="h-24 w-24 rounded-full object-cover mx-auto mb-4">
+            {% else %}
+                <div class="h-24 w-24 rounded-full bg-primary-500 text-white flex items-center justify-center text-3xl font-bold mx-auto mb-4">
+                    {{ team.name|slice:":2"|upper }}
+                </div>
+            {% endif %}
+
+            <!-- Welcome Message -->
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                Welcome to {{ team.name }}
+            </h1>
+
+            <!-- User Role Badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 rounded-full text-sm font-medium mt-4">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span class="capitalize">{{ user_role }}</span>
+            </div>
+
+            <!-- Team Plan -->
+            <div class="mt-4 text-gray-600">
+                <span class="inline-flex items-center gap-1">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                    <span class="capitalize">{{ team.plan }} Plan</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+            <!-- Team Status -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Status</p>
+                        <p class="mt-1">
+                            {% if team.is_active %}
+                                <span class="inline-flex items-center gap-1 text-green-600 font-semibold">
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 text-gray-500 font-semibold">
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Created -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Created</p>
+                        <p class="mt-1 text-lg font-semibold text-gray-900">
+                            {{ team.created_at|date:"M d, Y" }}
+                        </p>
+                    </div>
+                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Your Access -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Your Access</p>
+                        <p class="mt-1 text-lg font-semibold text-gray-900 capitalize">
+                            {{ user_role }}
+                        </p>
+                    </div>
+                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Placeholder Message -->
+        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <h3 class="text-sm font-semibold text-blue-900">Team Dashboard Coming Soon</h3>
+                    <p class="mt-1 text-sm text-blue-700">
+                        This is a placeholder for your team dashboard. Team-specific functionality will be added here soon.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

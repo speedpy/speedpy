@@ -1,0 +1,75 @@
+{% extends "mainapp/layouts/sidebar_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}Create Team{% endblock %}
+
+{% block main_content %}
+    <div class="max-w-2xl">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Create Team</h1>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Create a new team to organize your monitors and collaborate with others.
+            </p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg sm:px-12 px-6 py-12">
+            <div x-data="{
+                slugTouched: false,
+                slugify(text) {
+                    return text
+                        .toString()
+                        .toLowerCase()
+                        .trim()
+                        .replace(/\s+/g, '-')
+                        .replace(/[^\w\-]+/g, '')
+                        .replace(/\-\-+/g, '-')
+                        .replace(/^-+/, '')
+                        .replace(/-+$/, '');
+                },
+                updateSlug() {
+                    const nameField = document.getElementById('id_name');
+                    const slugField = document.getElementById('id_slug');
+
+                    if (!this.slugTouched && nameField && slugField) {
+                        slugField.value = this.slugify(nameField.value);
+                    }
+                }
+            }">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% crispy form %}
+
+                    <div class="mt-6 flex items-center gap-x-3">
+                        <button type="submit"
+                                class="py-2 px-4 text-sm font-medium leading-5 text-white bg-indigo-600 rounded-lg cursor-pointer lg:px-5 lg:py-2.5 hover:bg-indigo-700 focus:outline-offset-2">
+                            Create Team
+                        </button>
+                        <a href="{% url 'dashboard' %}"
+                               class="text-sm font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const nameField = document.getElementById('id_name');
+                        const slugField = document.getElementById('id_slug');
+
+                        if (nameField && slugField) {
+                            nameField.addEventListener('input', function() {
+                                const component = Alpine.$data(nameField.closest('[x-data]'));
+                                component.updateSlug();
+                            });
+
+                            slugField.addEventListener('input', function() {
+                                const component = Alpine.$data(slugField.closest('[x-data]'));
+                                component.slugTouched = true;
+                            });
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "mainapp/layouts/sidebar_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}Update Member Role - {{ team.name }}{% endblock %}
+
+{% block main_content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Update Member Role</h1>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Change the role for {{ target_membership.user.email }}
+            </p>
+        </div>
+
+        <!-- Member Info -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 mb-6">
+            <div class="flex items-center mb-4">
+                <div class="h-12 w-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-medium">
+                    {{ target_membership.user.email|slice:":2"|upper }}
+                </div>
+                <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ target_membership.user.email }}
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                        Current role: {{ target_membership.role }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning Box -->
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                    <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                        <strong>Important:</strong> Changing a member's role will affect their permissions and access level.
+                        They will receive an email notification about this change.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Update Form -->
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% crispy form %}
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex items-center gap-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <button type="submit"
+                            class="py-2 px-4 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-offset-2">
+                        Update Role
+                    </button>
+                    <a href="{% url 'team_members' team_id=team.id %}"
+                       class="text-sm font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

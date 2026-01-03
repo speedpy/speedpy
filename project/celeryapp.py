@@ -66,7 +66,24 @@ Run every 10 minutes
         },
     }
 """
-app.conf.beat_schedule = {}
+app.conf.beat_schedule = {
+    "expire-team-memberships": {
+        "task": "expire_team_memberships",
+        "schedule": crontab(hour=2, minute=0),  # Run daily at 2:00 AM
+        "options": {
+            "ignore_result": True,
+            "queue": "default",
+        },
+    },
+    "expire-team-invitations": {
+        "task": "expire_team_memberships_invitations",
+        "schedule": crontab(hour=2, minute=30),  # Run daily at 2:30 AM
+        "options": {
+            "ignore_result": True,
+            "queue": "default",
+        },
+    },
+}
 
 @setup_logging.connect
 def receiver_setup_logging(

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Invitation</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #f4f4f4; border-radius: 10px; padding: 30px; margin: 20px 0;">
+        <h1 style="color: #4F46E5; margin-top: 0;">You've Been Invited!</h1>
+
+        <p style="font-size: 16px;">
+            <strong>{{ inviter_name }}</strong> has invited you to join <strong>{{ team_name }}</strong>
+            {% if is_existing_user %}
+            on our platform.
+            {% else %}
+            . You'll be able to access the team once you create an account.
+            {% endif %}
+        </p>
+
+        {% if message %}
+        <div style="background-color: #EEF2FF; border-left: 4px solid #4F46E5; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; font-style: italic;">"{{ message }}"</p>
+        </div>
+        {% endif %}
+
+        <div style="background-color: white; border-radius: 5px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>Role:</strong> {{ role }}</p>
+            <p style="margin: 0;"><strong>Expires:</strong> {{ expires_at|date:"F j, Y" }}</p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ accept_url }}" style="background-color: #4F46E5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                Accept Invitation
+            </a>
+        </div>
+
+        <p style="text-align: center; color: #666; font-size: 14px;">
+            Not interested?
+            <a href="{{ decline_url }}" style="color: #4F46E5;">Decline this invitation</a>
+        </p>
+
+        {% if not is_existing_user %}
+        <div style="border-top: 1px solid #ddd; margin-top: 30px; padding-top: 20px;">
+            <p style="font-size: 14px; color: #666;">
+                <strong>Note:</strong> You'll need to create an account to accept this invitation.
+                The link above will guide you through the process.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <p style="text-align: center; color: #999; font-size: 12px;">
+        This invitation will expire on {{ expires_at|date:"F j, Y" }}.
+    </p>
+</body>
+</html>

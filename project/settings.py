@@ -256,7 +256,8 @@ DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="admin@example.com")
 POST_OFFICE = {
     "BACKENDS": {
         # "default": "django_ses.SESBackend",
-        "default": "django.core.mail.backends.smtp.EmailBackend",
+        "default": "django.core.mail.backends.console.EmailBackend",
+        # "default": "django.core.mail.backends.smtp.EmailBackend",
     },
     "DEFAULT_PRIORITY": "now",
     "CELERY_ENABLED": True,
@@ -278,16 +279,18 @@ RECAPTCHA_REQUIRED_SCORE = env.float("RECAPTCHA_REQUIRED_SCORE", default=0.5)
 SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
 
 LOGO_PATH = "static/mainapp/speedpy_logo.png"
+LOGO_PATH_TEMPLATE = LOGO_PATH.removeprefix("static/") if LOGO_PATH.startswith("static/") else LOGO_PATH
 TITLE = "SpeedPy"
 TAGLINE = "Django-based SaaS boilerplate"
 DEFAULT_SCHEMA = "https://" if not DEBUG else "http://"
-SITE_URL = None
-try:
-    first_host = ALLOWED_HOSTS[0]
-    if first_host != "*":
-        SITE_URL = DEFAULT_SCHEMA + env("SITE_URL", default=ALLOWED_HOSTS[0])
-except IndexError:
-    pass
+SITE_URL = env("SITE_URL", default=None)
+if not SITE_URL:
+    try:
+        first_host = ALLOWED_HOSTS[0]
+        if first_host != "*":
+            SITE_URL = DEFAULT_SCHEMA + ALLOWED_HOSTS[0]
+    except IndexError:
+        pass
 
 if not SITE_URL:
     logger.warning("SITE_URL not set")
