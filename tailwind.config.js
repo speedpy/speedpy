@@ -6,6 +6,7 @@ try {
 }
 
 module.exports = {
+    darkMode: 'class',
     content: [
         "./templates/**/*.{html,js}",
         "./node_modules/versoly-ui/**/*.js",

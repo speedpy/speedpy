@@ -7,6 +7,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block head_title %}{% endblock %}</title>
     <link rel="shortcut icon" href="{% static "mainapp/speedpy_favicon.png" %}" type="image/png">
+
+    <!-- Theme initialization - Must run before styles load to prevent FOUC -->
+    <script>
+        (function() {
+            function getThemePreference() {
+                const stored = localStorage.getItem('theme-preference');
+                if (stored) return stored;
+                return 'auto'; // Default to auto mode
+            }
+
+            function getEffectiveTheme(preference) {
+                if (preference === 'auto') {
+                    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                return preference;
+            }
+
+            const preference = getThemePreference();
+            const effectiveTheme = getEffectiveTheme(preference);
+
+            if (effectiveTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+
+            // Store for later access
+            window.__themePreference = preference;
+        })();
+    </script>
+
     <link rel="stylesheet" href="{% static "mainapp/styles.css" %}"/>
     <!-- og tags -->
     <meta property="og:title" content="{% if og_title %}{{ og_title }}{% else %}{{ SITE_TITLE }}{% endif %}">

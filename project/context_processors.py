@@ -14,5 +14,5 @@ def og_tags(request):
     return {
         "SITE_TITLE": getattr(settings, "TITLE", ""),
         "TAGLINE": getattr(settings, "TAGLINE", ""),
-        "LOGO_PATH": getattr(settings, "LOGO_PATH", ""),
+        "LOGO_PATH": getattr(settings, "LOGO_PATH_TEMPLATE", ""),
     }
