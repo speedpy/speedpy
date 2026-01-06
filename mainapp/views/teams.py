@@ -42,7 +42,7 @@ class TeamViewMixin(LoginRequiredMixin):
         LoginRequiredMixin already ensures request.user is authenticated.
         """
         # Check if teams functionality is enabled
-        if not getattr(settings, "TEAMS_ENABLED", True):
+        if not getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
             raise Http404("Teams functionality is disabled")
 
         # Resolve team from URL parameters
@@ -162,7 +162,7 @@ class TeamCreateView(LoginRequiredMixin, CreateView):
     form_class = TeamCreateForm
 
     def dispatch(self, request, *args, **kwargs):
-        if not getattr(settings, "TEAMS_ENABLED", True):
+        if not getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
             raise Http404("Teams functionality is disabled")
         return super().dispatch(request, *args, **kwargs)
 

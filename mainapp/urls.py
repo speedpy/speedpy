@@ -16,8 +16,8 @@ urlpatterns = [
     path('accounts/login/otp/', views.OTPLoginView.as_view(), name='account_login_otp'),
 ]
 
-# Team URLs (conditionally included based on TEAMS_ENABLED setting)
-if getattr(settings, "TEAMS_ENABLED", True):
+# Team URLs (conditionally included based on SPEEDPY_TEAMS_ENABLED setting)
+if getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
     urlpatterns += [
         path('teams/create/', views.TeamCreateView.as_view(), name='team_create'),
         path('teams/<uuid:team_id>/dashboard/', views.TeamDashboardView.as_view(), name='team_dashboard'),

@@ -112,7 +112,7 @@ class AcceptInvitationView(LoginRequiredMixin, TemplateView):
     template_name = 'mainapp/teams/members/accept.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if not getattr(settings, "TEAMS_ENABLED", True):
+        if not getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
             raise Http404("Teams functionality is disabled")
         return super().dispatch(request, *args, **kwargs)
 
@@ -163,7 +163,7 @@ class DeclineInvitationView(View):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not getattr(settings, "TEAMS_ENABLED", True):
+        if not getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
             raise Http404("Teams functionality is disabled")
         return super().dispatch(request, *args, **kwargs)
 
