@@ -17,7 +17,9 @@
     </ul>
 
     <div class="mt-auto">
-        {% include "components/team_selector/team_dropdown_selector.html" with dropdown_direction="up" %}
+        {% if TEAMS_ENABLED %}
+            {% include "components/team_selector/team_dropdown_selector.html" with dropdown_direction="up" %}
+        {% endif %}
         <ul class="pt-4 space-y-2 font-medium border-t border-gray-200 dark:border-gray-700">
              <li>
                 <a href="#" class="flex items-center p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white group">

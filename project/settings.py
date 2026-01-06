@@ -84,6 +84,7 @@ TEMPLATES = [
                 "project.context_processors.demo_mode",
                 "project.context_processors.site_url",
                 "project.context_processors.og_tags",
+                "project.context_processors.teams_enabled",
             ],
         },
     },
@@ -273,6 +274,7 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="support@example.com")
 
 DEFAULT_ADMIN_PASSWORD = env("DEFAULT_ADMIN_PASSWORD", default=None)
 DEMO_MODE = env.bool("DEMO_MODE", default=False)  # fills login and password on login form for demo purposes
+TEAMS_ENABLED = env.bool("TEAMS_ENABLED", default=True)  # enable/disable teams functionality
 RECAPTCHA_PUBLIC_KEY = env("RECAPTCHA_PUBLIC_KEY", default="")
 RECAPTCHA_PRIVATE_KEY = env("RECAPTCHA_PRIVATE_KEY", default="")
 RECAPTCHA_REQUIRED_SCORE = env.float("RECAPTCHA_REQUIRED_SCORE", default=0.5)
