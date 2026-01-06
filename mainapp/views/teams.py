@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -40,6 +41,10 @@ class TeamViewMixin(LoginRequiredMixin):
 
         LoginRequiredMixin already ensures request.user is authenticated.
         """
+        # Check if teams functionality is enabled
+        if not getattr(settings, "TEAMS_ENABLED", True):
+            raise Http404("Teams functionality is disabled")
+
         # Resolve team from URL parameters
         team = self._get_team(kwargs)
 
@@ -155,6 +160,11 @@ class TeamCreateView(LoginRequiredMixin, CreateView):
     template_name = "mainapp/teams/team_create.html"
     object: Team
     form_class = TeamCreateForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if not getattr(settings, "TEAMS_ENABLED", True):
+            raise Http404("Teams functionality is disabled")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse('team_dashboard', kwargs={'team_id': self.object.pk})

@@ -1,6 +1,7 @@
 from functools import partial
 
 from celery import current_app
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -110,6 +111,11 @@ class AcceptInvitationView(LoginRequiredMixin, TemplateView):
     """
     template_name = 'mainapp/teams/members/accept.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not getattr(settings, "TEAMS_ENABLED", True):
+            raise Http404("Teams functionality is disabled")
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         token = self.kwargs['token']
@@ -155,6 +161,11 @@ class DeclineInvitationView(View):
 
     No login required - public endpoint.
     """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not getattr(settings, "TEAMS_ENABLED", True):
+            raise Http404("Teams functionality is disabled")
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         token = self.kwargs['token']

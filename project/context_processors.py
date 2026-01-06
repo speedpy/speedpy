@@ -16,3 +16,7 @@ def og_tags(request):
         "TAGLINE": getattr(settings, "TAGLINE", ""),
         "LOGO_PATH": getattr(settings, "LOGO_PATH_TEMPLATE", ""),
     }
+
+
+def teams_enabled(request):
+    return {"TEAMS_ENABLED": getattr(settings, "TEAMS_ENABLED", True)}
