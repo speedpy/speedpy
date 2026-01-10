@@ -270,8 +270,6 @@ AWS_SES_ACCESS_KEY_ID = env("AWS_SES_ACCESS_KEY_ID", default="change_me")
 AWS_SES_SECRET_ACCESS_KEY = env("AWS_SES_SECRET_ACCESS_KEY", default="change_me")
 AWS_SES_AUTO_THROTTLE = 0.5
 
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="support@example.com")
-
 DEFAULT_ADMIN_PASSWORD = env("DEFAULT_ADMIN_PASSWORD", default=None)
 DEMO_MODE = env.bool("DEMO_MODE", default=False)  # fills login and password on login form for demo purposes
 SPEEDPY_TEAMS_ENABLED = env.bool("SPEEDPY_TEAMS_ENABLED", default=True)  # enable/disable teams functionality
