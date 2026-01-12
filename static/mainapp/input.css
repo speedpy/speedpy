@@ -16,10 +16,10 @@
     @apply px-4 py-2 border-b-2 hover:text-primary ring-0 focus:outline-none;
   }
   body {
-    @apply font-sans bg-white;
+    @apply font-sans bg-white dark:bg-neutral-900;
   }
   .card {
-    @apply relative flex flex-col overflow-hidden shadow-md rounded-md bg-white;
+    @apply relative flex flex-col overflow-hidden shadow-md rounded-md bg-white dark:bg-neutral-800;
   }
   .test {
     @apply py-2;
