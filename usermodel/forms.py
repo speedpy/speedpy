@@ -7,6 +7,8 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from usermodel.models import User
+
 
 class UsermodelSignupForm(SignupForm):
     def __init__(self, *args, **kwargs):
@@ -114,4 +116,21 @@ class UsermodelAddEmailForm(AddEmailForm):
                    value=_("Add email"),
                    css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
                              "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2"),
+        )
+
+
+class UserProfileForm(forms.ModelForm):
+    """Form for editing user profile information."""
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Field('first_name', placeholder='First name'),
+            Field('last_name', placeholder='Last name'),
         )
