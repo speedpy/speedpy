@@ -3577,6 +3577,16 @@ html :where(:is(:where(.dark) .group:hover .dark\:group-hover\:text-white)a):hov
   border-color: rgb(133 77 14 / var(--tw-border-opacity));
 }
 
+:is(:where(.dark) .dark\:border-blue-600) {
+  --tw-border-opacity: 1;
+  border-color: rgb(37 99 235 / var(--tw-border-opacity));
+}
+
+:is(:where(.dark) .dark\:border-blue-500) {
+  --tw-border-opacity: 1;
+  border-color: rgb(59 130 246 / var(--tw-border-opacity));
+}
+
 :is(:where(.dark) .dark\:bg-blue-900) {
   --tw-bg-opacity: 1;
   background-color: rgb(30 58 138 / var(--tw-bg-opacity));
@@ -3711,6 +3721,11 @@ html :where(:is(:where(.dark) .group:hover .dark\:group-hover\:text-white)a):hov
 :is(:where(.dark) .dark\:text-yellow-400) {
   --tw-text-opacity: 1;
   color: rgb(250 204 21 / var(--tw-text-opacity));
+}
+
+:is(:where(.dark) .dark\:text-sky-400) {
+  --tw-text-opacity: 1;
+  color: rgb(56 189 248 / var(--tw-text-opacity));
 }
 
 :is(:where(.dark) .dark\:outline-white\/10) {
