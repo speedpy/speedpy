@@ -26,17 +26,17 @@ services:
   #      - "5432:5432"
   web:
     <<: *app
-    image: speedpy-webspeedpy_b5c4675f
-    command: python manage.py runserver 0.0.0.0:9310
+    image: speedpy-web-image-suffix
+    command: python manage.py runserver 0.0.0.0:9000
     ports:
-      - "127.0.0.1:9310:9310"
+      - "127.0.0.1:9000:9000"
 
   media:
     image: nginx
     volumes:
       - ./media:/usr/share/nginx/html
     ports:
-      - "127.0.0.1:9807:80"
+      - "127.0.0.1:9001:80"
   #  tailwind:
   #    image: node:20.11-bullseye
   #    volumes:
@@ -46,12 +46,12 @@ services:
   #    command: /bin/bash -c 'cd /code/ && npm install && npm run tailwind:watch'
   celery:
     <<: *app
-    image: speedpy-celeryspeedpy_b5c4675f
+    image: speedpy-celery-image-suffix
     command: celery -A project.celeryapp:app  worker -Q default -n speedpycom.%%h --loglevel=DEBUG --max-memory-per-child=512000 --concurrency=1
 
   celery-beat:
     <<: *app
-    image: speedpy-celery-beatspeedpy_b5c4675f
+    image: speedpy-celery-beat-image-suffix
     command: celery -A project.celeryapp:app beat -S redbeat.RedBeatScheduler  --loglevel=DEBUG --pidfile /tmp/celerybeat.pid
 
 #  celery-flower:
