@@ -172,12 +172,61 @@ def something(user_id: int, something_else: str):
 
 In Django forms always use djago crispy forms layout in the `__init__` form and ` {% crispy form %}` to render the form.
 
-For checkbox fields always provide the template like in this example:
+For groups of fields that should be collapsed use `crispy_tailwind.layout.Collapse`.
+
+For example:
 
 ```python
-from crispy_tailwind.layout import BooleanField
+# forms.py
 
-BooleanField('is_paused')
+from django import forms
+from django.conf import settings
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Field, HTML, Div
+from crispy_tailwind.layout import Submit, Collapse
+import json
+
+from mainapp.models import HTTPMonitor
+
+
+class HttpMonitorForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+
+        self.helper.layout = Layout(
+            # Basic Information
+            HTML(
+                '<div class="mb-6"><h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Basic Information</h3></div>'),
+            Field('name'),
+            Field('url'),
+            Div(
+                Div(Field('method'), css_class='w-1/2 pr-2'),
+                Div(Field('check_interval'), css_class='w-1/2 pl-2'),
+                css_class='flex'
+            ),
+            Div(
+                Div(Field('is_active'), css_class='mr-4'),
+                css_class='flex items-center space-x-4 my-4'
+            ),
+            Div(
+                Div(Field('is_paused'), css_class=''),
+                css_class='flex items-center space-x-4 my-4'
+            ),
+
+            # Response Validation (Collapsible)
+            Collapse(
+                "Response Validation",
+                HTML(
+                    '<p class="text-sm text-gray-600 dark:text-gray-400">Define what a successful response looks like</p>'),
+                Field('expected_status_codes'),
+                HTML(
+                    '<p class="text-xs text-gray-500">Comma-separated list, e.g., 200, 201, 202. Defaults to 200.</p>'),
+                Field('expected_content'),
+            ),
+        )
+
 ```
 
 ## Environment Setup
