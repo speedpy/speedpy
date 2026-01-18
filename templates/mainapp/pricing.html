@@ -3,16 +3,16 @@
 {% block head_title %}Django SaaS Boilerplate Pricing{% endblock %}
 {% block content %}
 
-    <section class="leading-6 text-black bg-white">
-        <div class="py-8 px-4 mx-auto max-w-screen-xl text-black lg:px-6 lg:py-16">
+    <section class="leading-6 text-black dark:text-white bg-white dark:bg-gray-900">
+        <div class="py-8 px-4 mx-auto max-w-screen-xl text-black dark:text-white lg:px-6 lg:py-16">
             <div class="mx-auto mb-8 max-w-screen-md text-center lg:mb-12">
                 <h2
-                        class="mx-0 mt-0 mb-4 text-4xl font-extrabold tracking-tight leading-10 text-gray-900"
+                        class="mx-0 mt-0 mb-4 text-4xl font-extrabold tracking-tight leading-10 text-gray-900 dark:text-white"
                 >
                     My Best App Pricing
                 </h2>
                 <p
-                        class="mx-0 mt-0 mb-5 font-light text-gray-500 sm:text-xl sm:leading-7"
+                        class="mx-0 mt-0 mb-5 font-light text-gray-500 dark:text-gray-400 sm:text-xl sm:leading-7"
                 >
                     Affordable for everyone. Great for side projects and startups.
                 </p>
@@ -20,11 +20,11 @@
             <div class="lg:grid lg:grid-cols-3 xl:gap-14 sm:gap-6">
                 <!-- Pricing Card -->
                 <div
-                        class="flex flex-col p-6 mx-auto max-w-lg text-center text-gray-900 rounded-lg border border-gray-100 border-solid xl:p-8 shadow-lg"
+                        class="flex flex-col p-6 mx-auto max-w-lg text-center text-gray-900 dark:text-white rounded-lg border border-gray-100 dark:border-gray-700 border-solid xl:p-8 shadow-lg dark:bg-gray-800"
                 >
                     <div class="flex-1">
                         <h3 class="mx-0 mt-0 mb-4 text-2xl font-semibold leading-8">Free</h3>
-                        <p class="m-0 font-light text-gray-500 sm:text-lg sm:leading-7">
+                        <p class="m-0 font-light text-gray-500 dark:text-gray-400 sm:text-lg sm:leading-7">
                             For hobby projects and testing. Includes all the basics to get you started.
                         </p>
                         <div class="flex justify-center items-baseline my-8">
@@ -57,13 +57,13 @@
                 </div>
                 <!-- Pricing Card -->
                 <div
-                        class="flex flex-col p-6 my-0 mx-auto max-w-lg text-center text-gray-900 rounded-lg border border-gray-100 border-solid lg:my-0 xl:p-8 shadow-lg"
+                        class="flex flex-col p-6 my-0 mx-auto max-w-lg text-center text-gray-900 dark:text-white rounded-lg border border-gray-100 dark:border-gray-700 border-solid lg:my-0 xl:p-8 shadow-lg dark:bg-gray-800"
                 >
                     <div class="flex-1">
                         <h3 class="mx-0 mt-0 mb-4 text-2xl font-semibold leading-8">
                             Professional
                         </h3>
-                        <p class="m-0 font-light text-gray-500 sm:text-lg sm:leading-7">
+                        <p class="m-0 font-light text-gray-500 dark:text-gray-400 sm:text-lg sm:leading-7">
                             For serious projects. Advanced features.
                         </p>
                         <div class="flex justify-center items-baseline my-8">
@@ -95,20 +95,20 @@
                     </div>
                     <a
                             href="{% url 'account_signup' %}"
-                            class="py-2 px-5 text-sm font-medium leading-5 text-blue-600 border border-blue-600 rounded-lg cursor-pointer bg-white"
+                            class="py-2 px-5 text-sm font-medium leading-5 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-500 rounded-lg cursor-pointer bg-white dark:bg-gray-700"
                     >
                         Coming soon
                     </a>
                 </div>
                 <!-- Pricing Card -->
                 <div
-                        class="flex flex-col p-6 my-0 mx-auto max-w-lg text-center text-gray-900 rounded-lg border border-gray-100 border-solid lg:my-0 xl:p-8 shadow-lg"
+                        class="flex flex-col p-6 my-0 mx-auto max-w-lg text-center text-gray-900 dark:text-white rounded-lg border border-gray-100 dark:border-gray-700 border-solid lg:my-0 xl:p-8 shadow-lg dark:bg-gray-800"
                 >
                     <div class="flex-1">
                         <h3 class="mx-0 mt-0 mb-4 text-2xl font-semibold leading-8">
                             Enterprise
                         </h3>
-                        <p class="m-0 font-light text-gray-500 sm:text-lg sm:leading-7">
+                        <p class="m-0 font-light text-gray-500 dark:text-gray-400 sm:text-lg sm:leading-7">
                             For those who have hired too many developers.
                         </p>
                         <div class="flex justify-center items-baseline my-8">
@@ -152,7 +152,7 @@
                     </div>
                     <a
                             href="{% url 'account_signup' %}"
-                            class="py-2 px-5 text-sm font-medium leading-5 text-blue-600 border border-blue-600 rounded-lg cursor-pointer bg-white"
+                            class="py-2 px-5 text-sm font-medium leading-5 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-500 rounded-lg cursor-pointer bg-white dark:bg-gray-700"
                     >
                         Coming soon
                     </a>

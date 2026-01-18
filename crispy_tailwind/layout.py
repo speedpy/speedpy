@@ -66,8 +66,12 @@ class Alert(BaseAlert):
 
 class BooleanField(Field):
     """
-    Custom BooleanField that automatically uses the boolean_field.html template.
+    Custom BooleanField that automatically uses the checkbox.html template.
     Provides consistent styling for all checkbox fields.
+
+    Note: As of the auto-routing implementation, this is no longer needed
+    for standard checkbox fields - they are automatically routed to the
+    checkbox template. This class is kept for backward compatibility.
 
     Usage:
         BooleanField('is_active')
@@ -77,7 +81,7 @@ class BooleanField(Field):
     """
     def __init__(self, *args, **kwargs):
         if 'template' not in kwargs:
-            kwargs['template'] = 'components/forms/boolean_field.html'
+            kwargs['template'] = 'tailwind/layout/checkbox.html'
         super().__init__(*args, **kwargs)
 
 
@@ -101,7 +105,7 @@ class Collapse(LayoutObject):
             default_open=False
         )
     """
-    template = "crispy_tailwind/collapse.html"
+    template = "tailwind/layout/collapse.html"
 
     def __init__(self, label, *fields, **kwargs):
         self.label = label

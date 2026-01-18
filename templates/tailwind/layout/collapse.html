@@ -1,0 +1,14 @@
+<div x-data="{ {{ state_var }}: {{ default_open|lower }} }" class="mt-6 mb-4">
+    <button type="button" @click="{{ state_var }} = !{{ state_var }}"
+            class="flex items-center justify-between w-full p-4 text-left bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ label }}</h3>
+        <svg class="w-5 h-5 transition-transform text-gray-900 dark:text-white"
+             :class="{'rotate-180': {{ state_var }}}"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </button>
+    <div x-show="{{ state_var }}" x-collapse class="mt-4 space-y-4">
+        {{ fields_output|safe }}
+    </div>
+</div>

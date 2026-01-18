@@ -2,6 +2,8 @@
 
 {% if field.is_hidden %}
     {{ field }}
+{% elif field|is_checkbox %}
+    {% include 'tailwind/layout/checkbox.html' %}
 {% else %}
     {# Opening Div and Label first #}
 
