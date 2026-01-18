@@ -4,11 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SpeedPy Standard is a Django-based web application starter template featuring a single-app architecture with custom user authentication, Celery for background tasks, and Tailwind CSS for styling. The project follows a Docker-first development approach.
+SpeedPy Standard is a Django-based web application starter template featuring a single-app architecture with custom user
+authentication, Celery for background tasks, and Tailwind CSS for styling. The project follows a Docker-first
+development approach.
 
 ## Development Commands
 
 ### Docker Commands (Primary Development Method)
+
 All development should be done through Docker containers:
 
 ```bash
@@ -39,13 +42,16 @@ docker compose run --rm web bash
 ```
 
 ### NPM Commands
+
 ```bash
 npm run tailwind:build  # Build Tailwind CSS
 npm run tailwind:watch  # Watch Tailwind CSS changes
 ```
 
 ### Testing and Quality
+
 The project includes Django's testing framework. Run tests with:
+
 ```bash
 docker compose run --rm web python manage.py test
 ```
@@ -53,15 +59,17 @@ docker compose run --rm web python manage.py test
 ## Architecture
 
 ### Apps Structure
+
 - **`mainapp`**: Primary application containing all business logic
-  - Models organized in separate files under `mainapp/models/`
-  - Views organized in separate files under `mainapp/views/`
-  - Forms organized in separate files under `mainapp/forms/`
-  - All models/views/forms must be imported in respective `__init__.py` files
+    - Models organized in separate files under `mainapp/models/`
+    - Views organized in separate files under `mainapp/views/`
+    - Forms organized in separate files under `mainapp/forms/`
+    - All models/views/forms must be imported in respective `__init__.py` files
 - **`usermodel`**: Dedicated app for custom User model with email-based authentication
 - **`speedpycom`**: Contains management commands (e.g., `generate_tailwind_directories`)
 
 ### Key Architectural Patterns
+
 - Single Django app architecture (mainapp + usermodel)
 - Class-based views preferred over function-based views
 - Foreign key references use string notation: `'mainapp.ModelName'`
@@ -69,6 +77,7 @@ docker compose run --rm web python manage.py test
 - Package-style organization for models, views, and forms (separate files in directories)
 
 ### Technology Stack
+
 - **Backend**: Django 5.1.2 with PostgreSQL
 - **Frontend**: Tailwind CSS 3.4.0 with Alpine.js
 - **Authentication**: django-allauth with custom email-based user model
@@ -76,11 +85,13 @@ docker compose run --rm web python manage.py test
 - **Deployment**: Docker with Docker Compose
 
 ### Database Configuration
+
 - Supports PostgreSQL (recommended), SQLite (development), and MySQL
 - Database collation automatically configured per engine
 - Uses django-environ for environment variable management
 
 ### Styling and Static Files
+
 - Tailwind CSS with custom configuration
 - Flowbite components integrated
 - Static files served via WhiteNoise
@@ -89,27 +100,90 @@ docker compose run --rm web python manage.py test
 ## Code Conventions
 
 ### Models
+
 - Create separate files in `mainapp/models/` for different model groups
 - Import all models in `mainapp/models/__init__.py` with `__all__` list
 - Use string references for foreign keys: `ForeignKey('mainapp.ModelName')`
 
 ### Views
+
 - Use class-based views (inherit from Django's generic views)
 - Organize views in separate files under `mainapp/views/`
 - Import all views in `mainapp/views/__init__.py`
 
 ### Admin
+
 - Use meaningful `list_display`, `search_fields`, and filters
 - Implement `django_raw_fields` for foreign key fields
 
 ### Performance
+
 - Use `select_related()` and `prefetch_related()` for query optimization
 - Implement caching with Redis backend
 - Use Celery for long-running or I/O-bound operations
 
+### Sending emails
+
+Sending emails is performed with django-post_office library.
+
+If a new email sending is needed to be perfomed then use the following structure:
+
+```python
+
+context = {
+    'team_name': membership.team.name,
+    'old_role': old_role,
+    'new_role': new_role,
+    'team_url': f"{settings.SITE_URL}/teams/{membership.team.id}/dashboard/",
+}
+subject = f"Your role in {membership.team.name} has changed"
+html_message = render_to_string("emails/team_role_changed.html", context=context)
+mail.send(
+    membership.user.email,
+    settings.DEFAULT_FROM_EMAIL,
+    html_message=html_message,
+    subject=subject,
+    priority='now',
+)
+
+```
+
+Don't use the post_office template attribute, but instead use django's render_to_template to prepare the email message.
+
+New email templates must be placed into `templates/emails/` folder.
+
+### Logging
+
+For logging we use `structlog`.
+
+Example usage:
+
+```python
+import structlog
+
+logger = structlog.get_logger(__name__)
+
+
+def something(user_id: int, something_else: str):
+    logger.info("Something happened", user_id=user_id, something_else=something_else)
+```
+
+## Forms
+
+In Django forms always use djago crispy forms layout in the `__init__` form and ` {% crispy form %}` to render the form.
+
+For checkbox fields always provide the template like in this example:
+
+```python
+from crispy_tailwind.layout import BooleanField
+
+BooleanField('is_paused')
+```
+
 ## Environment Setup
 
 The project uses environment variables for configuration. Key variables:
+
 - `DEBUG`: Development mode toggle
 - `SECRET_KEY`: Django secret key
 - `DATABASE_URL`: Database connection string
@@ -119,6 +193,7 @@ The project uses environment variables for configuration. Key variables:
 ## Deployment
 
 The project is configured for deployment with Appliku:
+
 - Dockerfile included for containerization
 - Static file serving via WhiteNoise
 - Celery worker and beat processes configured
