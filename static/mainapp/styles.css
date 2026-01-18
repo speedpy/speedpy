@@ -3553,6 +3553,10 @@ html :where(:is(:where(.dark) .group:hover .dark\:group-hover\:text-white)a):hov
   border-color: rgb(55 65 81 / var(--tw-divide-opacity));
 }
 
+:is(:where(.dark) .dark\:border) {
+  border-width: 1px;
+}
+
 :is(:where(.dark) .dark\:border-blue-800) {
   --tw-border-opacity: 1;
   border-color: rgb(30 64 175 / var(--tw-border-opacity));
@@ -3605,6 +3609,10 @@ html :where(:is(:where(.dark) .group:hover .dark\:group-hover\:text-white)a):hov
 :is(:where(.dark) .dark\:bg-green-900) {
   --tw-bg-opacity: 1;
   background-color: rgb(20 83 45 / var(--tw-bg-opacity));
+}
+
+:is(:where(.dark) .dark\:bg-inherit) {
+  background-color: inherit;
 }
 
 :is(:where(.dark) .dark\:bg-purple-900) {
