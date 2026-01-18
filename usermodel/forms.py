@@ -10,7 +10,7 @@ from allauth.account.forms import (
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
 
-from crispy_tailwind.layout import Submit, BooleanField
+from crispy_tailwind.layout import Submit
 from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -46,16 +46,12 @@ class UsermodelSignupForm(SignupForm):
         self.helper.layout = Layout(
             Field("email", "password1"),
             (
-                BooleanField(
-                    "tos",
-                )
+                Field("tos")
                 if settings.REQUIRE_TOS_ACCEPTANCE
                 else None
             ),
             (
-                BooleanField(
-                    "dpa",
-                )
+                Field("dpa")
                 if settings.REQUIRE_DPA_ACCEPTANCE
                 else None
             ),
@@ -82,7 +78,7 @@ class UsermodelLoginForm(LoginForm):
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Field("login", "password"),
-            BooleanField("remember", template="components/forms/boolean_field.html"),
+            Field("remember"),
             Submit(
                 "submit",
                 _("Sign in"),
