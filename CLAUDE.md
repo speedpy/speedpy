@@ -19,20 +19,13 @@ All development should be done through Docker containers:
 make init
 
 # Run development server
-make dev
-# OR: docker compose run --rm web python manage.py runserver
-
+docker compose up -d web
 # Database operations
-make mm  # makemigrations
-make m   # migrate
-# OR: docker compose run --rm web python manage.py makemigrations
-# OR: docker compose run --rm web python manage.py migrate
-
-# Tailwind CSS
-make tw              # watch mode for development
-make twb             # build once
-make tailwind-watch  # watch with directory generation
-make tailwind-build  # build with directory generation
+docker compose run --rm web python manage.py makemigrations
+docker compose run --rm web python manage.py migrate
+# tailwind
+docker compose run web npm run tailwind:build # to build once
+docker compose run web npm run tailwind:watch # to start watch & build
 
 # General command runner
 docker compose run --rm web <command>
