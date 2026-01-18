@@ -7,7 +7,7 @@
 {% block main_content %}
 
         <div class="sm:w-full sm:max-w-md">
-            <h2 class="text-xl font-bold  tracking-tight text-gray-900 px-6 pt-6 sm:px-12">
+            <h2 class="text-xl font-bold  tracking-tight text-gray-900 dark:text-white px-6 pt-6 sm:px-12">
                 {% trans "Email Addresses" %}
             </h2>
 
@@ -64,7 +64,7 @@
                     {% include "account/snippets/warn_no_email.html" %}
                 {% endif %}
                 {% if can_add_email %}
-                    <h3 class="mt-6 text-xl font-semibold leading-9 tracking-tight text-gray-900">
+                    <h3 class="mt-6 text-xl font-semibold leading-9 tracking-tight text-gray-900 dark:text-white">
                         {% trans "Add Email Address" %}
                     </h3>
                     {% url 'account_email' as action_url %}
