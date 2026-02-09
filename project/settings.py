@@ -244,7 +244,12 @@ DPA_LINK = env("DPA_LINK", default="/")
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG,
 }
-email_config = env.email_url("EMAIL_URL", default="smtp://user:password@localhost:25")
+_EMAIL_URL_DEFAULT = "smtp://user:password@localhost:25"
+# If EMAIL_URL is set but empty, remove it so the default is used.
+# A non-empty but invalid EMAIL_URL will still raise an error as expected.
+if env.str("EMAIL_URL", default=None) == "":
+    os.environ.pop("EMAIL_URL", None)
+email_config = env.email_url("EMAIL_URL", default=_EMAIL_URL_DEFAULT)
 
 EMAIL_BACKEND = "post_office.EmailBackend"
 EMAIL_HOST = email_config["EMAIL_HOST"]
