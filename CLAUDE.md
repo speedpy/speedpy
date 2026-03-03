@@ -71,7 +71,7 @@ docker compose run --rm web python manage.py test
 
 ### Technology Stack
 
-- **Backend**: Django 5.1.2 with PostgreSQL
+- **Backend**: Django 5.2.8 with PostgreSQL
 - **Frontend**: Tailwind CSS 3.4.0 with Alpine.js
 - **Authentication**: django-allauth with custom email-based user model
 - **Background Tasks**: Celery with Redis
