@@ -85,6 +85,7 @@ TEMPLATES = [
                 "project.context_processors.site_url",
                 "project.context_processors.og_tags",
                 "project.context_processors.teams_enabled",
+                "project.context_processors.current_year",
             ],
         },
     },
