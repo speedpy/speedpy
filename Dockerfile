@@ -1,33 +1,28 @@
-FROM python:3.13.9-bookworm
-SHELL ["/bin/bash", "--login", "-c"]
-ENV PIP_NO_CACHE_DIR off
-ENV PIP_DISABLE_PIP_VERSION_CHECK on
+FROM python:3.13.12-trixie
+SHELL ["/bin/bash", "-c"]
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 0
 ENV COLUMNS 80
 RUN apt-get update \
-  && apt-get install -y --force-yes \
-  curl nano python3-pip gettext chrpath libssl-dev libxft-dev \
-  libfreetype6 libfreetype6-dev  libfontconfig1 libfontconfig1-dev \
+  && apt-get install -y \
+  nano gettext chrpath libssl-dev libxft-dev \
+  libfreetype6 libfreetype6-dev  libfontconfig1 libfontconfig1-dev\
   && rm -rf /var/lib/apt/lists/*
-
-ENV NODE_VERSION=20.18.0
-RUN mkdir /nvm
-ENV NVM_DIR=/nvm
+ENV NODE_VERSION=25.6.0
+ENV NVM_DIR=/root/.nvm
 RUN apt install -y curl
-RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.40.3/install.sh | bash
+RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.40.4/install.sh | bash
 RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
-ENV PATH="${NVM_DIR}/versions/node/v${NODE_VERSION}/bin/:${PATH}"
+ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 RUN node --version
 RUN npm --version
 RUN npm install --global yarn@1.22.22
-
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 WORKDIR /code/
-COPY requirements.txt /code/
-RUN pip install wheel
-RUN pip install -r requirements.txt
+COPY pyproject.toml uv.lock /code/
+RUN UV_PROJECT_ENVIRONMENT=/usr/local uv sync --frozen
 COPY . /code/
 RUN useradd -ms /bin/bash code
 USER code

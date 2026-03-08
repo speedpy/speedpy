@@ -1,6 +1,6 @@
 build_settings:
   build_command: npm i && npm run tailwind:build
-  build_image: python-3.13-node-20.18
+  build_image: python-3.13-uv-node-25.6
   environment_variables:
     - from_database:
         name: db
@@ -15,8 +15,6 @@ build_settings:
     - name: RECAPTCHA_PUBLIC_KEY
       source: manual
     - name: RECAPTCHA_PRIVATE_KEY
-      source: manual
-    - name: EMAIL_URL
       source: manual
     - name: ADMIN_URL
       source: manual
