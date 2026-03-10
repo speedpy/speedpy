@@ -1,0 +1,35 @@
+{% if tour_steps and tour_steps != "[]" %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var steps = {{ tour_steps|safe }};
+    if (!steps || steps.length === 0) return;
+
+    function markComplete() {
+        fetch("{% url 'tour_complete' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify({ tour_name: "{{ tour_name }}" }),
+        });
+    }
+
+    const driverObj = window.driver.js.driver({
+        showProgress: true,
+        onDestroyStarted: function () {
+            markComplete();
+            driverObj.destroy();
+        },
+        steps: steps.map(function (step) {
+            return {
+                element: step.selector,
+                popover: { title: step.title, description: step.text },
+            };
+        }),
+    });
+
+    driverObj.drive();
+});
+</script>
+{% endif %}

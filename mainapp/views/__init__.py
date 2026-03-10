@@ -11,6 +11,7 @@ from .otp_views import (
     OTPLoginView,
 )
 from .teams_dashboard import TeamDashboardView
+from .tour_views import mark_tour_complete
 from . import team_members
 
 __all__ = [
@@ -29,5 +30,6 @@ __all__ = [
     "TeamDashboardView",
     "TeamCreateView",
     "TeamSettingsView",
+    "mark_tour_complete",
     "team_members",
 ]

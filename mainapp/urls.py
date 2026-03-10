@@ -4,6 +4,8 @@ from mainapp import views
 from mainapp.views import team_members
 
 urlpatterns = [
+    path('tour/complete/', views.mark_tour_complete, name='tour_complete'),
+
     # OTP Management URLs
     path('accounts/otp/settings/', views.OTPSettingsView.as_view(), name='account_otp_settings'),
     path('accounts/otp/setup/', views.OTPSetupView.as_view(), name='account_otp_setup'),

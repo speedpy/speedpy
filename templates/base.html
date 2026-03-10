@@ -63,6 +63,9 @@
     <meta name="twitter:site" content="@speedpycom">
     <meta name="twitter:creator" content="@speedpycom">
     <script defer src="{% static "vendors/alpine.min.js" %}"></script>
+    {% if SPEEDPY_ONBOARDING_ENABLED %}
+    <link rel="stylesheet" href="{% static 'vendors/driverjs/driver.css' %}"/>
+    {% endif %}
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block extra_body_class %}{% endblock %}">
@@ -82,5 +85,9 @@
 <script src="{% static "floating-ui/floating-ui.dom.umd.js" %}"></script>
 <script src="{% static "versolyui/versoly-ui.js" %}"></script>
 <script src="{% static "mainapp/index.js" %}"></script>
+{% if SPEEDPY_ONBOARDING_ENABLED %}
+<script src="{% static 'vendors/driverjs/driver.js.iife.js' %}"></script>
+{% include "components/tour.html" %}
+{% endif %}
 </body>
 </html>
