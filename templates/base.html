@@ -39,6 +39,7 @@
     </script>
 
     <link rel="stylesheet" href="{% static "mainapp/styles.css" %}"/>
+    {% if SPEEDPY_TOURS_ENABLED %}<link rel="stylesheet" href="{% static "vendors/driverjs/driver.css" %}"/>{% endif %}
     <!-- og tags -->
     <meta property="og:title" content="{% if og_title %}{{ og_title }}{% else %}{{ SITE_TITLE }}{% endif %}">
     <meta property="og:description"
@@ -82,5 +83,7 @@
 <script src="{% static "floating-ui/floating-ui.dom.umd.js" %}"></script>
 <script src="{% static "versolyui/versoly-ui.js" %}"></script>
 <script src="{% static "mainapp/index.js" %}"></script>
+{% if SPEEDPY_TOURS_ENABLED %}<script src="{% static "vendors/driverjs/driver.js.iife.js" %}"></script>
+{% include "partials/_tour.html" %}{% endif %}
 </body>
 </html>

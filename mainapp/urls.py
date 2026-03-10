@@ -3,7 +3,14 @@ from django.urls import path
 from mainapp import views
 from mainapp.views import team_members
 
-urlpatterns = [
+urlpatterns = []
+
+if getattr(settings, "SPEEDPY_TOURS_ENABLED", True):
+    urlpatterns += [
+        path('tour/complete/', views.mark_tour_complete, name='tour_complete'),
+    ]
+
+urlpatterns += [
     # OTP Management URLs
     path('accounts/otp/settings/', views.OTPSettingsView.as_view(), name='account_otp_settings'),
     path('accounts/otp/setup/', views.OTPSetupView.as_view(), name='account_otp_setup'),

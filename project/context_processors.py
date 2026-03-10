@@ -22,6 +22,10 @@ def teams_enabled(request):
     return {"SPEEDPY_TEAMS_ENABLED": getattr(settings, "SPEEDPY_TEAMS_ENABLED", True)}
 
 
+def tours_enabled(request):
+    return {"SPEEDPY_TOURS_ENABLED": getattr(settings, "SPEEDPY_TOURS_ENABLED", True)}
+
+
 def current_year(request):
     from datetime import date
     return {"current_year": date.today().year}

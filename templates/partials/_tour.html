@@ -1,0 +1,26 @@
+{% if tour_steps and tour_steps != "[]" %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const steps = {{ tour_steps|safe }};
+    if (!steps || steps.length === 0) return;
+
+    const driver = window.driver.js.driver;
+    const driverObj = driver({
+        showProgress: true,
+        steps: steps,
+        onDestroyStarted: function () {
+            fetch('/tour/complete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify({tour_name: '{{ tour_name }}'}),
+            });
+            driverObj.destroy();
+        },
+    });
+    driverObj.drive();
+});
+</script>
+{% endif %}
