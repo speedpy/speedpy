@@ -34,4 +34,15 @@ dependencies = [
     "dnspython==2.8.0",
     "django-paddle-billing==0.1.14",
     "python-slugify==8.0.4",
+    "pytest>=9.0.2",
+    "pytest-django>=4.12.0",
+    "factory-boy>=3.3.3",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "project.settings"
+addopts = "--tb=short"
+markers = [
+    "teams: tests requiring SPEEDPY_TEAMS_ENABLED=True",
+    "tours: tests requiring SPEEDPY_TOURS_ENABLED=True",
 ]
