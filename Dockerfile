@@ -8,7 +8,7 @@ RUN apt-get update \
   nano gettext chrpath libssl-dev libxft-dev \
   libfreetype6 libfreetype6-dev  libfontconfig1 libfontconfig1-dev\
   && rm -rf /var/lib/apt/lists/*
-ENV NODE_VERSION=25.6.0
+ENV NODE_VERSION=25.8.1
 ENV NVM_DIR=/usr/local/nvm
 RUN apt install -y curl
 RUN mkdir -p $NVM_DIR && curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.40.4/install.sh | bash
