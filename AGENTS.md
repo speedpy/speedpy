@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI Coding Agents when working with code in this repository.
 
 ## Project Overview
 
@@ -239,3 +239,13 @@ The project is configured for deployment with Appliku:
 - Dockerfile included for containerization
 - Static file serving via WhiteNoise
 - Celery worker and beat processes configured
+
+
+### Appliku team and application
+
+This section describes the Team and Application name(s) when deployed with Appliku.
+
+It helps AI Agents to properly use Appliku CLI. If the project has more then one environment, all of them must be listed.
+
+Team path: not set
+Application name: not set
