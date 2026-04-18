@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+[x-cloak] { display: none !important; }
+
 /* ---------------------------------------------------------------------------
  * SpeedpyUI design tokens (Phase 1)
  * Expressed as space-separated rgb triples so Tailwind can combine them with
@@ -348,7 +350,6 @@
     @apply absolute hidden transition duration-200 opacity-0 w-max py-2 bg-white border border-gray-300 rounded mt-2 min-w-[160px] z-[1000];
   }
   .dropdown-menu.show { @apply opacity-100 block; }
-  [data-toggle="dropdown"] { @apply flex ml-4 items-center gap-x-1; }
   .tab-underline { @apply px-3 py-2 text-neutral hover:text-primary focus:outline-none; }
   .tab-list { @apply flex flex-wrap gap-x-2 mb-2 select-none; }
   .tab-list-underline { @apply border-b-2 border-gray-300; }

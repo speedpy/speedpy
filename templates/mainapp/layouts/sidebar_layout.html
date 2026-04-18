@@ -1,12 +1,14 @@
 {% extends "base.html" %}
 {% load static %}
 {% block  body %}
+<div x-data="{ sidebarOpen: false }">
     <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center justify-start rtl:justify-end">
-                    <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar"
+                    <button @click="sidebarOpen = !sidebarOpen"
                             aria-controls="logo-sidebar" type="button"
+                            :aria-expanded="sidebarOpen ? 'true' : 'false'"
                             class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
                         <span class="sr-only">Open sidebar</span>
                         <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
@@ -76,10 +78,11 @@
                     </button>
 
                     <div class="flex items-center ms-3">
-                        <div>
+                        <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
                             <button type="button"
-                                    class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
-                                    aria-expanded="false" data-dropdown-toggle="dropdown-user" data-toggle="dropdown">
+                                    class="flex items-center gap-x-1 text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+                                    :aria-expanded="open ? 'true' : 'false'"
+                                    @click="open = !open">
                                 <span class="sr-only">Open user menu</span>
                                 <img class="w-8 h-8 rounded-full" src="{% static "mainapp/speedpy_logo.png" %}"
                                      alt="user photo">
@@ -94,12 +97,20 @@
     </nav>
 
     <aside id="logo-sidebar"
-           class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+           class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
            aria-label="Sidebar">
         {% block sidebar_menu %}
             {% include "components/sidebar_layout/sidebar_menu.html" %}
         {% endblock sidebar_menu %}
     </aside>
+
+    <div x-show="sidebarOpen"
+         x-cloak
+         x-transition.opacity
+         @click="sidebarOpen = false"
+         class="fixed inset-0 z-30 bg-gray-900/50 sm:hidden"
+         aria-hidden="true"></div>
 
     <div class="p-4 sm:ml-64">
         <div class="p-4  mt-14">
@@ -107,5 +118,6 @@
             {% endblock main_content %}
         </div>
     </div>
+</div>
 
 {% endblock body %}
