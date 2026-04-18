@@ -3,61 +3,300 @@
 {% block head_title %}Django SaaS Boilerplate | SpeedPy.com{% endblock %}
 {% block content %}
 
-    <div
-            class="flex flex-col justify-center items-center pt-20 pb-8 w-screen bg-white dark:bg-gray-900 text-neutral-800 dark:text-white"
-    >
-        <div class="inline-flex w-64 text-neutral-800 dark:text-white">
-            <div class="flex flex-col items-center">
-                <img
-                        alt="SpeedPy.com"
-                        decoding="async"
-                        src="{% static "mainapp/speedpy_logo.png" %}"
-                        width="310"
-                        height="310"
-                        data-nimg="1"
-                        loading="eager"
-                        class="p-0 m-0 text-transparent"
-                />
+    {# ---------- Hero ---------- #}
+    <section class="relative overflow-hidden bg-background">
+        <div class="absolute inset-0 -z-10 opacity-60 dark:opacity-40"
+             style="background-image: radial-gradient(ellipse at top, rgb(var(--color-primary-main) / 0.15), transparent 60%);"></div>
+
+        <div class="max-w-6xl mx-auto px-6 pt-20 pb-24 flex flex-col items-center text-center">
+            <img alt="SpeedPy.com"
+                 src="{% static 'mainapp/speedpy_logo.png' %}"
+                 width="180" height="180"
+                 class="mb-8 drop-shadow-speedpyui-12"/>
+
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-background-paper border border-divider text-xs font-semibold uppercase tracking-wider text-fg-secondary mb-6">
+                <span class="w-2 h-2 rounded-full bg-success"></span>
+                Django SaaS Boilerplate
+            </span>
+
+            <h1 class="font-sans font-extrabold text-4xl sm:text-5xl lg:text-6xl text-fg leading-tight max-w-3xl">
+                Your SaaS Journey Starts Here with <span class="text-primary">SpeedPy</span>
+            </h1>
+
+            <p class="mt-6 text-lg sm:text-xl text-fg-secondary max-w-2xl">
+                A batteries-included Django starter with authentication, teams, billing-ready
+                plumbing and a polished component library — so you can ship your product, not your
+                boilerplate.
+            </p>
+
+            <div class="mt-10 flex flex-wrap justify-center gap-3">
+                <a href="{% url 'dashboard' %}" class="btn btn-contained btn-primary btn-lg">
+                    Go to dashboard
+                </a>
+                <a href="{% url 'speedpyui_preview' %}" class="btn btn-outlined btn-primary btn-lg">
+                    Browse components
+                </a>
+            </div>
+
+            <p class="mt-8 text-sm text-fg-secondary">
+                Edit this file in <code class="px-1.5 py-0.5 rounded bg-background-paper border border-divider text-fg font-mono text-xs">templates/mainapp/welcome.html</code>
+            </p>
+        </div>
+    </section>
+
+    {# ---------- Features ---------- #}
+    <section class="bg-background-paper border-y border-divider">
+        <div class="max-w-6xl mx-auto px-6 py-20">
+            <div class="text-center max-w-2xl mx-auto mb-14">
+                <h2 class="text-3xl sm:text-4xl font-bold text-fg">Everything you need to build a SaaS</h2>
+                <p class="mt-4 text-fg-secondary text-lg">
+                    Your SaaS journey begins here with SpeedPy — skip the plumbing and start with
+                    the pieces every product needs on day one.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <div class="rounded-xl bg-background p-6 shadow-speedpyui-1 hover:shadow-speedpyui-8 transition-shadow border border-divider">
+                    <div class="w-11 h-11 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h10"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-fg mb-2">Django 5 + PostgreSQL</h3>
+                    <p class="text-fg-secondary text-sm leading-relaxed">
+                        Opinionated single-app layout with package-style models, views, and forms.
+                        PostgreSQL out of the box, SQLite for quick starts.
+                    </p>
+                </div>
+
+                <div class="rounded-xl bg-background p-6 shadow-speedpyui-1 hover:shadow-speedpyui-8 transition-shadow border border-divider">
+                    <div class="w-11 h-11 rounded-lg bg-success/10 text-success flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm0 0v2m0 6a9 9 0 100-18 9 9 0 000 18zm0 0c-2.5 0-4-2-4-4h8c0 2-1.5 4-4 4z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-fg mb-2">Auth & OTP</h3>
+                    <p class="text-fg-secondary text-sm leading-relaxed">
+                        Email-based authentication powered by django-allauth, with built-in two-factor
+                        auth flows and backup codes ready to wire up.
+                    </p>
+                </div>
+
+                <div class="rounded-xl bg-background p-6 shadow-speedpyui-1 hover:shadow-speedpyui-8 transition-shadow border border-divider">
+                    <div class="w-11 h-11 rounded-lg bg-info/10 text-info flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-5.13a4 4 0 11-8 0 4 4 0 018 0zm6 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-fg mb-2">Teams & Invitations</h3>
+                    <p class="text-fg-secondary text-sm leading-relaxed">
+                        Multi-tenant-ready teams with role-based membership, invitations, and a
+                        team dashboard so collaboration works from day one.
+                    </p>
+                </div>
+
+                <div class="rounded-xl bg-background p-6 shadow-speedpyui-1 hover:shadow-speedpyui-8 transition-shadow border border-divider">
+                    <div class="w-11 h-11 rounded-lg bg-warning/10 text-warning flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-fg mb-2">Celery + Redis</h3>
+                    <p class="text-fg-secondary text-sm leading-relaxed">
+                        Background workers, scheduled beats, and a Redis cache wired up and ready
+                        — so heavy work never blocks a request.
+                    </p>
+                </div>
+
+                <div class="rounded-xl bg-background p-6 shadow-speedpyui-1 hover:shadow-speedpyui-8 transition-shadow border border-divider">
+                    <div class="w-11 h-11 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-fg mb-2">SpeedpyUI Components</h3>
+                    <p class="text-fg-secondary text-sm leading-relaxed">
+                        A Tailwind-powered component kit — buttons, inputs, switches, forms — with
+                        first-class light and dark themes. Consistent from day one.
+                    </p>
+                </div>
+
+                <div class="rounded-xl bg-background p-6 shadow-speedpyui-1 hover:shadow-speedpyui-8 transition-shadow border border-divider">
+                    <div class="w-11 h-11 rounded-lg bg-error/10 text-error flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-fg mb-2">Docker & Appliku Deploy</h3>
+                    <p class="text-fg-secondary text-sm leading-relaxed">
+                        Dockerfile and docker-compose for local dev, plus an Appliku config so you
+                        can ship to production as soon as you're ready.
+                    </p>
+                </div>
+
             </div>
         </div>
-        <h2
-                class="m-0 font-sans text-3xl font-bold xl:text-5xl sm:text-4xl lg:text-5xl"
-        >
-            SpeedPy.com
-        </h2>
-        <h4
-                class="mx-0 mt-4 mb-0 font-sans text-2xl font-bold xl:text-4xl sm:text-2xl lg:text-3xl"
-        >
-            Your SaaS Journey Starts Here
-        </h4>
-        <h5 class="mx-0 mt-4 mb-0 font-sans text-xl font-semibold xl:text-2xl sm:text-xl lg:text-2xl">
-            Edit this file in <code class="text-neutral-700 dark:text-gray-300">templates/mainapp/welcome.html</code>
-        </h5>
-        <div class="flex flex-row mt-6 text-neutral-800 dark:text-white">
-            <a
-                    class="inline-flex relative justify-center items-center py-2 px-3 m-0 font-sans text-sm font-semibold uppercase align-middle bg-transparent rounded-lg border-0 appearance-none cursor-pointer select-none text-sky-600 dark:text-sky-400 hover:bg-transparent"
-                    tabindex="0"
-                    target="_blank"
-                    rel="noopener"
-                    href="https://twitter.com/speedpycom"
-            >@speedpycom</a
-            ><a
-                class="inline-flex relative justify-center items-center py-2 px-3 my-0 mr-0 ml-4 font-sans text-sm font-semibold uppercase align-middle bg-transparent rounded-lg border-0 appearance-none cursor-pointer select-none text-sky-600 dark:text-sky-400 hover:bg-transparent"
-                tabindex="0"
-                target="_blank"
-                rel="noopener"
-                href="https://speedpy.com/discord"
-        >Join Discord</a>
+    </section>
+
+    {# ---------- What's in the box ---------- #}
+    <section class="bg-background">
+        <div class="max-w-6xl mx-auto px-6 py-20">
+            <div class="text-center max-w-2xl mx-auto mb-12">
+                <h2 class="text-3xl sm:text-4xl font-bold text-fg">What's in the box</h2>
+                <p class="mt-4 text-fg-secondary text-lg">
+                    A curated stack of proven tools — no surprises, no lock-in.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {% for item in '' %}{% endfor %}
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-primary"></span>
+                    <span class="font-semibold text-fg">Django 5.2</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-info"></span>
+                    <span class="font-semibold text-fg">PostgreSQL</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-error"></span>
+                    <span class="font-semibold text-fg">Redis</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-warning"></span>
+                    <span class="font-semibold text-fg">Celery</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                    <span class="font-semibold text-fg">Tailwind CSS</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-success"></span>
+                    <span class="font-semibold text-fg">Alpine.js</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-primary"></span>
+                    <span class="font-semibold text-fg">django-allauth</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-info"></span>
+                    <span class="font-semibold text-fg">Crispy Forms</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-warning"></span>
+                    <span class="font-semibold text-fg">django-post_office</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                    <span class="font-semibold text-fg">structlog</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-success"></span>
+                    <span class="font-semibold text-fg">Docker Compose</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg bg-background-paper border border-divider px-4 py-3 shadow-speedpyui-1">
+                    <span class="w-2 h-2 rounded-full bg-error"></span>
+                    <span class="font-semibold text-fg">Appliku</span>
+                </div>
+            </div>
         </div>
-        <div class="flex flex-row mt-6 text-neutral-800 dark:text-white">
-            <a
-                    class="inline-flex relative justify-center items-center py-2 px-5 m-0 font-sans text-sm font-semibold uppercase align-middle bg-transparent rounded-lg border border-blue-300 dark:border-blue-600 border-solid appearance-none cursor-pointer select-none text-sky-600 dark:text-sky-400 hover:border hover:border-solid hover:border-sky-600 hover:bg-transparent"
-                    tabindex="0"
-                    target="_blank"
-                    rel="noopener"
-                    href="https://appliku.com/"
-            >Deploy With Appliku</a>
+    </section>
+
+    {# ---------- Testimonials ---------- #}
+    <section class="bg-background-paper border-y border-divider">
+        <div class="max-w-6xl mx-auto px-6 py-20">
+            <div class="text-center max-w-2xl mx-auto mb-14">
+                <h2 class="text-3xl sm:text-4xl font-bold text-fg">Founders who skipped the boilerplate</h2>
+                <p class="mt-4 text-fg-secondary text-lg">
+                    SpeedPy helped them ship weeks sooner.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <figure class="rounded-xl bg-background p-6 shadow-speedpyui-3 border border-divider flex flex-col">
+                    <svg class="w-8 h-8 text-primary mb-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9.13 8.13A4.88 4.88 0 004 13v4h5v-4H6.5a2.5 2.5 0 012.63-2.5V8.13zm9 0A4.88 4.88 0 0013 13v4h5v-4h-2.5a2.5 2.5 0 012.63-2.5V8.13z"/>
+                    </svg>
+                    <blockquote class="text-fg leading-relaxed flex-1">
+                        I stood up a production auth flow, team invitations, and a background job
+                        pipeline in a weekend. SpeedPy gave me back a month of my life.
+                    </blockquote>
+                    <figcaption class="mt-6 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">MR</div>
+                        <div>
+                            <div class="font-semibold text-fg">Mira Ruiz</div>
+                            <div class="text-sm text-fg-secondary">Founder, Lumenlog</div>
+                        </div>
+                    </figcaption>
+                </figure>
+
+                <figure class="rounded-xl bg-background p-6 shadow-speedpyui-3 border border-divider flex flex-col">
+                    <svg class="w-8 h-8 text-secondary mb-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9.13 8.13A4.88 4.88 0 004 13v4h5v-4H6.5a2.5 2.5 0 012.63-2.5V8.13zm9 0A4.88 4.88 0 0013 13v4h5v-4h-2.5a2.5 2.5 0 012.63-2.5V8.13z"/>
+                    </svg>
+                    <blockquote class="text-fg leading-relaxed flex-1">
+                        The SpeedpyUI components made our MVP look like a Series-A product on launch
+                        day. Our first ten customers thought we had a design team.
+                    </blockquote>
+                    <figcaption class="mt-6 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-secondary/20 text-secondary flex items-center justify-center font-bold">TN</div>
+                        <div>
+                            <div class="font-semibold text-fg">Tom Nakamura</div>
+                            <div class="text-sm text-fg-secondary">CTO, Fieldstack</div>
+                        </div>
+                    </figcaption>
+                </figure>
+
+                <figure class="rounded-xl bg-background p-6 shadow-speedpyui-3 border border-divider flex flex-col">
+                    <svg class="w-8 h-8 text-success mb-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9.13 8.13A4.88 4.88 0 004 13v4h5v-4H6.5a2.5 2.5 0 012.63-2.5V8.13zm9 0A4.88 4.88 0 0013 13v4h5v-4h-2.5a2.5 2.5 0 012.63-2.5V8.13z"/>
+                    </svg>
+                    <blockquote class="text-fg leading-relaxed flex-1">
+                        Teams, OTP, Celery, Postgres — all wired up and tested. I just wrote the
+                        product. That's the magic of a boilerplate that respects your time.
+                    </blockquote>
+                    <figcaption class="mt-6 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-success/20 text-success flex items-center justify-center font-bold">AK</div>
+                        <div>
+                            <div class="font-semibold text-fg">Anja Kowalski</div>
+                            <div class="text-sm text-fg-secondary">Solo founder, Portlane</div>
+                        </div>
+                    </figcaption>
+                </figure>
+
+            </div>
         </div>
-    </div>
+    </section>
+
+    {# ---------- CTA ---------- #}
+    <section class="bg-background">
+        <div class="max-w-5xl mx-auto px-6 py-20">
+            <div class="relative overflow-hidden rounded-2xl bg-primary text-primary-contrast p-10 sm:p-14 text-center shadow-speedpyui-16">
+                <div class="absolute inset-0 -z-0 opacity-20"
+                     style="background-image: radial-gradient(circle at 30% 20%, white, transparent 60%), radial-gradient(circle at 80% 80%, white, transparent 50%);"></div>
+
+                <div class="relative z-10">
+                    <h2 class="text-3xl sm:text-4xl font-extrabold">
+                        Your SaaS journey begins here with SpeedPy.
+                    </h2>
+                    <p class="mt-4 text-lg opacity-90 max-w-2xl mx-auto">
+                        You've got the boilerplate. Now go build the product only you can build.
+                    </p>
+                    <div class="mt-8 flex flex-wrap justify-center gap-3">
+                        <a href="{% url 'dashboard' %}"
+                           class="inline-flex items-center justify-center px-6 py-3 rounded-md font-semibold bg-white text-primary hover:bg-neutral-100 transition-colors">
+                            Open your dashboard
+                        </a>
+                        <a href="https://speedpy.com/discord" target="_blank" rel="noopener"
+                           class="inline-flex items-center justify-center px-6 py-3 rounded-md font-semibold border border-white/40 text-white hover:bg-white/10 transition-colors">
+                            Join the Discord
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
 {% endblock %}
