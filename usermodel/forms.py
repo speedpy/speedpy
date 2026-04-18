@@ -58,8 +58,8 @@ class UsermodelSignupForm(SignupForm):
             Submit(
                 "submit",
                 _("Sign up"),
-                css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
-                "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2",
+                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
+                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
             ),
         )
 
@@ -82,8 +82,8 @@ class UsermodelLoginForm(LoginForm):
             Submit(
                 "submit",
                 _("Sign in"),
-                css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
-                "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2",
+                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
+                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
             ),
         )
 
@@ -97,8 +97,8 @@ class UsermodelResetPasswordForm(ResetPasswordForm):
             Submit(
                 "submit",
                 _("Reset password"),
-                css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
-                "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2",
+                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
+                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
             ),
         )
 
@@ -112,8 +112,8 @@ class UsermodelResetPasswordKeyForm(ResetPasswordKeyForm):
             Submit(
                 "submit",
                 _("Reset password"),
-                css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
-                "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2",
+                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
+                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
             ),
         )
 

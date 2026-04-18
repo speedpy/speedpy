@@ -1,6 +1,6 @@
 {% load crispy_forms_field %}
 
-<div class="form-field flex items-center gap-2" id="div_{{ field.auto_id }}">
+<div class="form-field flex-row items-center gap-2" id="div_{{ field.auto_id }}">
     {% crispy_field field 'class' 'checkbox' %}
     <label for="{{ field.id_for_label }}" class="input-label !mb-0 {% if field.field.required %} requiredField{% endif %}">
         {{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}

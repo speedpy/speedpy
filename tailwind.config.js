@@ -9,6 +9,8 @@ module.exports = {
     darkMode: 'class',
     content: [
         "./templates/**/*.{html,js}",
+        "./usermodel/**/*.py",
+        "./mainapp/**/*.py",
         ...tailwindDirectories
     ],
     theme: {

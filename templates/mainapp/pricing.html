@@ -1,163 +1,143 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block head_title %}Django SaaS Boilerplate Pricing{% endblock %}
+{% block head_title %}Pricing{% endblock %}
 {% block content %}
 
-    <section class="leading-6 text-black dark:text-white bg-white dark:bg-gray-900">
-        <div class="py-8 px-4 mx-auto max-w-screen-xl text-black dark:text-white lg:px-6 lg:py-16">
-            <div class="mx-auto mb-8 max-w-screen-md text-center lg:mb-12">
-                <h2
-                        class="mx-0 mt-0 mb-4 text-4xl font-extrabold tracking-tight leading-10 text-gray-900 dark:text-white"
-                >
-                    My Best App Pricing
-                </h2>
-                <p
-                        class="mx-0 mt-0 mb-5 font-light text-gray-500 dark:text-gray-400 sm:text-xl sm:leading-7"
-                >
-                    Affordable for everyone. Great for side projects and startups.
-                </p>
-            </div>
-            <div class="lg:grid lg:grid-cols-3 xl:gap-14 sm:gap-6">
-                <!-- Pricing Card -->
-                <div
-                        class="flex flex-col p-6 mx-auto max-w-lg text-center text-gray-900 dark:text-white rounded-lg border border-gray-100 dark:border-gray-700 border-solid xl:p-8 shadow-lg dark:bg-gray-800"
-                >
-                    <div class="flex-1">
-                        <h3 class="mx-0 mt-0 mb-4 text-2xl font-semibold leading-8">Free</h3>
-                        <p class="m-0 font-light text-gray-500 dark:text-gray-400 sm:text-lg sm:leading-7">
-                            For hobby projects and testing. Includes all the basics to get you started.
-                        </p>
-                        <div class="flex justify-center items-baseline my-8">
-                            <span class="mr-2 text-5xl font-extrabold leading-none">$0</span>
-                        </div>
-                        <!-- List -->
-                        <ul role="list" class="p-0 mx-0 mt-0 mb-8 text-left">
-                            <li class="flex items-center">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3"> Basic features</span>
-                            </li>
-                            <li class="flex items-center mt-4 mb-0">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">Community Support</span>
-                            </li>
+    <main class="bg-background-paper">
 
+        {# ---------- Hero ---------- #}
+        <section class="bg-background py-12">
+            <div class="max-w-6xl mx-auto px-6">
+                <div>
+                    <h1 class="text-4xl font-bold leading-tight text-fg">
+                        Start today. Boost up your services!
+                    </h1>
+                    <p class="mt-4 text-base text-fg-secondary">
+                        Join thousands of developers &amp; designers using SpeedPy
+                        to power modern SaaS projects.
+                    </p>
 
-                            <li class="flex items-center mt-4 mb-0">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">Projects Included
-                                <span class="font-semibold">One</span>
-                                </span>
-                            </li>
-                        </ul>
+                    <div class="mt-6 flex items-center gap-3">
+                        <label class="switch">
+                            <input type="checkbox" class="sr-only peer">
+                            <span class="switch-track"></span>
+                            <span class="switch-thumb"></span>
+                        </label>
+                        <span class="text-base text-fg">Yearly Payment</span>
+                        <span class="inline-flex items-center justify-center rounded-full bg-primary text-primary-contrast
+                                     text-[0.65rem] font-semibold uppercase tracking-wide h-5 px-2 ml-2">
+                            25% OFF
+                        </span>
                     </div>
-                    <a
-                            href="{% url 'account_signup' %}"
-                            class="py-2 px-5 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg cursor-pointer"
-                    >Get started</a>
-                </div>
-                <!-- Pricing Card -->
-                <div
-                        class="flex flex-col p-6 my-0 mx-auto max-w-lg text-center text-gray-900 dark:text-white rounded-lg border border-gray-100 dark:border-gray-700 border-solid lg:my-0 xl:p-8 shadow-lg dark:bg-gray-800"
-                >
-                    <div class="flex-1">
-                        <h3 class="mx-0 mt-0 mb-4 text-2xl font-semibold leading-8">
-                            Professional
-                        </h3>
-                        <p class="m-0 font-light text-gray-500 dark:text-gray-400 sm:text-lg sm:leading-7">
-                            For serious projects. Advanced features.
-                        </p>
-                        <div class="flex justify-center items-baseline my-8">
-                            <span class="mr-2 text-5xl font-extrabold leading-none">$89</span>
-                        </div>
-                        <!-- List -->
-                        <ul role="list" class="p-0 mx-0 mt-0 mb-8 text-left">
-                            <li class="flex items-center">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">Everything in Free version</span>
-                            </li>
-                            <li class="flex items-center mt-4 mb-0">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">More cool stuff</span>
-                            </li>
-                            <li class="flex items-center mt-4 mb-0">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">Email support 14 business days</span>
-                            </li>
-
-                            <li class="flex items-center mt-4 mb-0">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">
-                                <span class="font-semibold">Unlimited Projects</span>
-                              </span>
-                            </li>
-
-                        </ul>
-                    </div>
-                    <a
-                            href="{% url 'account_signup' %}"
-                            class="py-2 px-5 text-sm font-medium leading-5 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-500 rounded-lg cursor-pointer bg-white dark:bg-gray-700"
-                    >
-                        Coming soon
-                    </a>
-                </div>
-                <!-- Pricing Card -->
-                <div
-                        class="flex flex-col p-6 my-0 mx-auto max-w-lg text-center text-gray-900 dark:text-white rounded-lg border border-gray-100 dark:border-gray-700 border-solid lg:my-0 xl:p-8 shadow-lg dark:bg-gray-800"
-                >
-                    <div class="flex-1">
-                        <h3 class="mx-0 mt-0 mb-4 text-2xl font-semibold leading-8">
-                            Enterprise
-                        </h3>
-                        <p class="m-0 font-light text-gray-500 dark:text-gray-400 sm:text-lg sm:leading-7">
-                            For those who have hired too many developers.
-                        </p>
-                        <div class="flex justify-center items-baseline my-8">
-                            <span class="mr-2 text-5xl font-extrabold leading-none">$29 999</span>
-                        </div>
-                        <!-- List -->
-                        <ul
-                                role="list"
-                                class="p-0 mx-0 mt-0 mb-8 text-left"
-                                style="list-style: none"
-                        >
-                            <li class="flex items-center">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">Everything in Professional version</span>
-                            </li>
-                            <li class="flex items-center mt-4 mb-0">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">Actual support via email</span>
-                            </li>
-                            <li class="flex items-center mt-4 mb-0">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">SAML/SSO/AD Auth</span>
-                            </li>
-                            <li class="flex items-center mt-4 mb-0">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">Extra large font for COBOL developers</span>
-                            </li>
-                            <li class="flex items-center mt-4 mb-0">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">
-                                <span class="font-semibold">Unlimited Projects</span>
-                              </span>
-                            </li>
-                            <li class="flex items-center mt-4 mb-0">
-                                {% include "components/checkmark.html" %}
-                                <span class="mr-0 ml-3">
-                                <span class="font-semibold">IPO Friendly</span>
-                              </span>
-                            </li>
-                        </ul>
-                    </div>
-                    <a
-                            href="{% url 'account_signup' %}"
-                            class="py-2 px-5 text-sm font-medium leading-5 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-500 rounded-lg cursor-pointer bg-white dark:bg-gray-700"
-                    >
-                        Coming soon
-                    </a>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+
+        <hr class="border-0 border-t border-divider m-0">
+
+        {# ---------- Plans ---------- #}
+        <section class="py-12">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                    {# ---------- Plan 1 : Free ---------- #}
+                    <div class="flex flex-col max-w-md mx-auto md:mx-0 w-full">
+                        <div class="p-8">
+                            <div class="mt-4 flex items-baseline gap-1">
+                                <span class="text-3xl font-bold text-fg">$0</span>
+                                <span class="text-sm font-medium text-fg-secondary">/mo</span>
+                            </div>
+                            <h3 class="mt-4 text-lg font-semibold text-fg">Free</h3>
+                            <p class="mt-2 text-sm text-fg-secondary">
+                                For hobby projects and testing. Includes all the basics to get you started.
+                            </p>
+                        </div>
+
+                        <hr class="border-0 border-t border-divider m-0">
+
+                        <div class="flex flex-col flex-grow p-8">
+                            <ul class="space-y-4 p-0 m-0 list-none">
+                                {% include "mainapp/pricing/_feature.html" with text="Basic features" %}
+                                {% include "mainapp/pricing/_feature.html" with text="Community support" %}
+                                {% include "mainapp/pricing/_feature.html" with text="One project" %}
+                            </ul>
+                            <div class="flex-grow"></div>
+                            <a href="{% url 'account_signup' %}"
+                               class="btn btn-outlined btn-primary w-full mt-10">
+                                Get started
+                            </a>
+                        </div>
+                    </div>
+
+                    {# ---------- Plan 2 : Professional (popular) ---------- #}
+                    <div class="flex flex-col max-w-md mx-auto md:mx-0 w-full">
+                        <div class="p-8">
+                            <div class="mt-4 flex items-baseline gap-1">
+                                <span class="text-3xl font-bold text-fg">$89</span>
+                                <span class="text-sm font-medium text-fg-secondary">/mo</span>
+                            </div>
+                            <h3 class="mt-4 text-lg font-semibold text-fg">Professional</h3>
+                            <p class="mt-2 text-sm text-fg-secondary">
+                                For serious projects. Advanced features.
+                            </p>
+                        </div>
+
+                        <hr class="border-0 border-t border-divider m-0">
+
+                        <div class="flex flex-col flex-grow p-8">
+                            <ul class="space-y-4 p-0 m-0 list-none">
+                                {% include "mainapp/pricing/_feature.html" with text="Everything in Free" %}
+                                {% include "mainapp/pricing/_feature.html" with text="More cool stuff" %}
+                                {% include "mainapp/pricing/_feature.html" with text="Email support 14 business days" %}
+                                {% include "mainapp/pricing/_feature.html" with text="Unlimited projects" %}
+                            </ul>
+                            <div class="flex-grow"></div>
+                            <a href="{% url 'account_signup' %}"
+                               class="btn btn-contained btn-primary w-full mt-10">
+                                Coming soon
+                            </a>
+                        </div>
+                    </div>
+
+                    {# ---------- Plan 3 : Enterprise ---------- #}
+                    <div class="flex flex-col max-w-md mx-auto md:mx-0 w-full">
+                        <div class="p-8">
+                            <div class="mt-4 flex items-baseline gap-1">
+                                <span class="text-3xl font-bold text-fg">$29,999</span>
+                                <span class="text-sm font-medium text-fg-secondary">/mo</span>
+                            </div>
+                            <h3 class="mt-4 text-lg font-semibold text-fg">Enterprise</h3>
+                            <p class="mt-2 text-sm text-fg-secondary">
+                                For those who have hired too many developers.
+                            </p>
+                        </div>
+
+                        <hr class="border-0 border-t border-divider m-0">
+
+                        <div class="flex flex-col flex-grow p-8">
+                            <ul class="space-y-4 p-0 m-0 list-none">
+                                {% include "mainapp/pricing/_feature.html" with text="Everything in Professional" %}
+                                {% include "mainapp/pricing/_feature.html" with text="Actual support via email" %}
+                                {% include "mainapp/pricing/_feature.html" with text="SAML / SSO / AD auth" %}
+                                {% include "mainapp/pricing/_feature.html" with text="Extra large font for COBOL devs" %}
+                                {% include "mainapp/pricing/_feature.html" with text="Unlimited projects" %}
+                                {% include "mainapp/pricing/_feature.html" with text="IPO friendly" %}
+                            </ul>
+                            <div class="flex-grow"></div>
+                            <a href="{% url 'account_signup' %}"
+                               class="btn btn-outlined btn-primary w-full mt-10">
+                                Contact us
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <p class="text-center text-xs text-fg-secondary pb-10">
+            30% or even more sadly goes to fees and taxes
+        </p>
+    </main>
+
 {% endblock %}
