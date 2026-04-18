@@ -8,6 +8,7 @@ import speedpycom.views
 from usermodel.views import ProfileEditView
 urlpatterns = [
     path("", views.WelcomeToSpeedPyView.as_view(), name="welcome"),
+    path("demo/", include("demoapp.urls")),
     path("pricing", views.PricingView.as_view(), name="pricing"),
     path("contact/", views.ContactView.as_view(), name="contact"),
     path("dashboard/", views.DashboardView.as_view(), name="dashboard"),

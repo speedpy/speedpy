@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "speedpycom",
     "mainapp.apps.MainappConfig",
     "django_recaptcha",
+    "demoapp",
 ]
 
 MIDDLEWARE = [
