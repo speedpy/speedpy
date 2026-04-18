@@ -243,7 +243,7 @@ TOS_LINK = env("TOS_LINK", default="/")
 DPA_LINK = env("DPA_LINK", default="/")
 
 DEBUG_TOOLBAR_CONFIG = {
-    "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG,
+    "SHOW_TOOLBAR_CALLBACK": lambda request: False,
 }
 _EMAIL_URL_DEFAULT = "smtp://user:password@localhost:25"
 # If EMAIL_URL is set but empty, remove it so the default is used.

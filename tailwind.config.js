@@ -32,7 +32,7 @@ module.exports = {
                     "light": "rgb(var(--color-primary-light) / <alpha-value>)",
                     "dark": "rgb(var(--color-primary-dark) / <alpha-value>)",
                     "contrast": "rgb(var(--color-primary-contrast) / <alpha-value>)",
-                    // Numbered scale around devias primary #5048E5 (static in both themes,
+                    // Numbered scale around primary #5048E5 (static in both themes,
                     // kept for backwards compatibility with existing template utilities like
                     // bg-primary-500 / text-primary-700 / bg-primary-50)
                     "50":  "#EEEEFC",
@@ -76,7 +76,7 @@ module.exports = {
                     "dark": "rgb(var(--color-error-dark) / <alpha-value>)",
                     "contrast": "rgb(var(--color-error-contrast) / <alpha-value>)"
                 },
-                // Neutral grayscale — same values in light and dark modes (devias scale)
+                // Neutral grayscale — same values in light and dark modes
                 "neutral": {
                     "50":  "#F9FAFB",
                     "100": "#F3F4F6",
@@ -105,13 +105,13 @@ module.exports = {
                 "black": "#000000"
             },
             "boxShadow": {
-                // Devias elevation scale (subset)
-                "devias-1": "0px 1px 1px rgba(100, 116, 139, 0.06), 0px 1px 2px rgba(100, 116, 139, 0.1)",
-                "devias-3": "0px 1px 4px rgba(100, 116, 139, 0.12)",
-                "devias-8": "0px 2px 4px rgba(31, 41, 55, 0.06), 0px 4px 6px rgba(100, 116, 139, 0.12)",
-                "devias-12": "0px 6px 15px rgba(100, 116, 139, 0.12)",
-                "devias-16": "0px 12px 22px -8px rgba(100, 116, 139, 0.25)",
-                "devias-24": "0px 25px 50px rgba(100, 116, 139, 0.25)"
+                // Elevation scale (subset)
+                "speedpyui-1": "0px 1px 1px rgba(100, 116, 139, 0.06), 0px 1px 2px rgba(100, 116, 139, 0.1)",
+                "speedpyui-3": "0px 1px 4px rgba(100, 116, 139, 0.12)",
+                "speedpyui-8": "0px 2px 4px rgba(31, 41, 55, 0.06), 0px 4px 6px rgba(100, 116, 139, 0.12)",
+                "speedpyui-12": "0px 6px 15px rgba(100, 116, 139, 0.12)",
+                "speedpyui-16": "0px 12px 22px -8px rgba(100, 116, 139, 0.25)",
+                "speedpyui-24": "0px 25px 50px rgba(100, 116, 139, 0.25)"
             },
             "backgroundImage": {
                 "arrow-down": "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e\")",
