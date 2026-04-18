@@ -16,7 +16,7 @@ class Submit(BaseInput):
 
     def __init__(self, *args, css_class=None, **kwargs):
         if css_class is None:
-            self.field_classes = "bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            self.field_classes = "btn btn-contained btn-primary"
         else:
             self.field_classes = css_class
         super().__init__(*args, **kwargs)
@@ -35,7 +35,7 @@ class Reset(BaseInput):
 
     def __init__(self, *args, css_class=None, **kwargs):
         if css_class is None:
-            self.field_classes = "bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            self.field_classes = "btn btn-outlined btn-error"
         else:
             self.field_classes = css_class
         super().__init__(*args, **kwargs)
@@ -54,7 +54,7 @@ class Button(BaseInput):
 
     def __init__(self, *args, css_class=None, **kwargs):
         if css_class is None:
-            self.field_classes = "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            self.field_classes = "btn btn-contained btn-secondary"
         else:
             self.field_classes = css_class
         super().__init__(*args, **kwargs)

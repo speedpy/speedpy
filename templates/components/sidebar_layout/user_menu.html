@@ -1,5 +1,8 @@
-<div class="z-50 absolute hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-sm shadow-sm dark:bg-gray-700 dark:divide-gray-600"
-     id="dropdown-user">
+<div x-show="open"
+     x-cloak
+     x-transition
+     @click.outside="open = false"
+     class="z-50 absolute right-0 my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-sm shadow-sm dark:bg-gray-700 dark:divide-gray-600">
     <div class="px-4 py-3" role="none">
         <p class="text-sm text-gray-900 dark:text-white" role="none">
             {{ user.get_full_name }}

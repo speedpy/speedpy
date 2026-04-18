@@ -5,7 +5,7 @@
             type="color"
             x-model="colorValue"
             @input="updateFromColor($event.target.value)"
-            class="form-control form-control-color p-1"
+            class="input-outlined p-1"
             style="width: 50px; height: 38px; cursor: pointer;"
             :value="colorValue">
 
@@ -15,7 +15,7 @@
             name="{{ widget.name }}"
             x-model="hexValue"
             @input="updateFromHex($event.target.value)"
-            class="form-control font-monospace text-uppercase"
+            class="input-outlined font-mono uppercase"
             style="max-width: 120px;"
             placeholder="#FFFFFF"
             pattern="^#[0-9A-Fa-f]{6}$"

@@ -1,48 +1,43 @@
 {% extends "allauth/layouts/manage.html" %}
+{% load i18n %}
 {% block content %}
     <div class="mx-auto max-w-7xl pt-5 lg:flex lg:gap-x-16 lg:px-8">
-        <aside class="flex overflow-x-auto border-b border-gray-900/5 py-4 lg:block lg:w-64 lg:flex-none lg:border-0 lg:py-20">
+        <aside class="flex overflow-x-auto border-b border-divider py-4 lg:block lg:w-64 lg:flex-none lg:border-0 lg:py-20">
             <nav class="flex-none px-4 sm:px-6 lg:px-0">
+                {% url "account_profile" as profile_url %}
+                {% url "account_change_password" as password_url %}
+                {% url "account_email" as email_url %}
+                {% url "account_otp_settings" as otp_url %}
                 <ul role="list" class="flex gap-x-3 gap-y-1 whitespace-nowrap lg:flex-col">
                     <li>
-                        <a href="{% url "account_profile" %}"
-                           class="block p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <span class="font-semibold">
-                            Your Profile
-                            </span>
+                        <a href="{{ profile_url }}"
+                           class="block p-3 rounded-lg text-fg hover:bg-neutral-100 dark:hover:bg-neutral-800 {% if request.path == profile_url %}bg-primary/10 text-primary{% endif %}">
+                            <span class="font-semibold">{% trans "Your Profile" %}</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{% url "account_change_password" %}"
-                           class="block p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <span class="font-semibold">
-                            Change Password
-                                </span>
+                        <a href="{{ password_url }}"
+                           class="block p-3 rounded-lg text-fg hover:bg-neutral-100 dark:hover:bg-neutral-800 {% if request.path == password_url %}bg-primary/10 text-primary{% endif %}">
+                            <span class="font-semibold">{% trans "Change Password" %}</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{% url "account_email" %}"
-                           class="block p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <span class="font-semibold">
-                            Change Email
-                            </span>
+                        <a href="{{ email_url }}"
+                           class="block p-3 rounded-lg text-fg hover:bg-neutral-100 dark:hover:bg-neutral-800 {% if request.path == email_url %}bg-primary/10 text-primary{% endif %}">
+                            <span class="font-semibold">{% trans "Change Email" %}</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{% url "account_otp_settings" %}"
-                           class="block p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <span class="font-semibold">
-                            Two-Factor Authentication
-                            </span>
+                        <a href="{{ otp_url }}"
+                           class="block p-3 rounded-lg text-fg hover:bg-neutral-100 dark:hover:bg-neutral-800 {% if request.path == otp_url %}bg-primary/10 text-primary{% endif %}">
+                            <span class="font-semibold">{% trans "Two-Factor Authentication" %}</span>
                         </a>
                     </li>
-
-
                 </ul>
             </nav>
         </aside>
         <main class="px-4 py-16 sm:px-6 lg:flex-auto lg:px-0 lg:py-20">
-            <div class="mx-auto max-w-2xl space-y-16 sm:space-y-10 lg:mx-0 lg:max-w-none bg-white shadow sm:rounded-lg">
+            <div class="mx-auto max-w-2xl space-y-16 sm:space-y-10 lg:mx-0 lg:max-w-none bg-background-paper border border-divider shadow-speedpyui-1 sm:rounded-lg">
                 {% block main_content %}
                 {% endblock %}
             </div>

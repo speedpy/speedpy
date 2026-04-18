@@ -58,8 +58,8 @@ class UsermodelSignupForm(SignupForm):
             Submit(
                 "submit",
                 _("Sign up"),
-                css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
-                "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2",
+                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
+                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
             ),
         )
 
@@ -82,8 +82,8 @@ class UsermodelLoginForm(LoginForm):
             Submit(
                 "submit",
                 _("Sign in"),
-                css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
-                "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2",
+                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
+                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
             ),
         )
 
@@ -97,8 +97,8 @@ class UsermodelResetPasswordForm(ResetPasswordForm):
             Submit(
                 "submit",
                 _("Reset password"),
-                css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
-                "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2",
+                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
+                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
             ),
         )
 
@@ -112,8 +112,8 @@ class UsermodelResetPasswordKeyForm(ResetPasswordKeyForm):
             Submit(
                 "submit",
                 _("Reset password"),
-                css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
-                "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2",
+                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
+                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
             ),
         )
 
@@ -124,12 +124,7 @@ class UsermodelChangePasswordForm(ChangePasswordForm):
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Field("oldpassword", "password1", "password2"),
-            Submit(
-                "submit",
-                _("Change password"),
-                css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
-                "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2",
-            ),
+            Submit("submit", _("Change password")),
         )
 
 
@@ -139,12 +134,7 @@ class UsermodelAddEmailForm(AddEmailForm):
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Field("email"),
-            Submit(
-                "action_add",
-                value=_("Add email"),
-                css_class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg "
-                "cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2",
-            ),
+            Submit("action_add", value=_("Add email")),
         )
 
 
@@ -153,7 +143,10 @@ class UserProfileForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("first_name", "last_name")
+        fields = ("first_name", "last_name", "profile_picture")
+        widgets = {
+            "profile_picture": forms.FileInput(attrs={"accept": "image/*"}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -162,4 +155,11 @@ class UserProfileForm(forms.ModelForm):
         self.helper.layout = Layout(
             Field("first_name", placeholder="First name"),
             Field("last_name", placeholder="Last name"),
+            Field("profile_picture"),
+            Submit(
+                "submit",
+                _("Save changes"),
+                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
+                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
+            ),
         )
