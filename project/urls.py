@@ -9,6 +9,7 @@ urlpatterns = [
     path("", views.WelcomeToSpeedPyView.as_view(), name="welcome"),
     path("pricing", views.PricingView.as_view(), name="pricing"),
     path("dashboard/", views.DashboardView.as_view(), name="dashboard"),
+    path("devias-preview/", views.DeviasPreviewView.as_view(), name="devias_preview"),
     path(settings.ADMIN_URL, admin.site.urls),
     path("accounts/", include("allauth.urls")),
     path("accounts/profile/", ProfileEditView.as_view(), name="account_profile"),

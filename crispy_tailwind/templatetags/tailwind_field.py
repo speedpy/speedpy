@@ -77,36 +77,33 @@ def pairwise(iterable):
 
 
 class CrispyTailwindFieldNode(template.Node):
-    base_input = (
-        "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500"
-    )
+    base_input = "input-outlined"
 
     default_styles = {
         "text": base_input,
         "number": base_input,
-        "radioselect": "",
+        "radioselect": "radio",
         "email": base_input,
         "url": base_input,
         "password": base_input,
         "hidden": "",
         "multiplehidden": "",
-        "file": "",
-        "clearablefile": "",
-        "textarea": base_input,
+        "file": base_input,
+        "clearablefile": base_input,
+        "textarea": "textarea-outlined",
         "date": base_input,
         "datetime": base_input,
         "time": base_input,
-        "checkbox": "",
-        "select": "kavabunga",
-        "nullbooleanselect": "",
-        "selectmultiple": "",
-        "checkboxselectmultiple": "",
-        "multi": "col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-indigo-500",
-        "splitdatetime": "text-gray-700 bg-white focus:outline border border-gray-300 leading-normal px-4 "
-        "appearance-none rounded-lg py-2 focus:outline-none mr-2",
+        "checkbox": "checkbox",
+        "select": "select-outlined",
+        "nullbooleanselect": "select-outlined",
+        "selectmultiple": "select-outlined",
+        "checkboxselectmultiple": "checkbox",
+        "multi": "input-outlined",
+        "splitdatetime": "input-outlined",
         "splithiddendatetime": "",
-        "selectdate": "",
-        "error_border": "border-red-500",
+        "selectdate": "select-outlined",
+        "error_border": "input-error",
     }
 
     default_container = CSSContainer(default_styles)
@@ -164,7 +161,8 @@ class CrispyTailwindFieldNode(template.Node):
                     css_class += css
                 if field.errors:
                     error_border_class = css_container.error_border
-                    css_class = re.sub(r"border-\S+", error_border_class, css_class)
+                    if error_border_class and error_border_class not in css_class:
+                        css_class = f"{css_class} {error_border_class}".strip()
 
             widget.attrs["class"] = css_class
 

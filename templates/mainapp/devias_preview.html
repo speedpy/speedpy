@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block head_title %}Devias Preview{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-background py-10 px-6">
+    <div class="max-w-6xl mx-auto space-y-12">
+
+        <header class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-fg">Devias Component Preview</h1>
+                <p class="text-fg-secondary mt-1">Phase 1 — buttons and form inputs.</p>
+            </div>
+            <button type="button"
+                    id="preview-theme-toggle"
+                    class="btn btn-outlined btn-inherit btn-md"
+                    onclick="document.documentElement.classList.toggle('dark')">
+                Toggle theme
+            </button>
+        </header>
+
+        {# ---------- Buttons ---------- #}
+        <section class="space-y-6">
+            <h2 class="text-xl font-semibold text-fg">Buttons</h2>
+
+            <div class="bg-background-paper rounded-lg p-6 shadow-devias-1 space-y-6">
+                <div>
+                    <h3 class="text-sm font-semibold text-fg-secondary uppercase tracking-wide mb-3">Contained</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <button class="btn btn-contained btn-primary">Primary</button>
+                        <button class="btn btn-contained btn-secondary">Secondary</button>
+                        <button class="btn btn-contained btn-success">Success</button>
+                        <button class="btn btn-contained btn-info">Info</button>
+                        <button class="btn btn-contained btn-warning">Warning</button>
+                        <button class="btn btn-contained btn-error">Error</button>
+                        <button class="btn btn-contained btn-primary" disabled>Disabled</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-fg-secondary uppercase tracking-wide mb-3">Outlined</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <button class="btn btn-outlined btn-primary">Primary</button>
+                        <button class="btn btn-outlined btn-secondary">Secondary</button>
+                        <button class="btn btn-outlined btn-success">Success</button>
+                        <button class="btn btn-outlined btn-info">Info</button>
+                        <button class="btn btn-outlined btn-warning">Warning</button>
+                        <button class="btn btn-outlined btn-error">Error</button>
+                        <button class="btn btn-outlined btn-primary" disabled>Disabled</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-fg-secondary uppercase tracking-wide mb-3">Text</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <button class="btn btn-text btn-primary">Primary</button>
+                        <button class="btn btn-text btn-secondary">Secondary</button>
+                        <button class="btn btn-text btn-success">Success</button>
+                        <button class="btn btn-text btn-info">Info</button>
+                        <button class="btn btn-text btn-warning">Warning</button>
+                        <button class="btn btn-text btn-error">Error</button>
+                        <button class="btn btn-text btn-primary" disabled>Disabled</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-fg-secondary uppercase tracking-wide mb-3">Sizes</h3>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button class="btn btn-contained btn-primary btn-sm">Small</button>
+                        <button class="btn btn-contained btn-primary btn-md">Medium</button>
+                        <button class="btn btn-contained btn-primary btn-lg">Large</button>
+                        <button class="btn btn-outlined btn-primary btn-sm">Small</button>
+                        <button class="btn btn-outlined btn-primary btn-md">Medium</button>
+                        <button class="btn btn-outlined btn-primary btn-lg">Large</button>
+                        <button class="btn btn-text btn-primary btn-sm">Small</button>
+                        <button class="btn btn-text btn-primary btn-md">Medium</button>
+                        <button class="btn btn-text btn-primary btn-lg">Large</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ---------- Form inputs ---------- #}
+        <section class="space-y-6">
+            <h2 class="text-xl font-semibold text-fg">Form inputs</h2>
+
+            <div class="bg-background-paper rounded-lg p-6 shadow-devias-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <div class="form-field">
+                    <label class="input-label" for="preview-text">Text input</label>
+                    <input class="input-outlined" id="preview-text" type="text" placeholder="Placeholder">
+                    <p class="input-helper">Helper text sits beneath the field.</p>
+                </div>
+
+                <div class="form-field">
+                    <label class="input-label" for="preview-email">Email</label>
+                    <input class="input-outlined" id="preview-email" type="email" placeholder="you@example.com">
+                </div>
+
+                <div class="form-field">
+                    <label class="input-label" for="preview-password">Password</label>
+                    <input class="input-outlined" id="preview-password" type="password" placeholder="••••••••">
+                </div>
+
+                <div class="form-field">
+                    <label class="input-label" for="preview-error">With error</label>
+                    <input class="input-outlined input-error" id="preview-error" type="text" value="Invalid value">
+                    <p class="input-error-text">This field is required.</p>
+                </div>
+
+                <div class="form-field">
+                    <label class="input-label" for="preview-sm">Small</label>
+                    <input class="input-outlined input-outlined-sm" id="preview-sm" type="text" placeholder="Small">
+                </div>
+
+                <div class="form-field">
+                    <label class="input-label" for="preview-lg">Large</label>
+                    <input class="input-outlined input-outlined-lg" id="preview-lg" type="text" placeholder="Large">
+                </div>
+
+                <div class="form-field md:col-span-2">
+                    <label class="input-label" for="preview-textarea">Textarea</label>
+                    <textarea class="textarea-outlined" id="preview-textarea" rows="4" placeholder="Type something..."></textarea>
+                </div>
+
+                <div class="form-field">
+                    <label class="input-label" for="preview-select">Select</label>
+                    <select class="select-outlined" id="preview-select">
+                        <option>Option one</option>
+                        <option>Option two</option>
+                        <option>Option three</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label class="input-label">Input group</label>
+                    <div class="input-group">
+                        <span class="input-group-text">@</span>
+                        <input class="input-outlined" type="text" placeholder="username">
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <span class="input-label">Checkboxes</span>
+                    <label class="inline-flex items-center gap-2 text-fg mr-4">
+                        <input type="checkbox" class="checkbox" checked> Subscribe
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-fg mr-4">
+                        <input type="checkbox" class="checkbox"> Remember me
+                    </label>
+                </div>
+
+                <div class="form-field">
+                    <span class="input-label">Radio</span>
+                    <label class="inline-flex items-center gap-2 text-fg mr-4">
+                        <input type="radio" name="preview-radio" class="radio" checked> One
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-fg mr-4">
+                        <input type="radio" name="preview-radio" class="radio"> Two
+                    </label>
+                </div>
+
+                <div class="form-field">
+                    <span class="input-label">Switch</span>
+                    <label class="switch">
+                        <input type="checkbox" class="sr-only peer" checked>
+                        <span class="switch-track"></span>
+                        <span class="switch-thumb"></span>
+                    </label>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
