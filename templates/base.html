@@ -38,8 +38,8 @@
         })();
     </script>
 
-    <link rel="stylesheet" href="{% static "mainapp/styles.css" %}"/>
     {% if SPEEDPY_TOURS_ENABLED %}<link rel="stylesheet" href="{% static "vendors/driverjs/driver.css" %}"/>{% endif %}
+    <link rel="stylesheet" href="{% static "mainapp/styles.css" %}"/>
     <!-- og tags -->
     <meta property="og:title" content="{% if og_title %}{{ og_title }}{% else %}{{ SITE_TITLE }}{% endif %}">
     <meta property="og:description"
