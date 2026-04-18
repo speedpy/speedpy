@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block head_title %}Contact | SpeedPy.com{% endblock %}
+{% block content %}
+
+    <section class="relative bg-background">
+        <div class="absolute inset-0 -z-10 opacity-60 dark:opacity-40"
+             style="background-image: radial-gradient(ellipse at top, rgb(var(--color-primary-main) / 0.15), transparent 60%);"></div>
+
+        <div class="max-w-6xl mx-auto px-6 py-16 lg:py-24">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+
+                {# ---------- Left column: pitch ---------- #}
+                <div>
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-background-paper border border-divider text-xs font-semibold uppercase tracking-wider text-fg-secondary mb-6">
+                        <span class="w-2 h-2 rounded-full bg-primary"></span>
+                        Contact sales
+                    </span>
+
+                    <h1 class="text-4xl sm:text-5xl font-extrabold text-fg leading-tight">
+                        Talk to our <span class="text-primary">account expert</span>
+                    </h1>
+
+                    <p class="mt-5 text-lg text-fg-secondary max-w-lg">
+                        Have questions about rolling out SpeedPy in your team? Fill out the form
+                        and a senior engineer will be in touch shortly.
+                    </p>
+
+                    <p class="mt-10 text-sm font-semibold uppercase tracking-wider text-fg-secondary">
+                        Join 3,000+ forward-thinking companies
+                    </p>
+
+                    <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-md">
+                        <div class="flex items-center justify-center rounded-lg bg-background-paper border border-divider px-4 py-3 text-sm font-semibold text-fg">Lumenlog</div>
+                        <div class="flex items-center justify-center rounded-lg bg-background-paper border border-divider px-4 py-3 text-sm font-semibold text-fg">Fieldstack</div>
+                        <div class="flex items-center justify-center rounded-lg bg-background-paper border border-divider px-4 py-3 text-sm font-semibold text-fg">Portlane</div>
+                        <div class="flex items-center justify-center rounded-lg bg-background-paper border border-divider px-4 py-3 text-sm font-semibold text-fg">Northwind</div>
+                        <div class="flex items-center justify-center rounded-lg bg-background-paper border border-divider px-4 py-3 text-sm font-semibold text-fg">Orbit&nbsp;HQ</div>
+                        <div class="flex items-center justify-center rounded-lg bg-background-paper border border-divider px-4 py-3 text-sm font-semibold text-fg">Trellix</div>
+                    </div>
+                </div>
+
+                {# ---------- Right column: form card ---------- #}
+                <div class="rounded-2xl bg-background-paper border border-divider shadow-speedpyui-16 p-8 sm:p-10">
+                    <h2 class="text-xl font-bold text-fg mb-6">
+                        Fill the form below
+                    </h2>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% crispy form %}
+                    </form>
+
+                    <p class="mt-6 text-sm text-fg-secondary">
+                        By submitting this, you agree to the
+                        <a href="#" class="underline text-fg hover:text-primary">Privacy Policy</a>
+                        and
+                        <a href="#" class="underline text-fg hover:text-primary">Cookie Policy</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}

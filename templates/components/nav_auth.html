@@ -1,11 +1,11 @@
 {% load static %}
 {% if user.is_authenticated %}
     <div class="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
-        <div class="relative ml-4" x-data="{ open: false }" @keydown.escape.window="open = false">
+        <div class="relative ml-4" x-data="{ userMenuOpen: false }" @keydown.escape.window="userMenuOpen = false">
             <button type="button"
                     class="flex items-center gap-x-1 text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
-                    :aria-expanded="open ? 'true' : 'false'"
-                    @click="open = !open">
+                    :aria-expanded="userMenuOpen ? 'true' : 'false'"
+                    @click="userMenuOpen = !userMenuOpen">
                 <span class="sr-only">Open user menu</span>
                 {% if user.profile_picture_thumbnail %}
                     <img class="w-8 h-8 rounded-full object-cover"
@@ -22,10 +22,9 @@
                 {% endif %}
             </button>
             <!-- Dropdown menu -->
-            <div x-show="open"
+            <div x-show="userMenuOpen"
                  x-cloak
-                 x-transition
-                 @click.outside="open = false"
+                 @click.outside="userMenuOpen = false"
                  class="z-50 absolute right-0 my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-sm shadow-sm dark:bg-gray-700 dark:divide-gray-600">
                 <div class="px-4 py-3">
                     <span class="block text-sm text-gray-900 dark:text-white">{{ user.get_full_name }}</span>

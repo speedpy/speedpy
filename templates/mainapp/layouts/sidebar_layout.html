@@ -78,14 +78,25 @@
                     </button>
 
                     <div class="flex items-center ms-3">
-                        <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                        <div class="relative" x-data="{ userMenuOpen: false }" @keydown.escape.window="userMenuOpen = false">
                             <button type="button"
                                     class="flex items-center gap-x-1 text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
-                                    :aria-expanded="open ? 'true' : 'false'"
-                                    @click="open = !open">
+                                    :aria-expanded="userMenuOpen ? 'true' : 'false'"
+                                    @click="userMenuOpen = !userMenuOpen">
                                 <span class="sr-only">Open user menu</span>
-                                <img class="w-8 h-8 rounded-full" src="{% static "mainapp/speedpy_logo.png" %}"
-                                     alt="user photo">
+                                {% if user.profile_picture_thumbnail %}
+                                    <img class="w-8 h-8 rounded-full object-cover"
+                                         src="{{ user.profile_picture_thumbnail.url }}"
+                                         alt="{{ user.get_full_name|default:user.email }}">
+                                {% elif user.profile_picture %}
+                                    <img class="w-8 h-8 rounded-full object-cover"
+                                         src="{{ user.profile_picture.url }}"
+                                         alt="{{ user.get_full_name|default:user.email }}">
+                                {% else %}
+                                    <span class="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-xs font-semibold">
+                                        {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
+                                    </span>
+                                {% endif %}
                             </button>
                             {% include "components/sidebar_layout/user_menu.html" %}
                         </div>

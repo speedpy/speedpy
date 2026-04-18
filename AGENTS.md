@@ -71,7 +71,7 @@ docker compose run --rm web python manage.py test
 
 ### Technology Stack
 
-- **Backend**: Django 5.2.8 with PostgreSQL
+- **Backend**: Django 6.0.3 with PostgreSQL
 - **Frontend**: Tailwind CSS 3.4.0 with Alpine.js
 - **Authentication**: django-allauth with custom email-based user model
 - **Background Tasks**: Celery with Redis
@@ -86,9 +86,147 @@ docker compose run --rm web python manage.py test
 ### Styling and Static Files
 
 - Tailwind CSS with custom configuration
-- Flowbite components integrated
+- SpeedPy UI design system (see below) — do NOT introduce Flowbite, DaisyUI, or other component libraries
 - Static files served via WhiteNoise
 - CSS compiled from `static/mainapp/input.css` to `static/mainapp/styles.css`
+
+## SpeedPy UI Design System
+
+The project uses an in-house design system called **SpeedPy UI**. A live catalogue of every
+primitive lives at `/speedpyui-preview/` — open it before designing new pages or components
+to see what's already available and reuse the existing look.
+
+### Design tokens (colors, surfaces, shadows)
+
+Colors and surfaces are declared as CSS variables in `static/mainapp/input.css` and wired into
+Tailwind via `tailwind.config.js`. They automatically swap between light and dark mode, so in
+templates you write **one** utility name per slot — never pair a light utility with a `dark:`
+variant for token-driven colors.
+
+Use these Tailwind utilities (bound to the tokens):
+
+- Background: `bg-background` (app chrome), `bg-background-paper` (cards, modals, raised surfaces)
+- Text: `text-fg` (primary), `text-fg-secondary` (muted / helper text)
+- Borders: `border-divider`
+- Brand / status: `bg-primary`, `text-primary`, `bg-secondary`, `bg-success`, `bg-info`,
+  `bg-warning`, `bg-error` — each has `-light`, `-dark`, and `-contrast` variants
+  (e.g. `text-primary-contrast` for text placed on a `bg-primary` surface)
+- Numbered brand scale (`bg-primary-50` … `bg-primary-900`) exists for backwards compatibility
+  but prefer the token-driven `primary` / `primary-dark` / `primary-light` names
+- Neutrals `neutral-50`…`neutral-950` are static (same value in both modes) — use them only
+  for things that must NOT follow the theme
+- Elevation: `shadow-speedpyui-1 | -3 | -8 | -12 | -16 | -24` (use `-16` for cards, `-24`
+  for modals). Do not add raw `shadow-lg` / `shadow-md` — they look off against the palette.
+
+**Do not** write `bg-white`, `bg-gray-*`, `text-gray-*`, `text-black` for surfaces or
+body/heading copy. Those bypass the theme and will not follow dark mode. The only exceptions
+are utility text like `text-primary-contrast` on brand-filled buttons, or `neutral-*` where
+a deliberately static color is needed.
+
+### Dark mode
+
+- Tailwind is configured with `darkMode: 'class'` and the `.dark` class is toggled on
+  `<html>` by the inline script at the top of `templates/base.html`.
+- User preference is stored in `localStorage['theme-preference']` with values
+  `'light' | 'dark' | 'auto'` (default `'auto'` follows `prefers-color-scheme`). The nav bar
+  includes a three-state theme toggle (`#theme-toggle`) wired in `static/mainapp/index.js`.
+- Because colors come from CSS variables, **most new markup does not need `dark:` variants**.
+  Only add `dark:` prefixes for things the token system doesn't cover (e.g. legacy
+  `neutral-*` scales on third-party widgets).
+
+### Component classes
+
+Re-use these `@layer components` classes from `input.css` rather than hand-rolling new styles:
+
+**Buttons** — compose three axes: variant + color + size. Size defaults to `btn-md`.
+
+```html
+<button class="btn btn-contained btn-primary">Save</button>
+<button class="btn btn-outlined btn-error btn-sm">Delete</button>
+<a href="..." class="btn btn-text btn-secondary btn-lg">Learn more</a>
+```
+
+- Variants: `btn-contained` (filled), `btn-outlined` (border only), `btn-text` (ghost)
+- Colors: `btn-primary`, `btn-secondary`, `btn-success`, `btn-info`, `btn-warning`,
+  `btn-error`, `btn-inherit`
+- Sizes: `btn-sm`, `btn-md` (default), `btn-lg`
+
+**Form inputs** — `input-outlined`, `textarea-outlined`, `select-outlined`, `checkbox`,
+`radio`, `switch` (with `.switch-track` and `.switch-thumb`). Pair with
+`.form-field`, `.input-label`, `.input-helper`, `.input-error`, `.input-error-text` for
+layout. `crispy-tailwind` field templates already emit these classes, so crispy forms pick
+them up automatically — see the Forms section below.
+
+**Cards** — prefer the raw tokens for new surfaces:
+
+```html
+<div class="rounded-2xl bg-background-paper border border-divider shadow-speedpyui-16 p-8">…</div>
+```
+
+The legacy `.card` / `.card-body` classes still exist for pages not yet migrated, but new
+code should use the token utilities.
+
+### Alpine.js conventions
+
+Alpine 3.15.x is loaded via `templates/base.html`. A few gotchas we hit the hard way:
+
+- **Do not reuse the variable name `open` across nested `x-data` scopes.** The nav wrapper
+  in `templates/components/nav.html` declares `x-data="{open: false}"` for the mobile menu;
+  nested scopes (user menu dropdown, etc.) must pick a different name — e.g.
+  `userMenuOpen`, `sidebarOpen`. Reusing `open` shadows the outer scope and causes reads and
+  writes to resolve against different proxies, leaving the dropdown permanently hidden.
+- **Do not add `x-transition` to the user menu dropdown** (or any dropdown that starts with
+  `display:none`). In this bundle the inline-style transition gets stuck at opacity 0 and the
+  element never becomes visible. Toggle visibility with `x-show` + `x-cloak` only; if you
+  need a fade, use explicit `x-transition:enter-*` / `x-transition:leave-*` class directives
+  with CSS classes, not the bare `x-transition` shortcut.
+- Use `x-model` on the hidden checkbox inside a `.switch` to bind a boolean state. See
+  `templates/mainapp/pricing.html` for the monthly / yearly toggle example
+  (`x-model="yearly"`, `x-text="yearly ? '$801' : '$89'"`).
+
+### User profile pictures
+
+The custom user model (`usermodel.models.User`) has two image fields:
+
+- `profile_picture` — full upload (`ImageField`, stored under `media/profile_pictures/`)
+- `profile_picture_thumbnail` — 96×96 thumbnail auto-generated on save (stored under
+  `media/profile_pictures/thumbnails/`), used in nav avatars
+
+Render avatars with the three-tier fallback used in `templates/components/nav_auth.html`
+and `templates/components/sidebar_layout/user_menu.html`:
+
+```django
+{% if user.profile_picture_thumbnail %}
+    <img src="{{ user.profile_picture_thumbnail.url }}" class="w-8 h-8 rounded-full object-cover" …>
+{% elif user.profile_picture %}
+    <img src="{{ user.profile_picture.url }}" class="w-8 h-8 rounded-full object-cover" …>
+{% else %}
+    <span class="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-xs font-semibold">
+        {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
+    </span>
+{% endif %}
+```
+
+Profile editing lives at `/accounts/profile/` (`ProfileEditView` +
+`templates/account/profile/edit.html`). The form MUST use `enctype="multipart/form-data"`
+because `UserProfileForm` exposes `profile_picture`. Dev media is served via the
+`if settings.DEBUG: urlpatterns += static(...)` block at the bottom of `project/urls.py`.
+
+### Account / settings pages
+
+Account pages (change password, email addresses, OTP settings, profile edit) extend
+`templates/account/base_manage.html`, which renders a sidebar layout with a left nav of
+account links. New account pages should reuse this base and follow the header style from
+`templates/account/password_change.html` (`<h2>` with the shared classes) so the pages
+line up visually.
+
+### Tours (Driver.js)
+
+`templates/partials/_tour.html` wires Driver.js with SpeedPy-themed popovers (overrides in
+the `.driver-popover*` block at the bottom of `input.css`). Tours are only rendered when
+the context contains non-empty `tour_steps`. Guard new tour styles outside `@layer
+components` because Tailwind would otherwise purge them (the class names live in vendor JS,
+not in the `content` globs).
 
 ## Code Conventions
 

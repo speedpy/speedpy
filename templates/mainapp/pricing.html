@@ -3,7 +3,7 @@
 {% block head_title %}Pricing{% endblock %}
 {% block content %}
 
-    <main class="bg-background-paper">
+    <main class="bg-background-paper" x-data="{ yearly: false }">
 
         {# ---------- Hero ---------- #}
         <section class="bg-background py-12">
@@ -19,7 +19,7 @@
 
                     <div class="mt-6 flex items-center gap-3">
                         <label class="switch">
-                            <input type="checkbox" class="sr-only peer">
+                            <input type="checkbox" class="sr-only peer" x-model="yearly">
                             <span class="switch-track"></span>
                             <span class="switch-thumb"></span>
                         </label>
@@ -45,7 +45,7 @@
                         <div class="p-8">
                             <div class="mt-4 flex items-baseline gap-1">
                                 <span class="text-3xl font-bold text-fg">$0</span>
-                                <span class="text-sm font-medium text-fg-secondary">/mo</span>
+                                <span class="text-sm font-medium text-fg-secondary" x-text="yearly ? '/yr' : '/mo'">/mo</span>
                             </div>
                             <h3 class="mt-4 text-lg font-semibold text-fg">Free</h3>
                             <p class="mt-2 text-sm text-fg-secondary">
@@ -73,8 +73,8 @@
                     <div class="flex flex-col max-w-md mx-auto md:mx-0 w-full">
                         <div class="p-8">
                             <div class="mt-4 flex items-baseline gap-1">
-                                <span class="text-3xl font-bold text-fg">$89</span>
-                                <span class="text-sm font-medium text-fg-secondary">/mo</span>
+                                <span class="text-3xl font-bold text-fg" x-text="yearly ? '$801' : '$89'">$89</span>
+                                <span class="text-sm font-medium text-fg-secondary" x-text="yearly ? '/yr' : '/mo'">/mo</span>
                             </div>
                             <h3 class="mt-4 text-lg font-semibold text-fg">Professional</h3>
                             <p class="mt-2 text-sm text-fg-secondary">
@@ -103,8 +103,8 @@
                     <div class="flex flex-col max-w-md mx-auto md:mx-0 w-full">
                         <div class="p-8">
                             <div class="mt-4 flex items-baseline gap-1">
-                                <span class="text-3xl font-bold text-fg">$29,999</span>
-                                <span class="text-sm font-medium text-fg-secondary">/mo</span>
+                                <span class="text-3xl font-bold text-fg" x-text="yearly ? '$269,991' : '$29,999'">$29,999</span>
+                                <span class="text-sm font-medium text-fg-secondary" x-text="yearly ? '/yr' : '/mo'">/mo</span>
                             </div>
                             <h3 class="mt-4 text-lg font-semibold text-fg">Enterprise</h3>
                             <p class="mt-2 text-sm text-fg-secondary">

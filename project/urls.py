@@ -9,6 +9,7 @@ from usermodel.views import ProfileEditView
 urlpatterns = [
     path("", views.WelcomeToSpeedPyView.as_view(), name="welcome"),
     path("pricing", views.PricingView.as_view(), name="pricing"),
+    path("contact/", views.ContactView.as_view(), name="contact"),
     path("dashboard/", views.DashboardView.as_view(), name="dashboard"),
     path("speedpyui-preview/", views.SpeedpyuiPreviewView.as_view(), name="speedpyui_preview"),
     path(settings.ADMIN_URL, admin.site.urls),
