@@ -131,6 +131,7 @@
                             <td class="text-right">
                                 <div class="flex justify-end gap-2">
                                     <a href="{{ product.get_absolute_url }}" class="btn btn-text btn-primary btn-sm">View</a>
+                                    <a href="{% url 'demo_product_update' product.pk %}" class="btn btn-text btn-primary btn-sm">Edit</a>
                                     <a href="{% url 'demo_product_delete' product.pk %}" class="btn btn-text btn-error btn-sm">Delete</a>
                                 </div>
                             </td>

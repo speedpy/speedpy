@@ -145,8 +145,8 @@ Full-page demos that are meant to teach boilerplate users should live in `demoap
 `mainapp`. Keep them conventional and easy to copy: model in `demoapp/models.py`, form in
 `demoapp/forms.py`, generic class-based views in `demoapp/views.py`, routes in
 `demoapp/urls.py`, and templates under `templates/demoapp/`. The Product CRUD demo at
-`/demo/products/` is the canonical example for `ListView`, `CreateView`, `DetailView`, and
-`DeleteView` screens using SpeedPy UI classes. Do not seed demo rows in migrations; expose
+`/demo/products/` is the canonical example for `ListView`, `CreateView`, `UpdateView`,
+`DetailView`, and `DeleteView` screens using SpeedPy UI classes. Do not seed demo rows in migrations; expose
 an explicit POST action, like the Product "Generate demo products" button, and only show it
 when the demo table is empty.
 

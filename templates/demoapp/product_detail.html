@@ -21,6 +21,7 @@
                     <p class="lead max-w-3xl">{{ product.description|default:"No description has been added yet." }}</p>
                 </div>
                 <div class="flex flex-wrap justify-start gap-2 lg:justify-end">
+                    <a href="{% url 'demo_product_update' product.pk %}" class="btn btn-contained btn-primary">Edit</a>
                     <a href="{% url 'demo_product_delete' product.pk %}" class="btn btn-outlined btn-error">Delete</a>
                 </div>
             </div>
@@ -92,6 +93,9 @@
                         </a>
                         <a href="{% url 'demo_product_list' %}?status={{ product.status }}" class="list-group-item hover:bg-primary/5">
                             View products with this status
+                        </a>
+                        <a href="{% url 'demo_product_update' product.pk %}" class="list-group-item hover:bg-primary/5">
+                            Edit product details
                         </a>
                         <a href="{% url 'demo_product_delete' product.pk %}" class="list-group-item text-error hover:bg-error/5">
                             Delete this product

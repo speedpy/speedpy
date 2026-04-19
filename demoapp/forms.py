@@ -23,6 +23,7 @@ class ProductForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        submit_label = kwargs.pop("submit_label", "Create product")
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -37,5 +38,5 @@ class ProductForm(forms.ModelForm):
                 Div(Field("description", placeholder="Short product notes for the team."), css_class="sm:col-span-2"),
                 css_class="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2",
             ),
-            Submit("submit", "Create product", css_class="btn btn-contained btn-primary"),
+            Submit("submit", submit_label, css_class="btn btn-contained btn-primary"),
         )

@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.urls import reverse_lazy
 from django.shortcuts import redirect
 from django.views import View
-from django.views.generic import CreateView, DeleteView, DetailView, ListView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from demoapp.forms import ProductForm
 from demoapp.models import Product
@@ -122,8 +122,29 @@ class ProductCreateView(CreateView):
     form_class = ProductForm
     template_name = "demoapp/product_form.html"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["submit_label"] = "Create product"
+        return kwargs
+
     def form_valid(self, form):
         messages.success(self.request, "Product created.")
+        return super().form_valid(form)
+
+
+class ProductUpdateView(UpdateView):
+    model = Product
+    form_class = ProductForm
+    template_name = "demoapp/product_form.html"
+    context_object_name = "product"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["submit_label"] = "Save changes"
+        return kwargs
+
+    def form_valid(self, form):
+        messages.success(self.request, "Product updated.")
         return super().form_valid(form)
 
 
