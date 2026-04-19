@@ -194,7 +194,7 @@ long wrapper and heading utilities:
 - Icons and avatars: `media-icon`, `avatar-sm`, `avatar-xs`
 
 **Cards, status, lists, and tables** — use these for dashboard panels, account pages, status
-rows, and simple data display:
+rows, and simple data display. Keep preview/documentation examples one component per row:
 
 ```html
 <div class="card">
@@ -218,6 +218,28 @@ rows, and simple data display:
   `pagination-link`, `pagination-link-active`, `pagination-link-disabled`, and
   `pagination-ellipsis` for list footers. Prefer numbered, elided pagination with a
   result count summary over Previous/Next-only controls.
+- Dividers: `divider`, `divider-text`, `divider-vertical`
+- Generic surfaces: `paper`, `paper-outlined`, `paper-padded`, `paper-elevation-0`,
+  `paper-elevation-1`, `paper-elevation-3`, `paper-elevation-8`, `paper-elevation-16`,
+  `paper-elevation-24`
+- Chips: `chip`, `chip-sm`, `chip-primary`, `chip-secondary`, `chip-success`,
+  `chip-info`, `chip-warning`, `chip-error`, `chip-outlined`, `chip-avatar`,
+  `chip-remove`
+- Breadcrumbs: `breadcrumbs`, `breadcrumb-list`, `breadcrumb-item`, `breadcrumb-link`,
+  `breadcrumb-current`
+- Button groups: `btn-group`, `btn-group-vertical`; use existing `btn` variants inside
+- Skeletons: `skeleton`, `skeleton-text`, `skeleton-text-lg`, `skeleton-circular`,
+  `skeleton-rectangular`
+- Linear progress: `progress`, `progress-sm`, `progress-lg`, `progress-xl`,
+  `progress-bar`, `progress-primary`, `progress-secondary`, `progress-success`,
+  `progress-info`, `progress-warning`, `progress-error`
+- Timeline: `timeline`, `timeline-item`, `timeline-marker`, `timeline-marker-success`,
+  `timeline-marker-info`, `timeline-marker-warning`, `timeline-marker-error`,
+  `timeline-content`, `timeline-title`, `timeline-meta`, `timeline-body`
+- Stepper: `stepper`, `step`, `step-marker`, `step-body`, `step-label`,
+  `step-description`, `step-completed`, `step-active`, `step-link`
+- Accordion: `accordion`, `accordion-item`, `accordion-header`, `accordion-body`; use
+  native `<details>` / `<summary>` unless custom behavior is explicitly needed
 
 **Account and sidebar navigation** — use these for settings pages and dashboard sidebar
 links rather than repeating link classes:
