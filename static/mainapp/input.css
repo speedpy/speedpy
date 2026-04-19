@@ -593,6 +593,248 @@
   .prose h4     { @apply text-lg; }
   .prose ul ul  { @apply list-disc; }
   .prose ul ul ul { @apply list-[square]; }
+
+  /* ==========================================================================
+   * SPEEDPY UI COMPONENTS: low-JS primitives
+   * ========================================================================== */
+
+  .divider {
+    @apply my-6 h-px w-full border-0 bg-divider;
+  }
+  .divider-vertical {
+    @apply mx-4 h-10 w-px shrink-0 self-stretch border-0 bg-divider;
+  }
+  .divider-text {
+    @apply my-6 flex items-center gap-3 text-xs font-semibold uppercase text-fg-secondary;
+  }
+  .divider-text::before,
+  .divider-text::after {
+    @apply h-px flex-1 bg-divider content-[''];
+  }
+
+  .chip {
+    @apply inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full border border-transparent bg-background text-sm font-semibold text-fg px-3 py-1 leading-5;
+  }
+  .chip-sm {
+    @apply min-h-7 px-2.5 py-0.5 text-xs;
+  }
+  .chip-primary { @apply bg-primary/10 text-primary; }
+  .chip-secondary { @apply bg-secondary/10 text-secondary; }
+  .chip-success { @apply bg-success/10 text-success; }
+  .chip-info { @apply bg-info/10 text-info; }
+  .chip-warning { @apply bg-warning/10 text-warning; }
+  .chip-error { @apply bg-error/10 text-error; }
+  .chip-outlined {
+    @apply border-divider bg-transparent text-fg;
+  }
+  .chip-outlined.chip-primary { @apply border-primary/50 text-primary; }
+  .chip-outlined.chip-secondary { @apply border-secondary/50 text-secondary; }
+  .chip-outlined.chip-success { @apply border-success/50 text-success; }
+  .chip-outlined.chip-info { @apply border-info/50 text-info; }
+  .chip-outlined.chip-warning { @apply border-warning/50 text-warning; }
+  .chip-outlined.chip-error { @apply border-error/50 text-error; }
+  .chip-avatar {
+    @apply -ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-background-paper text-xs font-semibold text-fg;
+  }
+  .chip-remove {
+    @apply -mr-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-current opacity-70 transition hover:bg-neutral-500/10 hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40;
+  }
+
+  .paper {
+    @apply rounded-lg bg-background-paper text-fg;
+  }
+  .paper-outlined {
+    @apply border border-divider;
+  }
+  .paper-padded {
+    @apply p-6;
+  }
+  .paper-elevation-0 { @apply shadow-none; }
+  .paper-elevation-1 { @apply shadow-speedpyui-1; }
+  .paper-elevation-3 { @apply shadow-speedpyui-3; }
+  .paper-elevation-8 { @apply shadow-speedpyui-8; }
+  .paper-elevation-16 { @apply shadow-speedpyui-16; }
+  .paper-elevation-24 { @apply shadow-speedpyui-24; }
+
+  .breadcrumbs {
+    @apply text-sm font-medium text-fg-secondary;
+  }
+  .breadcrumb-list {
+    @apply flex flex-wrap items-center gap-y-2;
+  }
+  .breadcrumb-item {
+    @apply flex items-center;
+  }
+  .breadcrumb-item + .breadcrumb-item::before {
+    @apply mx-2 text-fg-secondary/60 content-['/'];
+  }
+  .breadcrumb-link {
+    @apply text-fg-secondary transition-colors hover:text-primary hover:no-underline;
+  }
+  .breadcrumb-current {
+    @apply text-fg;
+  }
+
+  .btn-group {
+    @apply inline-flex items-stretch rounded-lg shadow-sm;
+  }
+  .btn-group > .btn {
+    @apply rounded-none;
+  }
+  .btn-group > .btn:not(:first-child) {
+    margin-left: -1px;
+  }
+  .btn-group > .btn:first-child {
+    @apply rounded-l-lg;
+  }
+  .btn-group > .btn:last-child {
+    @apply rounded-r-lg;
+  }
+  .btn-group-vertical {
+    @apply inline-flex flex-col items-stretch rounded-lg shadow-sm;
+  }
+  .btn-group-vertical > .btn {
+    @apply rounded-none;
+  }
+  .btn-group-vertical > .btn:not(:first-child) {
+    margin-top: -1px;
+  }
+  .btn-group-vertical > .btn:first-child {
+    @apply rounded-t-lg;
+  }
+  .btn-group-vertical > .btn:last-child {
+    @apply rounded-b-lg;
+  }
+
+  .skeleton {
+    @apply animate-pulse bg-neutral-200 dark:bg-neutral-700;
+  }
+  .skeleton-text {
+    @apply h-3 rounded;
+  }
+  .skeleton-text-lg {
+    @apply h-5 rounded;
+  }
+  .skeleton-circular {
+    @apply rounded-full;
+  }
+  .skeleton-rectangular {
+    @apply rounded-lg;
+  }
+
+  .progress {
+    @apply flex h-2.5 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700;
+  }
+  .progress-sm { @apply h-1.5; }
+  .progress-lg { @apply h-4; }
+  .progress-xl { @apply h-6; }
+  .progress-bar {
+    @apply h-full rounded-full bg-primary transition-[width] duration-300;
+  }
+  .progress-primary { @apply bg-primary; }
+  .progress-secondary { @apply bg-secondary; }
+  .progress-success { @apply bg-success; }
+  .progress-info { @apply bg-info; }
+  .progress-warning { @apply bg-warning; }
+  .progress-error { @apply bg-error; }
+
+  .timeline {
+    @apply space-y-0;
+  }
+  .timeline-item {
+    @apply relative grid grid-cols-[auto,1fr] gap-x-4 pb-6;
+  }
+  .timeline-item::before {
+    @apply absolute bottom-0 left-[0.4375rem] top-7 w-px bg-divider content-[''];
+  }
+  .timeline-item:last-child {
+    @apply pb-0;
+  }
+  .timeline-item:last-child::before {
+    @apply hidden;
+  }
+  .timeline-marker {
+    @apply relative z-10 mt-1 h-3.5 w-3.5 rounded-full border-2 border-background-paper bg-primary shadow-speedpyui-1;
+  }
+  .timeline-marker-success { @apply bg-success; }
+  .timeline-marker-info { @apply bg-info; }
+  .timeline-marker-warning { @apply bg-warning; }
+  .timeline-marker-error { @apply bg-error; }
+  .timeline-content {
+    @apply min-w-0;
+  }
+  .timeline-title {
+    @apply mb-1 text-sm font-semibold text-fg;
+  }
+  .timeline-meta {
+    @apply mb-1 text-xs font-medium text-fg-secondary;
+  }
+  .timeline-body {
+    @apply text-sm leading-6 text-fg-secondary;
+  }
+
+  .stepper {
+    @apply flex flex-col gap-4 sm:flex-row sm:items-start;
+  }
+  .step {
+    @apply flex min-w-0 flex-1 items-start gap-3 text-fg-secondary;
+  }
+  .step:not(:last-child)::after {
+    @apply mt-4 hidden h-px flex-1 bg-divider content-[''] sm:block;
+  }
+  .step-marker {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-divider bg-background-paper text-sm font-semibold text-fg-secondary;
+  }
+  .step-body {
+    @apply min-w-0;
+  }
+  .step-label {
+    @apply mb-0 text-sm font-semibold text-fg-secondary;
+  }
+  .step-description {
+    @apply mb-0 text-xs leading-5 text-fg-secondary;
+  }
+  .step-completed .step-marker {
+    @apply border-success bg-success text-success-contrast;
+  }
+  .step-completed .step-label {
+    @apply text-fg;
+  }
+  .step-active .step-marker {
+    @apply border-primary bg-primary text-primary-contrast;
+  }
+  .step-active .step-label {
+    @apply text-primary;
+  }
+  .step-link {
+    @apply rounded-lg hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40;
+  }
+
+  .accordion {
+    @apply space-y-3;
+  }
+  .accordion-item {
+    @apply overflow-hidden rounded-lg border border-divider bg-background-paper text-fg shadow-speedpyui-1;
+  }
+  .accordion-header {
+    @apply flex w-full cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-fg transition-colors hover:bg-primary/5;
+  }
+  .accordion-header::-webkit-details-marker {
+    display: none;
+  }
+  .accordion-header::after {
+    @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-background text-fg-secondary content-['+'];
+  }
+  .accordion-item[open] > .accordion-header {
+    @apply border-b border-divider text-primary;
+  }
+  .accordion-item[open] > .accordion-header::after {
+    @apply content-['-'];
+  }
+  .accordion-body {
+    @apply px-5 py-4 text-sm leading-6 text-fg-secondary;
+  }
+
   .pagination > .btn { @apply px-3 py-1; }
   .disabled { @apply opacity-80 pointer-events-none; }
   /* Link hover states — plain hover: utility, no base a {} rule to avoid

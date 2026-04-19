@@ -103,6 +103,302 @@
             </div>
         </section>
 
+        {# ---------- Low-JS primitives ---------- #}
+        <section class="space-y-6">
+            <div class="section-header text-left mx-0">
+                <p class="eyebrow">New Primitives</p>
+                <h2 class="h2">Low-JS Components</h2>
+                <p class="lead">
+                    Static and native HTML components for common product UI patterns.
+                </p>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Divider</h3>
+                    <p class="mb-0 text-sm text-fg-secondary">Section one</p>
+                    <hr class="divider">
+                    <p class="mb-0 text-sm text-fg-secondary">Section two</p>
+                    <div class="divider-text">or continue with</div>
+                    <div class="flex h-10 items-center text-sm text-fg-secondary">
+                        <span>Left</span>
+                        <span class="divider-vertical"></span>
+                        <span>Right</span>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;hr class="divider"&gt;
+&lt;div class="divider-text"&gt;or continue with&lt;/div&gt;
+&lt;span class="divider-vertical"&gt;&lt;/span&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Paper</h3>
+                    <div class="grid gap-3 sm:grid-cols-3">
+                        <div class="paper paper-outlined paper-padded paper-elevation-0">
+                            <p class="mb-0 text-sm font-semibold text-fg">Outlined</p>
+                        </div>
+                        <div class="paper paper-padded paper-elevation-3">
+                            <p class="mb-0 text-sm font-semibold text-fg">Raised</p>
+                        </div>
+                        <div class="paper paper-padded paper-elevation-16">
+                            <p class="mb-0 text-sm font-semibold text-fg">Overlay</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="paper paper-outlined paper-padded paper-elevation-1"&gt;
+  Content
+&lt;/div&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Chips</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="chip">Default</span>
+                        <span class="chip chip-primary">Primary</span>
+                        <span class="chip chip-success">Success</span>
+                        <span class="chip chip-warning">Warning</span>
+                        <span class="chip chip-error">Error</span>
+                        <span class="chip chip-outlined chip-info">Outlined</span>
+                        <span class="chip chip-primary">
+                            <span class="chip-avatar">A</span>
+                            Assigned
+                        </span>
+                        <span class="chip chip-outlined">
+                            Removable
+                            <button type="button" class="chip-remove" aria-label="Remove chip">&times;</button>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;span class="chip chip-primary"&gt;
+  &lt;span class="chip-avatar"&gt;A&lt;/span&gt;
+  Assigned
+&lt;/span&gt;
+&lt;span class="chip chip-outlined"&gt;
+  Removable
+  &lt;button type="button" class="chip-remove" aria-label="Remove chip"&gt;&amp;times;&lt;/button&gt;
+&lt;/span&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Button Group</h3>
+                    <div class="flex flex-wrap gap-4">
+                        <div class="btn-group" role="group" aria-label="View options">
+                            <button type="button" class="btn btn-outlined btn-primary btn-sm">Day</button>
+                            <button type="button" class="btn btn-outlined btn-primary btn-sm">Week</button>
+                            <button type="button" class="btn btn-contained btn-primary btn-sm">Month</button>
+                        </div>
+                        <div class="btn-group-vertical" role="group" aria-label="Record actions">
+                            <button type="button" class="btn btn-outlined btn-inherit btn-sm">Edit</button>
+                            <button type="button" class="btn btn-outlined btn-error btn-sm">Delete</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="btn-group" role="group" aria-label="View options"&gt;
+  &lt;button class="btn btn-outlined btn-primary btn-sm"&gt;Day&lt;/button&gt;
+  &lt;button class="btn btn-outlined btn-primary btn-sm"&gt;Week&lt;/button&gt;
+  &lt;button class="btn btn-contained btn-primary btn-sm"&gt;Month&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Breadcrumbs</h3>
+                    <nav class="breadcrumbs" aria-label="Breadcrumb">
+                        <ol class="breadcrumb-list">
+                            <li class="breadcrumb-item"><a class="breadcrumb-link" href="#">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a class="breadcrumb-link" href="#">Teams</a></li>
+                            <li class="breadcrumb-item"><span class="breadcrumb-current" aria-current="page">Members</span></li>
+                        </ol>
+                    </nav>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;nav class="breadcrumbs" aria-label="Breadcrumb"&gt;
+  &lt;ol class="breadcrumb-list"&gt;
+    &lt;li class="breadcrumb-item"&gt;&lt;a class="breadcrumb-link" href="#"&gt;Dashboard&lt;/a&gt;&lt;/li&gt;
+    &lt;li class="breadcrumb-item"&gt;&lt;span class="breadcrumb-current"&gt;Members&lt;/span&gt;&lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/nav&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Skeleton</h3>
+                    <div class="flex gap-4">
+                        <div class="skeleton skeleton-circular h-12 w-12"></div>
+                        <div class="min-w-0 flex-1 space-y-3">
+                            <div class="skeleton skeleton-text-lg w-2/3"></div>
+                            <div class="skeleton skeleton-text w-full"></div>
+                            <div class="skeleton skeleton-text w-5/6"></div>
+                            <div class="skeleton skeleton-rectangular h-20 w-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="skeleton skeleton-circular h-12 w-12"&gt;&lt;/div&gt;
+&lt;div class="skeleton skeleton-text-lg w-2/3"&gt;&lt;/div&gt;
+&lt;div class="skeleton skeleton-text w-full"&gt;&lt;/div&gt;
+&lt;div class="skeleton skeleton-rectangular h-20 w-full"&gt;&lt;/div&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Linear Progress</h3>
+                    <div class="space-y-4">
+                        <div class="progress" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar progress-primary" style="width: 45%"></div>
+                        </div>
+                        <div class="progress progress-lg" role="progressbar" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar progress-success" style="width: 72%"></div>
+                        </div>
+                        <div class="progress progress-sm" role="progressbar" aria-valuenow="28" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar progress-warning" style="width: 28%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="progress" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"&gt;
+  &lt;div class="progress-bar progress-primary" style="width: 45%"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Accordion</h3>
+                    <div class="accordion">
+                        <details class="accordion-item" open>
+                            <summary class="accordion-header">Can this use native HTML?</summary>
+                            <div class="accordion-body">
+                                Yes. The first version uses details and summary, so it works without custom JavaScript.
+                            </div>
+                        </details>
+                        <details class="accordion-item">
+                            <summary class="accordion-header">When should Alpine be added?</summary>
+                            <div class="accordion-body">
+                                Add Alpine only when the product needs behavior like one-open-at-a-time groups.
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;details class="accordion-item" open&gt;
+  &lt;summary class="accordion-header"&gt;Question&lt;/summary&gt;
+  &lt;div class="accordion-body"&gt;Answer&lt;/div&gt;
+&lt;/details&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Timeline</h3>
+                    <ol class="timeline">
+                        <li class="timeline-item">
+                            <span class="timeline-marker timeline-marker-success"></span>
+                            <div class="timeline-content">
+                                <p class="timeline-title">Invite accepted</p>
+                                <p class="timeline-meta">Today at 09:24</p>
+                                <p class="timeline-body">A new member joined the workspace.</p>
+                            </div>
+                        </li>
+                        <li class="timeline-item">
+                            <span class="timeline-marker timeline-marker-info"></span>
+                            <div class="timeline-content">
+                                <p class="timeline-title">Plan changed</p>
+                                <p class="timeline-meta">Yesterday at 16:10</p>
+                                <p class="timeline-body">Billing moved to the growth plan.</p>
+                            </div>
+                        </li>
+                        <li class="timeline-item">
+                            <span class="timeline-marker timeline-marker-warning"></span>
+                            <div class="timeline-content">
+                                <p class="timeline-title">Review requested</p>
+                                <p class="timeline-meta">Monday at 11:02</p>
+                                <p class="timeline-body">Security settings need an owner review.</p>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;ol class="timeline"&gt;
+  &lt;li class="timeline-item"&gt;
+    &lt;span class="timeline-marker timeline-marker-success"&gt;&lt;/span&gt;
+    &lt;div class="timeline-content"&gt;...&lt;/div&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Stepper</h3>
+                    <ol class="stepper">
+                        <li class="step step-completed">
+                            <span class="step-marker">1</span>
+                            <div class="step-body">
+                                <p class="step-label">Account</p>
+                                <p class="step-description">Profile created</p>
+                            </div>
+                        </li>
+                        <li class="step step-active">
+                            <span class="step-marker">2</span>
+                            <div class="step-body">
+                                <p class="step-label">Team</p>
+                                <p class="step-description">Invite members</p>
+                            </div>
+                        </li>
+                        <li class="step">
+                            <span class="step-marker">3</span>
+                            <div class="step-body">
+                                <p class="step-label">Billing</p>
+                                <p class="step-description">Choose a plan</p>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;ol class="stepper"&gt;
+  &lt;li class="step step-active"&gt;
+    &lt;span class="step-marker"&gt;2&lt;/span&gt;
+    &lt;div class="step-body"&gt;...&lt;/div&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;</code></pre>
+                </div>
+            </div>
+        </section>
+
         {# ---------- Forms ---------- #}
         <section class="space-y-6">
             <div class="section-header text-left mx-0">
@@ -259,32 +555,52 @@ class ProductCreateView(CreateView):
             </div>
 
             <div class="grid gap-6 lg:grid-cols-2">
-                <div class="space-y-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="h3 mb-0">Card title</h3>
-                        </div>
-                        <div class="card-body">
-                            <p class="lead mb-0">Card body content uses the theme surface, divider, and elevation tokens.</p>
-                        </div>
-                        <div class="card-footer">
-                            <button class="btn btn-contained btn-primary btn-sm">Action</button>
-                        </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="h3 mb-0">Card title</h3>
                     </div>
-
-                    <ul class="list-group">
-                        <li class="list-group-item flex items-center justify-between">
-                            <span class="font-medium text-fg">Primary email</span>
-                            <span class="badge badge-primary">Primary</span>
-                        </li>
-                        <li class="list-group-item flex items-center justify-between">
-                            <span class="font-medium text-fg">Security status</span>
-                            <span class="badge badge-success">Verified</span>
-                        </li>
-                    </ul>
+                    <div class="card-body">
+                        <p class="lead mb-0">Card body content uses the theme surface, divider, and elevation tokens.</p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-contained btn-primary btn-sm">Action</button>
+                    </div>
                 </div>
 
-                <div class="space-y-6">
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="card"&gt;
+  &lt;div class="card-header"&gt;&lt;h2 class="h3"&gt;Title&lt;/h2&gt;&lt;/div&gt;
+  &lt;div class="card-body"&gt;Content&lt;/div&gt;
+  &lt;div class="card-footer"&gt;Actions&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <ul class="list-group">
+                    <li class="list-group-item flex items-center justify-between">
+                        <span class="font-medium text-fg">Primary email</span>
+                        <span class="badge badge-primary">Primary</span>
+                    </li>
+                    <li class="list-group-item flex items-center justify-between">
+                        <span class="font-medium text-fg">Security status</span>
+                        <span class="badge badge-success">Verified</span>
+                    </li>
+                </ul>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;ul class="list-group"&gt;
+  &lt;li class="list-group-item"&gt;Primary email&lt;/li&gt;
+  &lt;li class="list-group-item"&gt;Security status&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Badges</h3>
                     <div class="flex flex-wrap gap-2">
                         <span class="badge badge-primary">Primary</span>
                         <span class="badge badge-secondary">Secondary</span>
@@ -293,23 +609,31 @@ class ProductCreateView(CreateView):
                         <span class="badge badge-warning">Warning</span>
                         <span class="badge badge-error">Error</span>
                     </div>
+                </div>
 
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;span class="badge badge-primary"&gt;Primary&lt;/span&gt;
+&lt;span class="badge badge-success"&gt;Success&lt;/span&gt;
+&lt;span class="badge badge-error"&gt;Error&lt;/span&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Alerts</h3>
                     <div class="space-y-3">
                         <div class="alert alert-success">Your account settings were saved.</div>
                         <div class="alert alert-warning">Two-factor authentication is not enabled.</div>
                         <div class="alert alert-error">This destructive action needs confirmation.</div>
                     </div>
+                </div>
 
-                    <div class="rounded-lg border border-divider bg-background-paper p-5">
-                        <p class="eyebrow">Code</p>
-                        <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="card"&gt;
-  &lt;div class="card-header"&gt;&lt;h2 class="h3"&gt;Title&lt;/h2&gt;&lt;/div&gt;
-  &lt;div class="card-body"&gt;Content&lt;/div&gt;
-&lt;/div&gt;
-
-&lt;span class="badge badge-success"&gt;Verified&lt;/span&gt;
-&lt;div class="alert alert-warning"&gt;Review this setting.&lt;/div&gt;</code></pre>
-                    </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="alert alert-success"&gt;Saved successfully.&lt;/div&gt;
+&lt;div class="alert alert-warning"&gt;Review this setting.&lt;/div&gt;
+&lt;div class="alert alert-error"&gt;Action failed.&lt;/div&gt;</code></pre>
                 </div>
             </div>
         </section>
@@ -371,27 +695,46 @@ class ProductCreateView(CreateView):
 
             <div class="grid gap-6 lg:grid-cols-2">
                 <div class="card shadow-speedpyui-1">
-                    <div class="card-body space-y-6">
-                        <div>
-                            <h3 class="h4 mb-3">Account nav</h3>
-                            <ul class="account-nav max-w-md">
-                                <li><a href="#" class="account-nav-link account-nav-link-active">Your Profile</a></li>
-                                <li><a href="#" class="account-nav-link">Change Password</a></li>
-                                <li><a href="#" class="account-nav-link">Two-Factor Authentication</a></li>
-                            </ul>
-                        </div>
+                    <div class="card-body">
+                        <h3 class="h4 mb-3">Account Nav</h3>
+                        <ul class="account-nav max-w-md">
+                            <li><a href="#" class="account-nav-link account-nav-link-active">Your Profile</a></li>
+                            <li><a href="#" class="account-nav-link">Change Password</a></li>
+                            <li><a href="#" class="account-nav-link">Two-Factor Authentication</a></li>
+                        </ul>
+                    </div>
+                </div>
 
-                        <div>
-                            <h3 class="h4 mb-3">Avatars and media icons</h3>
-                            <div class="flex items-center gap-3">
-                                <span class="media-icon">A</span>
-                                <span class="avatar-sm">SP</span>
-                                <span class="avatar-xs">UI</span>
-                            </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;ul class="account-nav"&gt;
+  &lt;li&gt;&lt;a href="#" class="account-nav-link account-nav-link-active"&gt;Profile&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href="#" class="account-nav-link"&gt;Change Password&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="card shadow-speedpyui-1">
+                    <div class="card-body">
+                        <h3 class="h4 mb-3">Avatars and Media Icons</h3>
+                        <div class="flex items-center gap-3">
+                            <span class="media-icon">A</span>
+                            <span class="avatar-sm">SP</span>
+                            <span class="avatar-xs">UI</span>
                         </div>
                     </div>
                 </div>
 
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;span class="media-icon"&gt;A&lt;/span&gt;
+&lt;span class="avatar-sm"&gt;SP&lt;/span&gt;
+&lt;span class="avatar-xs"&gt;UI&lt;/span&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
                 <div class="rounded-lg bg-neutral-900 p-4">
                     <div class="sidebar-brand mb-4">
                         <span class="avatar-sm">SP</span>
@@ -416,6 +759,25 @@ class ProductCreateView(CreateView):
                             </a>
                         </li>
                     </ul>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="sidebar-brand"&gt;
+  &lt;span class="avatar-sm"&gt;SP&lt;/span&gt;
+  &lt;span class="sidebar-brand-text"&gt;SpeedPy&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;a href="#" class="sidebar-link sidebar-link-active"&gt;
+  &lt;svg class="sidebar-link-icon"&gt;...&lt;/svg&gt;
+  Dashboard
+&lt;/a&gt;</code></pre>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="rounded-lg bg-neutral-900 p-4">
+                    <h3 class="mb-3 text-lg font-semibold text-neutral-50">Sidebar Select</h3>
                     <button class="sidebar-select mt-4 text-neutral-100">
                         <span class="flex items-center gap-2">
                             <span class="avatar-xs">TM</span>
@@ -424,18 +786,17 @@ class ProductCreateView(CreateView):
                         <span class="text-neutral-400">v</span>
                     </button>
                 </div>
-            </div>
 
-            <div class="rounded-lg border border-divider bg-background-paper p-5">
-                <p class="eyebrow">Code</p>
-                <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;a href="#" class="account-nav-link account-nav-link-active"&gt;Profile&lt;/a&gt;
-
-&lt;a href="#" class="sidebar-link sidebar-link-active"&gt;
-  &lt;svg class="sidebar-link-icon"&gt;...&lt;/svg&gt;
-  Dashboard
-&lt;/a&gt;
-
-&lt;button class="sidebar-select"&gt;Select team&lt;/button&gt;</code></pre>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;button class="sidebar-select text-neutral-100"&gt;
+  &lt;span class="flex items-center gap-2"&gt;
+    &lt;span class="avatar-xs"&gt;TM&lt;/span&gt;
+    Select team
+  &lt;/span&gt;
+  &lt;span class="text-neutral-400"&gt;v&lt;/span&gt;
+&lt;/button&gt;</code></pre>
+                </div>
             </div>
         </section>
     </div>
