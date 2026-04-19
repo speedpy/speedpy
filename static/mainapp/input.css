@@ -306,6 +306,27 @@
   .list-group-item {
     @apply block w-full p-4 text-left text-fg hover:no-underline;
   }
+  .pagination {
+    @apply flex flex-col gap-4 border-t border-divider px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8;
+  }
+  .pagination-summary {
+    @apply text-sm font-medium text-fg-secondary;
+  }
+  .pagination-list {
+    @apply inline-flex overflow-hidden rounded-lg border border-divider bg-background-paper;
+  }
+  .pagination-link {
+    @apply flex h-10 min-w-10 items-center justify-center border-r border-divider px-3 text-sm font-semibold text-fg-secondary transition-colors last:border-r-0 hover:bg-primary/5 hover:text-primary hover:no-underline;
+  }
+  .pagination-link-active {
+    @apply bg-primary text-primary-contrast hover:bg-primary hover:text-primary-contrast;
+  }
+  .pagination-link-disabled {
+    @apply text-fg-secondary/40 pointer-events-none;
+  }
+  .pagination-ellipsis {
+    @apply flex h-10 min-w-10 items-center justify-center border-r border-divider px-3 text-sm font-semibold text-fg-secondary last:border-r-0;
+  }
   .account-shell {
     @apply mx-auto max-w-7xl pt-5 lg:flex lg:gap-x-16 lg:px-8;
   }

@@ -214,6 +214,10 @@ rows, and simple data display:
 - Alerts: `alert`, `alert-primary`, `alert-secondary`, `alert-success`, `alert-info`,
   `alert-warning`, `alert-error`, `alert-danger`, `alert-light`, `alert-neutral`
 - Tables: `table`, `table-hover`, `table-striped`, `table-sm`
+- Pagination: use `pagination`, `pagination-summary`, `pagination-list`,
+  `pagination-link`, `pagination-link-active`, `pagination-link-disabled`, and
+  `pagination-ellipsis` for list footers. Prefer numbered, elided pagination with a
+  result count summary over Previous/Next-only controls.
 
 **Account and sidebar navigation** — use these for settings pages and dashboard sidebar
 links rather than repeating link classes:

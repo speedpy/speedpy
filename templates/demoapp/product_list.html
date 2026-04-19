@@ -151,24 +151,58 @@
             </div>
 
             {% if is_paginated %}
-                <div class="card-footer flex items-center justify-between">
-                    <p class="text-sm text-fg-secondary">
-                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                <div class="pagination">
+                    <p class="pagination-summary">
+                        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count|intcomma }} results
                     </p>
-                    <div class="flex gap-2">
+                    <nav class="pagination-list" aria-label="Pagination">
                         {% if page_obj.has_previous %}
-                            <a class="btn btn-outlined btn-inherit btn-sm"
+                            <a class="pagination-link"
                                href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">
-                                Previous
+                                <span class="sr-only">Previous page</span>
+                                <svg class="h-5 w-5" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                                    <path d="M12.5 4.5 7 10l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
                             </a>
+                        {% else %}
+                            <span class="pagination-link pagination-link-disabled">
+                                <span class="sr-only">Previous page</span>
+                                <svg class="h-5 w-5" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                                    <path d="M12.5 4.5 7 10l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
                         {% endif %}
+
+                        {% for page_number in pagination_range %}
+                            {% if page_number == "..." %}
+                                <span class="pagination-ellipsis">...</span>
+                            {% elif page_number == page_obj.number %}
+                                <span class="pagination-link pagination-link-active" aria-current="page">{{ page_number }}</span>
+                            {% else %}
+                                <a class="pagination-link"
+                                   href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_number }}">
+                                    {{ page_number }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+
                         {% if page_obj.has_next %}
-                            <a class="btn btn-outlined btn-inherit btn-sm"
+                            <a class="pagination-link"
                                href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.next_page_number }}">
-                                Next
+                                <span class="sr-only">Next page</span>
+                                <svg class="h-5 w-5" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                                    <path d="m7.5 4.5 5.5 5.5-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
                             </a>
+                        {% else %}
+                            <span class="pagination-link pagination-link-disabled">
+                                <span class="sr-only">Next page</span>
+                                <svg class="h-5 w-5" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                                    <path d="m7.5 4.5 5.5 5.5-5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
                         {% endif %}
-                    </div>
+                    </nav>
                 </div>
             {% endif %}
         </section>

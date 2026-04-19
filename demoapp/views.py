@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.urls import reverse_lazy
 from django.shortcuts import redirect
@@ -92,6 +93,16 @@ class ProductListView(ListView):
         params = self.request.GET.copy()
         params.pop("page", None)
         context["query_string"] = params.urlencode()
+        if context.get("is_paginated"):
+            page_range = context["paginator"].get_elided_page_range(
+                context["page_obj"].number,
+                on_each_side=2,
+                on_ends=2,
+            )
+            context["pagination_range"] = [
+                "..." if page_number == Paginator.ELLIPSIS else page_number
+                for page_number in page_range
+            ]
         return context
 
 
