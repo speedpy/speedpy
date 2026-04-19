@@ -2161,6 +2161,10 @@ h1, h2, h3, h4, h5, p {
   margin-bottom: 1rem;
 }
 
+.mb-5 {
+  margin-bottom: 1.25rem;
+}
+
 .mb-6 {
   margin-bottom: 1.5rem;
 }
@@ -2469,6 +2473,10 @@ h1, h2, h3, h4, h5, p {
   flex-shrink: 0;
 }
 
+.shrink-0 {
+  flex-shrink: 0;
+}
+
 .flex-grow {
   flex-grow: 1;
 }
@@ -2526,6 +2534,10 @@ h1, h2, h3, h4, h5, p {
   flex-direction: column;
 }
 
+.flex-col-reverse {
+  flex-direction: column-reverse;
+}
+
 .flex-wrap {
   flex-wrap: wrap;
 }
@@ -2576,6 +2588,10 @@ h1, h2, h3, h4, h5, p {
 
 .gap-4 {
   gap: 1rem;
+}
+
+.gap-5 {
+  gap: 1.25rem;
 }
 
 .gap-6 {
@@ -2702,6 +2718,10 @@ h1, h2, h3, h4, h5, p {
 
 .whitespace-nowrap {
   white-space: nowrap;
+}
+
+.break-words {
+  overflow-wrap: break-word;
 }
 
 .break-all {
@@ -3982,6 +4002,11 @@ h1, h2, h3, h4, h5, p {
   color: rgb(58 52 199 / var(--tw-text-opacity));
 }
 
+.hover\:text-primary-dark:hover {
+  --tw-text-opacity: 1;
+  color: rgb(var(--color-primary-dark) / var(--tw-text-opacity));
+}
+
 .hover\:text-red-900:hover {
   --tw-text-opacity: 1;
   color: rgb(127 29 29 / var(--tw-text-opacity));
@@ -4085,6 +4110,22 @@ h1, h2, h3, h4, h5, p {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .sm\:flex-row {
+    flex-direction: row;
+  }
+
+  .sm\:items-start {
+    align-items: flex-start;
+  }
+
+  .sm\:items-center {
+    align-items: center;
+  }
+
+  .sm\:justify-end {
+    justify-content: flex-end;
+  }
+
   .sm\:space-y-10 > :not([hidden]) ~ :not([hidden]) {
     --tw-space-y-reverse: 0;
     margin-top: calc(2.5rem * calc(1 - var(--tw-space-y-reverse)));
@@ -4097,6 +4138,10 @@ h1, h2, h3, h4, h5, p {
 
   .sm\:p-10 {
     padding: 2.5rem;
+  }
+
+  .sm\:p-8 {
+    padding: 2rem;
   }
 
   .sm\:px-12 {
@@ -4170,10 +4215,18 @@ h1, h2, h3, h4, h5, p {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .md\:grid-cols-\[minmax\(0\2c 220px\)_1fr\] {
+    grid-template-columns: minmax(0,220px) 1fr;
+  }
+
   .md\:space-x-0 > :not([hidden]) ~ :not([hidden]) {
     --tw-space-x-reverse: 0;
     margin-right: calc(0px * var(--tw-space-x-reverse));
     margin-left: calc(0px * calc(1 - var(--tw-space-x-reverse)));
+  }
+
+  .md\:p-8 {
+    padding: 2rem;
   }
 }
 
@@ -4303,6 +4356,11 @@ h1, h2, h3, h4, h5, p {
   .lg\:px-8 {
     padding-left: 2rem;
     padding-right: 2rem;
+  }
+
+  .lg\:py-12 {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
   }
 
   .lg\:py-2 {
@@ -4465,11 +4523,6 @@ h1, h2, h3, h4, h5, p {
 :is(:where(.dark) .dark\:text-red-400) {
   --tw-text-opacity: 1;
   color: rgb(248 113 113 / var(--tw-text-opacity));
-}
-
-:is(:where(.dark) .dark\:text-slate-200) {
-  --tw-text-opacity: 1;
-  color: rgb(226 232 240 / var(--tw-text-opacity));
 }
 
 :is(:where(.dark) .dark\:text-white) {
