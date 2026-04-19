@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block head_title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<main class="section">
+    <div class="page-container space-y-8">
+        <header class="space-y-6">
+            <a href="{% url 'demo_product_list' %}"
+               class="inline-flex items-center gap-2 text-sm font-semibold text-fg-secondary transition-colors hover:text-primary hover:no-underline">
+                <svg class="h-5 w-5" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                    <path d="M12.5 4.5 7 10l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Products
+            </a>
+            <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+                <div>
+                    <p class="eyebrow">Product detail</p>
+                    <h1 class="h1 mb-2">{{ product.name }}</h1>
+                    <p class="lead max-w-3xl">{{ product.description|default:"No description has been added yet." }}</p>
+                </div>
+                <div class="flex flex-wrap justify-start gap-2 lg:justify-end">
+                    <a href="{% url 'demo_product_delete' product.pk %}" class="btn btn-outlined btn-error">Delete</a>
+                </div>
+            </div>
+        </header>
+
+        <section class="grid gap-4 md:grid-cols-3">
+            <div class="card shadow-speedpyui-1">
+                <div class="card-body py-5">
+                    <p class="eyebrow mb-2">Price</p>
+                    <p class="h2 mb-0">${{ product.price|floatformat:2|intcomma }}</p>
+                </div>
+            </div>
+            <div class="card shadow-speedpyui-1">
+                <div class="card-body py-5">
+                    <p class="eyebrow mb-2">Inventory</p>
+                    <p class="h2 mb-0">{{ product.inventory|intcomma }}</p>
+                    <p class="text-sm text-fg-secondary">{{ product.inventory_label }}</p>
+                </div>
+            </div>
+            <div class="card shadow-speedpyui-1">
+                <div class="card-body py-5">
+                    <p class="eyebrow mb-2">Status</p>
+                    {% if product.status == "active" %}
+                        <span class="badge badge-lg badge-success">{{ product.get_status_display }}</span>
+                    {% elif product.status == "draft" %}
+                        <span class="badge badge-lg badge-warning">{{ product.get_status_display }}</span>
+                    {% else %}
+                        <span class="badge badge-lg badge-secondary">{{ product.get_status_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="grid gap-6 lg:grid-cols-[2fr_1fr]">
+            <div class="card shadow-speedpyui-1">
+                <div class="card-header">
+                    <h2 class="h3 mb-0">Product information</h2>
+                </div>
+                <div class="card-body">
+                    <dl class="grid gap-6 sm:grid-cols-2">
+                        <div>
+                            <dt class="eyebrow mb-1">SKU</dt>
+                            <dd class="font-semibold text-fg">{{ product.sku }}</dd>
+                        </div>
+                        <div>
+                            <dt class="eyebrow mb-1">Category</dt>
+                            <dd class="font-semibold text-fg">{{ product.get_category_display }}</dd>
+                        </div>
+                        <div>
+                            <dt class="eyebrow mb-1">Created</dt>
+                            <dd class="font-semibold text-fg">{{ product.created_at|date:"M j, Y" }}</dd>
+                        </div>
+                        <div>
+                            <dt class="eyebrow mb-1">Updated</dt>
+                            <dd class="font-semibold text-fg">{{ product.updated_at|date:"M j, Y" }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <aside class="card shadow-speedpyui-1">
+                <div class="card-header">
+                    <h2 class="h3 mb-0">Next steps</h2>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{% url 'demo_product_create' %}" class="list-group-item hover:bg-primary/5">
+                            Create another product
+                        </a>
+                        <a href="{% url 'demo_product_list' %}?status={{ product.status }}" class="list-group-item hover:bg-primary/5">
+                            View products with this status
+                        </a>
+                        <a href="{% url 'demo_product_delete' product.pk %}" class="list-group-item text-error hover:bg-error/5">
+                            Delete this product
+                        </a>
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </div>
+</main>
+{% endblock %}

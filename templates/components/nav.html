@@ -1,26 +1,23 @@
 {% load static %}
-<nav class="sticky top-0 z-50 py-2 px-4 leading-6 text-black bg-gray-800 lg:px-6">
+<nav class="top-nav">
     <div
-            class="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl text-black"
+            class="top-nav-inner"
              x-data="{open: false}"
     >
-        <a href="/" class="flex items-center cursor-pointer">
+        <a href="/" class="top-nav-brand">
             <img
                     src="{% static "mainapp/speedpy_logo.png" %}"
-                    class="block mr-3 max-w-full h-6 align-middle sm:h-8"
+                    class="top-nav-logo"
                     alt="SpeedPy Logo"
             />
-            <span
-                    class="self-center text-xl font-semibold leading-7 text-white whitespace-nowrap"
-            >SpeedPy</span
-            >
+            <span class="top-nav-title">SpeedPy</span>
         </a>
-        <div class="flex items-center lg:order-2">
+        <div class="top-nav-actions">
             <!-- Theme Toggle Button -->
             <button
                     id="theme-toggle"
                     type="button"
-                    class="p-2 mr-2 text-gray-400 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
+                    class="top-nav-icon-button mr-2"
                     aria-label="Toggle theme"
                     title="Toggle theme"
             >
@@ -41,11 +38,11 @@
             <button
                     @click="open = !open"
                     type="button"
-                    class="inline-flex items-center p-2 my-0 mr-0 ml-1 text-sm leading-5 text-center text-gray-400 normal-case bg-transparent bg-none rounded-lg cursor-pointer lg:hidden focus:outline-offset-2"
+                    class="top-nav-icon-button ml-1 lg:hidden"
                     aria-controls="mobile-menu-2"
-                    aria-expanded="false"
+                    :aria-expanded="open ? 'true' : 'false'"
             >
-                <span class="border-gray-200 border-solid sr-only">Open main menu</span>
+                <span class="sr-only">Open main menu</span>
                 <svg
                         class="block w-6 h-6 align-middle"
                         fill="currentColor"
@@ -75,54 +72,41 @@
             </button>
         </div>
         <div
-                class="justify-between items-center w-full lg:order-1 lg:flex lg:w-auto"
+                class="top-nav-menu"
                 id="mobile-menu-2"
-                :class="open ? '' : 'hidden'"
+                :class="open ? '!flex' : ''"
         >
-            <ul
-                    class="flex flex-col p-0 mx-0 mt-4 mb-0 font-medium lg:mt-0 lg:flex-row"
-                    style="list-style: none;"
-            >
+            <ul class="top-nav-list">
 
-                <li
-                        class="text-left lg:mr-0 lg:ml-8"
-                >
+                <li class="top-nav-item">
                     <a
                             href="{% url "pricing" %}"
-                            class="block py-2 pr-4 pl-3 text-gray-400 border-t-0 border-b border-gray-700 border-solid cursor-pointer lg:border-0 lg:p-0 hover,lg:bg-transparent border-x-0"
+                            class="top-nav-link"
                     >Pricing</a>
                 </li>
-                <li
-                        class="text-left lg:mr-0 lg:ml-8"
-                >
+                <li class="top-nav-item">
                     <a
                             href="#"
-                            class="block py-2 pr-4 pl-3 text-gray-400 border-t-0 border-b border-gray-700 border-solid cursor-pointer lg:border-0 lg:p-0 hover,lg:bg-transparent border-x-0"
+                            class="top-nav-link"
                     >FAQ</a>
                 </li>
 
-                <li
-                        class="text-left lg:mr-0 lg:ml-8"
-                >
+                <li class="top-nav-item">
                     <a
                             href="{% url "contact" %}"
-                            class="block py-2 pr-4 pl-3 text-gray-400 border-t-0 border-b border-gray-700 border-solid cursor-pointer lg:border-0 lg:p-0 hover,lg:bg-transparent border-x-0"
+                            class="top-nav-link"
                     >Contact</a>
                 </li>
-                <li
-                        class="text-left lg:mr-0 lg:ml-8"
-                >
+                <li class="top-nav-item">
                     <a
                             href="#"
-                            class="block py-2 pr-4 pl-3 text-gray-400 border-t-0 border-b border-gray-700 border-solid cursor-pointer lg:border-0 lg:p-0 hover,lg:bg-transparent border-x-0"
+                            class="top-nav-link"
                     >Blog</a>
                 </li>
-                <li
-                        class="text-left lg:mr-0 lg:ml-8"
-                >
+                <li class="top-nav-item">
                     <a
                             href="#"
-                            class="block py-2 pr-4 pl-3 text-gray-400 border-t-0 border-b border-gray-700 border-solid cursor-pointer lg:border-0 lg:p-0 hover,lg:bg-transparent border-x-0"
+                            class="top-nav-link"
                     >Docs</a>
                 </li>
             </ul>

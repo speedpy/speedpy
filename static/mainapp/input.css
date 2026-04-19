@@ -267,6 +267,15 @@
   .page-header {
     @apply mb-12 mx-auto max-w-2xl text-center;
   }
+  .page-header-actions {
+    @apply mb-12 flex flex-col justify-between gap-4 text-left sm:flex-row sm:items-start;
+  }
+  .page-header-main {
+    @apply max-w-3xl;
+  }
+  .page-header-buttons {
+    @apply flex shrink-0 flex-wrap justify-start gap-3 sm:justify-end;
+  }
   .section {
     @apply overflow-x-hidden bg-background;
   }
@@ -295,7 +304,7 @@
     @apply overflow-hidden rounded-lg border border-divider divide-y divide-divider;
   }
   .list-group-item {
-    @apply p-4;
+    @apply block w-full p-4 text-left text-fg hover:no-underline;
   }
   .account-shell {
     @apply mx-auto max-w-7xl pt-5 lg:flex lg:gap-x-16 lg:px-8;
@@ -308,6 +317,54 @@
   }
   .account-nav-link-active {
     @apply bg-primary/10 text-primary;
+  }
+  .top-nav {
+    @apply sticky top-0 z-50 border-b border-divider bg-background-paper text-fg-secondary shadow-none;
+  }
+  .top-nav-inner {
+    @apply mx-auto flex min-h-16 max-w-screen-xl flex-wrap items-center justify-between px-4 lg:px-6;
+  }
+  .top-nav-brand {
+    @apply flex items-center text-fg hover:text-fg hover:no-underline;
+  }
+  .top-nav-logo {
+    @apply mr-3 h-6 max-w-full align-middle sm:h-8;
+  }
+  .top-nav-title {
+    @apply self-center whitespace-nowrap text-xl font-semibold leading-7 text-fg;
+  }
+  .top-nav-actions {
+    @apply flex items-center lg:order-2;
+  }
+  .top-nav-menu {
+    @apply hidden w-full items-center justify-between lg:order-1 lg:flex lg:w-auto;
+  }
+  .top-nav-list {
+    @apply m-0 flex list-none flex-col p-0 font-semibold lg:flex-row lg:items-center;
+  }
+  .top-nav-item {
+    @apply text-left lg:ml-8;
+  }
+  .top-nav-link {
+    @apply block border-b border-divider px-3 py-2 text-fg-secondary transition-colors hover:text-primary hover:no-underline lg:border-0 lg:p-0;
+  }
+  .top-nav-icon-button {
+    @apply inline-flex items-center justify-center rounded-lg p-2 text-fg-secondary transition-colors hover:bg-primary/5 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40;
+  }
+  .top-nav-user-button {
+    @apply flex items-center gap-x-1 rounded-full p-0.5 transition-colors hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/40;
+  }
+  .top-nav-auth-link {
+    @apply inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold leading-5 text-fg-secondary transition-colors hover:bg-primary/5 hover:text-primary hover:no-underline focus:outline-none focus:ring-2 focus:ring-primary/40;
+  }
+  .top-nav-dropdown {
+    @apply absolute right-0 z-50 my-4 w-56 overflow-hidden rounded-lg border border-divider bg-background-paper text-base shadow-speedpyui-16;
+  }
+  .top-nav-dropdown-header {
+    @apply border-b border-divider px-4 py-3;
+  }
+  .top-nav-dropdown-link {
+    @apply block px-4 py-2 text-sm font-medium text-fg-secondary transition-colors hover:bg-primary/5 hover:text-primary;
   }
   .sidebar {
     @apply flex h-full flex-col overflow-y-auto bg-neutral-900 px-4 py-5;

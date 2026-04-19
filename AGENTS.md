@@ -141,6 +141,15 @@ Re-use these `@layer components` classes from `input.css` rather than hand-rolli
 Open `/speedpyui-preview/` before adding or changing UI. It shows rendered examples and
 copyable snippets for the current SpeedPy UI primitives.
 
+Full-page demos that are meant to teach boilerplate users should live in `demoapp`, not
+`mainapp`. Keep them conventional and easy to copy: model in `demoapp/models.py`, form in
+`demoapp/forms.py`, generic class-based views in `demoapp/views.py`, routes in
+`demoapp/urls.py`, and templates under `templates/demoapp/`. The Product CRUD demo at
+`/demo/products/` is the canonical example for `ListView`, `CreateView`, `DetailView`, and
+`DeleteView` screens using SpeedPy UI classes. Do not seed demo rows in migrations; expose
+an explicit POST action, like the Product "Generate demo products" button, and only show it
+when the demo table is empty.
+
 **Buttons** — compose three axes: variant + color + size. Size defaults to `btn-md`.
 
 ```html
@@ -177,6 +186,10 @@ long wrapper and heading utilities:
 ```
 
 - Layout: `section`, `section-paper`, `page-container`, `page-header`, `section-header`
+- Page headers with top-level actions must use the action layout:
+  `page-header-actions` with `page-header-main` for copy and `page-header-buttons` for
+  actions. Top-level action buttons (Add, Create, Delete, Generate, etc.) belong on the
+  right on desktop, never centered under the title.
 - Typography: `h1`, `h2`, `h3`, `h4`, `h5`, `eyebrow`, `lead`
 - Icons and avatars: `media-icon`, `avatar-sm`, `avatar-xs`
 
@@ -214,6 +227,11 @@ links rather than repeating link classes:
 ```
 
 - Account: `account-shell`, `account-nav`, `account-nav-link`, `account-nav-link-active`
+- Top nav: `top-nav`, `top-nav-inner`, `top-nav-brand`, `top-nav-logo`,
+  `top-nav-title`, `top-nav-actions`, `top-nav-menu`, `top-nav-list`,
+  `top-nav-item`, `top-nav-link`, `top-nav-icon-button`, `top-nav-user-button`,
+  `top-nav-auth-link`, `top-nav-dropdown`, `top-nav-dropdown-header`,
+  `top-nav-dropdown-link`
 - Sidebar: `sidebar`, `sidebar-brand`, `sidebar-brand-text`, `sidebar-section-label`,
   `sidebar-nav`, `sidebar-link`, `sidebar-link-active`, `sidebar-link-icon`,
   `sidebar-divider`, `sidebar-select`, `sidebar-dropdown`, `sidebar-dropdown-item`,
@@ -233,6 +251,10 @@ Alpine 3.15.x is loaded via `templates/base.html`. A few gotchas we hit the hard
   element never becomes visible. Toggle visibility with `x-show` + `x-cloak` only; if you
   need a fade, use explicit `x-transition:enter-*` / `x-transition:leave-*` class directives
   with CSS classes, not the bare `x-transition` shortcut.
+- **Do not toggle `hidden` on `.top-nav-menu`.** The desktop navigation is shown by the
+  component class via `lg:flex`; adding a runtime `hidden` class after Alpine initializes
+  can override it and make the links disappear on desktop. Keep `.top-nav-menu` hidden by
+  default in CSS and use `:class="open ? '!flex' : ''"` for the mobile-open state.
 - Use `x-model` on the hidden checkbox inside a `.switch` to bind a boolean state. See
   `templates/mainapp/pricing.html` for the monthly / yearly toggle example
   (`x-model="yearly"`, `x-text="yearly ? '$801' : '$89'"`).

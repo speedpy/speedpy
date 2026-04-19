@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block head_title %}Delete {{ product.name }}{% endblock %}
+
+{% block content %}
+<main class="section">
+    <div class="page-container max-w-3xl space-y-8">
+        <header class="section-header text-left mx-0">
+            <p class="eyebrow">Demo app</p>
+            <h1 class="h1 mb-2">Delete product</h1>
+            <p class="lead">
+                Confirming this removes the demo product from the database.
+            </p>
+        </header>
+
+        <section class="card shadow-speedpyui-1">
+            <div class="card-header">
+                <h2 class="h3 mb-1">{{ product.name }}</h2>
+                <p class="lead mb-0">{{ product.sku }}</p>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-error">
+                    This action cannot be undone.
+                </div>
+            </div>
+            <div class="card-footer">
+                <form method="post" class="flex flex-wrap gap-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-contained btn-error">
+                        Delete product
+                    </button>
+                    <a href="{{ product.get_absolute_url }}" class="btn btn-outlined btn-inherit">
+                        Cancel
+                    </a>
+                </form>
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock %}

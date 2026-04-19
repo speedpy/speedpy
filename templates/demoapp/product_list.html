@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block head_title %}Product CRUD Demo{% endblock %}
+
+{% block content %}
+<main class="section">
+    <div class="page-container space-y-8">
+        <header class="page-header-actions">
+            <div class="page-header-main">
+                <p class="eyebrow">Demo app</p>
+                <h1 class="h1 mb-2">Products</h1>
+                <p class="lead max-w-3xl">
+                    A small CRUD example built with Django generic views and SpeedPy UI classes.
+                </p>
+            </div>
+            <div class="page-header-buttons">
+                {% if can_populate_demo_products %}
+                    <form method="post" action="{% url 'demo_product_populate' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outlined btn-primary">
+                            Generate demo products
+                        </button>
+                    </form>
+                {% endif %}
+                <a href="{% url 'demo_product_create' %}" class="btn btn-contained btn-primary">
+                    Add product
+                </a>
+            </div>
+        </header>
+
+        <section class="grid gap-4 md:grid-cols-3">
+            <div class="card shadow-speedpyui-1">
+                <div class="card-body py-5">
+                    <p class="eyebrow mb-2">Total</p>
+                    <p class="h2 mb-0">{{ total_products|intcomma }}</p>
+                </div>
+            </div>
+            <div class="card shadow-speedpyui-1">
+                <div class="card-body py-5">
+                    <p class="eyebrow mb-2">Active</p>
+                    <p class="h2 mb-0">{{ active_products|intcomma }}</p>
+                </div>
+            </div>
+            <div class="card shadow-speedpyui-1">
+                <div class="card-body py-5">
+                    <p class="eyebrow mb-2">Draft</p>
+                    <p class="h2 mb-0">{{ draft_products|intcomma }}</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card shadow-speedpyui-1">
+            <div class="card-header">
+                <form method="get" class="grid gap-4 lg:grid-cols-[1fr_12rem_12rem_auto]">
+                    <div class="form-field mb-0">
+                        <label for="product-search" class="input-label">Search</label>
+                        <input id="product-search"
+                               class="input-outlined"
+                               type="search"
+                               name="q"
+                               value="{{ request.GET.q }}"
+                               placeholder="Search by name or SKU">
+                    </div>
+                    <div class="form-field mb-0">
+                        <label for="product-category" class="input-label">Category</label>
+                        <select id="product-category" class="select-outlined" name="category">
+                            <option value="">All categories</option>
+                            {% for value, label in categories %}
+                                <option value="{{ value }}"{% if request.GET.category == value %} selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-field mb-0">
+                        <label for="product-status" class="input-label">Status</label>
+                        <select id="product-status" class="select-outlined" name="status">
+                            <option value="">All statuses</option>
+                            {% for value, label in statuses %}
+                                <option value="{{ value }}"{% if request.GET.status == value %} selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button type="submit" class="btn btn-contained btn-primary">Filter</button>
+                        <a href="{% url 'demo_product_list' %}" class="btn btn-text btn-inherit">Reset</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Price</th>
+                        <th>Inventory</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for product in products %}
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <span class="media-icon h-10 w-10 text-sm">{{ product.name|slice:":1" }}</span>
+                                    <div>
+                                        <a href="{{ product.get_absolute_url }}" class="font-semibold text-fg hover:text-primary">
+                                            {{ product.name }}
+                                        </a>
+                                        <p class="mt-1 text-xs text-fg-secondary">{{ product.sku }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ product.get_category_display }}</td>
+                            <td>
+                                {% if product.status == "active" %}
+                                    <span class="badge badge-success">{{ product.get_status_display }}</span>
+                                {% elif product.status == "draft" %}
+                                    <span class="badge badge-warning">{{ product.get_status_display }}</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ product.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>${{ product.price|floatformat:2|intcomma }}</td>
+                            <td>
+                                <span class="font-semibold text-fg">{{ product.inventory|intcomma }}</span>
+                                <span class="text-fg-secondary">({{ product.inventory_label }})</span>
+                            </td>
+                            <td class="text-right">
+                                <div class="flex justify-end gap-2">
+                                    <a href="{{ product.get_absolute_url }}" class="btn btn-text btn-primary btn-sm">View</a>
+                                    <a href="{% url 'demo_product_delete' product.pk %}" class="btn btn-text btn-error btn-sm">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-fg-secondary">
+                                {% if can_populate_demo_products %}
+                                    No products yet. Generate demo products or add one manually.
+                                {% else %}
+                                    No products match the current filters.
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+                <div class="card-footer flex items-center justify-between">
+                    <p class="text-sm text-fg-secondary">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </p>
+                    <div class="flex gap-2">
+                        {% if page_obj.has_previous %}
+                            <a class="btn btn-outlined btn-inherit btn-sm"
+                               href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                Previous
+                            </a>
+                        {% endif %}
+                        {% if page_obj.has_next %}
+                            <a class="btn btn-outlined btn-inherit btn-sm"
+                               href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                Next
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</main>
+{% endblock %}

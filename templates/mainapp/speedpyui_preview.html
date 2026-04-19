@@ -194,6 +194,60 @@
             </div>
         </section>
 
+        {# ---------- CRUD screens ---------- #}
+        <section class="space-y-6">
+            <div class="section-header text-left mx-0">
+                <p class="eyebrow">Demo App</p>
+                <h2 class="h2">CRUD Screens</h2>
+                <p class="lead">
+                    A complete Product example shows how the component classes fit regular Django generic views.
+                </p>
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <a href="{% url "demo_product_list" %}" class="btn btn-contained btn-primary">
+                        Open Product CRUD demo
+                    </a>
+                    <a href="{% url "demo_product_create" %}" class="btn btn-outlined btn-primary">
+                        Open CreateView
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="card shadow-speedpyui-1">
+                    <div class="card-header">
+                        <h3 class="h3 mb-1">What is included</h3>
+                        <p class="lead mb-0">List, create, detail, and delete pages live in `demoapp`.</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="{% url "demo_product_list" %}" class="list-group-item hover:bg-primary/5">
+                                Product ListView
+                            </a>
+                            <a href="{% url "demo_product_create" %}" class="list-group-item hover:bg-primary/5">
+                                Product CreateView
+                            </a>
+                            <span class="list-group-item text-fg-secondary">
+                                Product DetailView and DeleteView are linked from each product row.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>class ProductListView(ListView):
+    model = Product
+    template_name = "demoapp/product_list.html"
+    context_object_name = "products"
+
+class ProductCreateView(CreateView):
+    model = Product
+    form_class = ProductForm
+    template_name = "demoapp/product_form.html"</code></pre>
+                </div>
+            </div>
+        </section>
+
         {# ---------- Surfaces ---------- #}
         <section class="space-y-6">
             <div class="section-header text-left mx-0">

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}Create Product{% endblock %}
+
+{% block content %}
+<main class="section">
+    <div class="page-container space-y-8">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">Demo app</p>
+                <h1 class="h1 mb-2">Create product</h1>
+                <p class="lead max-w-3xl">
+                    A `CreateView` using a regular Django `ModelForm` rendered by crispy forms.
+                </p>
+            </div>
+            <a href="{% url 'demo_product_list' %}" class="btn btn-text btn-primary">
+                Back to products
+            </a>
+        </header>
+
+        <form method="post" novalidate class="space-y-6">
+            {% csrf_token %}
+            <section class="card shadow-speedpyui-1">
+                <div class="card-header">
+                    <h2 class="h3 mb-1">Basic details</h2>
+                    <p class="lead mb-0">Keep the form declarative in Python and let the component classes handle the surface.</p>
+                </div>
+                <div class="card-body">
+                    {% crispy form %}
+                </div>
+            </section>
+        </form>
+    </div>
+</main>
+{% endblock %}
