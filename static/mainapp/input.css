@@ -257,6 +257,54 @@
   }
 
   /* ==========================================================================
+   * LAYOUT, TYPOGRAPHY, AND CONTENT PRIMITIVES
+   * Bootstrap-like class names backed by SpeedpyUI tokens.
+   * ========================================================================== */
+
+  .page-container {
+    @apply mx-auto w-full max-w-6xl px-6 py-20;
+  }
+  .page-header {
+    @apply mb-12 mx-auto max-w-2xl text-center;
+  }
+  .section {
+    @apply overflow-x-hidden bg-background;
+  }
+  .section-paper {
+    @apply overflow-x-hidden bg-background-paper border-y border-divider;
+  }
+  .section-header {
+    @apply mb-12 mx-auto max-w-2xl text-center;
+  }
+  .eyebrow {
+    @apply mb-1 text-sm font-semibold uppercase text-fg-secondary;
+  }
+  .lead {
+    @apply text-base leading-7 text-fg-secondary sm:text-lg;
+  }
+  .media-icon {
+    @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary;
+  }
+  .list-group {
+    @apply overflow-hidden rounded-lg border border-divider divide-y divide-divider;
+  }
+  .list-group-item {
+    @apply p-4;
+  }
+  .account-shell {
+    @apply mx-auto max-w-7xl pt-5 lg:flex lg:gap-x-16 lg:px-8;
+  }
+  .account-nav {
+    @apply flex gap-x-3 gap-y-1 whitespace-nowrap lg:flex-col;
+  }
+  .account-nav-link {
+    @apply block rounded-lg p-3 text-fg transition-colors hover:bg-primary/5 hover:text-primary;
+  }
+  .account-nav-link-active {
+    @apply bg-primary/10 text-primary;
+  }
+
+  /* ==========================================================================
    * LEGACY / PHASE 2+ COMPONENTS (preserved verbatim from pre-SpeedpyUI input.css
    * for cards, alerts, badges, tables, modals, nav, dropdowns, tabs, accordion,
    * tooltip, progress, blockquotes, display headings, layout grid, prose. These
@@ -265,8 +313,9 @@
    * utilities which still work because we provide a numbered primary scale.)
    * ========================================================================== */
 
+  html,
   body {
-    @apply font-sans bg-background text-fg antialiased;
+    @apply overflow-x-hidden font-sans bg-background text-fg antialiased;
   }
   .col {
     @apply relative w-full px-5;
@@ -278,40 +327,48 @@
     @apply px-4 py-2 border-b-2 hover:text-primary ring-0 focus:outline-none;
   }
   .card {
-    @apply relative flex flex-col overflow-hidden shadow-md rounded-md bg-white dark:bg-neutral-800;
+    @apply relative flex flex-col overflow-hidden rounded-lg border border-divider bg-background-paper text-fg shadow-speedpyui-16;
   }
   .card-body {
-    @apply p-5 flex-grow;
+    @apply flex-grow p-6 sm:p-8;
   }
   .card-footer {
-    @apply px-5 py-3 bg-gray-100;
+    @apply border-t border-divider px-6 py-4 sm:px-8;
   }
   .card-header {
-    @apply px-5 py-3 bg-gray-100;
+    @apply border-b border-divider px-6 py-5 sm:px-8;
   }
   .alert {
-    @apply flex flex-row rounded-md px-3 py-2 text-gray-700 bg-gray-100 transition-opacity duration-300;
+    @apply flex rounded-lg border px-4 py-3 text-sm transition-opacity duration-300;
   }
-  .alert-info      { @apply text-info-600    bg-info-50; }
-  .alert-light     { @apply text-gray-600    bg-gray-50; }
-  .alert-danger    { @apply text-red-600     bg-red-50; }
-  .alert-neutral   { @apply text-neutral-600 bg-neutral-50; }
-  .alert-primary   { @apply text-primary-700 bg-primary-50; }
-  .alert-success   { @apply text-green-600   bg-green-50; }
-  .alert-warning   { @apply text-yellow-600  bg-yellow-50; }
-  .alert-tertiary  { @apply text-purple-600  bg-purple-50; }
-  .alert-secondary { @apply text-secondary-dark bg-secondary/10; }
+  .alert-info      { @apply border-info/30 bg-info/10 text-fg; }
+  .alert-light     { @apply border-divider bg-background-paper text-fg; }
+  .alert-danger,
+  .alert-error     { @apply border-error/30 bg-error/10 text-fg; }
+  .alert-neutral   { @apply border-divider bg-background text-fg; }
+  .alert-primary   { @apply border-primary/30 bg-primary/10 text-fg; }
+  .alert-success   { @apply border-success/30 bg-success/10 text-fg; }
+  .alert-warning   { @apply border-warning/30 bg-warning/10 text-fg; }
+  .alert-tertiary  { @apply border-secondary/30 bg-secondary/10 text-fg; }
+  .alert-secondary { @apply border-secondary/30 bg-secondary/10 text-fg; }
   .badge {
-    @apply inline-block px-2 py-0.5 rounded text-xs text-white font-semibold;
+    @apply inline-flex items-center gap-2 rounded px-2 py-0.5 text-xs font-semibold;
   }
   .badge-lg {
-    @apply px-3 py-1 rounded text-sm text-white font-semibold;
+    @apply inline-flex items-center gap-2 rounded px-3 py-1 text-sm font-semibold;
   }
-  .badge-light-success { @apply bg-green-100   text-green-700; }
-  .badge-light-warning { @apply bg-yellow-100  text-yellow-700; }
-  .badge-light-danger  { @apply bg-red-100     text-red-700; }
-  .badge-light-info    { @apply bg-blue-100    text-blue-700; }
-  .badge-light-primary { @apply bg-primary-100 text-primary-700; }
+  .badge-primary,
+  .badge-light-primary { @apply bg-primary/10 text-primary; }
+  .badge-success,
+  .badge-light-success { @apply bg-success/10 text-success; }
+  .badge-warning,
+  .badge-light-warning { @apply bg-warning/10 text-warning; }
+  .badge-danger,
+  .badge-error,
+  .badge-light-danger  { @apply bg-error/10 text-error; }
+  .badge-info,
+  .badge-light-info    { @apply bg-info/10 text-info; }
+  .badge-secondary     { @apply bg-secondary/10 text-secondary; }
   .fa-ul { @apply ml-6; }
   .modal {
     @apply fixed left-0 top-0 w-screen h-screen overflow-auto z-50 transition-opacity duration-500 opacity-0;
@@ -325,16 +382,17 @@
   .modal-content {
     @apply relative m-auto mt-16 bg-gray-100 shadow-lg z-40 max-w-md;
   }
-  .table { @apply min-w-full; }
-  .table>tbody>tr { @apply bg-white border-b; }
-  .table-hover>tbody>tr { @apply hover:bg-gray-200; }
+  .table { @apply min-w-full divide-y divide-divider text-fg; }
+  .table>tbody { @apply divide-y divide-divider; }
+  .table>tbody>tr { @apply bg-background-paper; }
+  .table-hover>tbody>tr { @apply hover:bg-primary/5; }
   .table-sm>tbody>tr>td { @apply py-1; }
   .table-sm>thead>tr>th { @apply py-1; }
-  .table-striped>tbody>tr { @apply even:bg-gray-100; }
-  .table-striped>thead>tr { @apply bg-gray-50 border-b border-gray-300; }
-  .table>thead { @apply bg-gray-50; }
-  .table>tbody>tr>td { @apply py-3 px-4 text-sm text-gray-900; }
-  .table>thead>tr>th { @apply py-3 px-4 text-xs font-semibold text-left text-gray-700; }
+  .table-striped>tbody>tr { @apply even:bg-background; }
+  .table-striped>thead>tr { @apply border-b border-divider bg-background; }
+  .table>thead { @apply bg-background; }
+  .table>tbody>tr>td { @apply px-4 py-3 text-sm text-fg; }
+  .table>thead>tr>th { @apply px-4 py-3 text-left text-xs font-semibold uppercase text-fg-secondary; }
   .navbar { @apply z-20 py-3 relative; }
   .navbar-btn { @apply w-6 mr-5 cursor-pointer select-none rounded md:hidden; }
   .navbar-col { @apply flex flex-col items-center mt-3 space-y-4 md:flex-row md:space-x-4 md:space-y-0 md:mt-0; }
@@ -381,11 +439,11 @@
   [data-popper-placement^='bottom'] > [data-popper-arrow] { @apply -top-2; }
   .container { @apply w-full max-w-full lg:max-w-[calc(min(100vw-60px,1220px))] mx-auto px-5; }
   .container-fluid { @apply w-full max-w-full mx-auto px-5; }
-  h1, .h1 { @apply text-[calc(1.375rem+1.5vw)] xl:text-5xl; }
-  h2, .h2 { @apply text-[calc(1.325rem+0.9vw)] xl:text-4xl; }
-  h3, .h3 { @apply text-[calc(1.3rem+0.6vw)] xl:text-3xl; }
-  h4, .h4 { @apply text-[calc(1.275rem+0.3vw)] xl:text-2xl; }
-  h5, .h5 { @apply text-xl; }
+  h1, .h1 { @apply text-4xl font-bold leading-tight text-fg lg:text-5xl; }
+  h2, .h2 { @apply text-3xl font-bold leading-tight text-fg lg:text-4xl; }
+  h3, .h3 { @apply text-xl font-semibold leading-snug text-fg; }
+  h4, .h4 { @apply text-lg font-semibold leading-snug text-fg; }
+  h5, .h5 { @apply text-base font-semibold leading-snug text-fg; }
   h1, h2, h3, h4, h5, p { @apply mb-3; }
   .display-1 { @apply text-[calc(1.625rem+4.5vw)] lg:text-[5rem] leading-[1.2] font-light; }
   .display-2 { @apply text-[calc(1.575rem+3.9vw)] lg:text-[4.5rem] leading-[1.2] font-light; }

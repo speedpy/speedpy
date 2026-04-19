@@ -1,89 +1,83 @@
-{% extends "account/base_manage_email.html" %}
+{% extends "account/base_manage.html" %}
 {% load allauth i18n %}
 {% load crispy_forms_tags static %}
+
 {% block head_title %}
     {% trans "Email Addresses" %}
 {% endblock head_title %}
+
 {% block main_content %}
-
-        <div class="sm:w-full sm:max-w-md">
-            <h2 class="text-xl font-bold tracking-tight text-fg px-6 pt-6 sm:px-12">
-                {% trans "Email Addresses" %}
-            </h2>
-
-        </div>
-        <div class="sm:mx-auto sm:w-full ">
-            <div class="px-6 py-8 sm:px-12">
-                {% if emailaddresses %}
-                    <p class="mb-4 text-fg">{% trans 'The following email addresses are associated with your account:' %}</p>
-                    {% url 'account_email' as email_url %}
-                    {% element form form=form action=email_url method="post" %}
-                        {% slot body %}
-                            {% csrf_token %}
-                            <ul class="space-y-2 mb-4">
-                            {% for radio in emailaddress_radios %}
-                                {% with emailaddress=radio.emailaddress %}
-                                <li>
-                                    <label class="flex items-start gap-3 p-3 rounded-lg border border-divider hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer">
-                                        <input type="radio"
-                                               class="radio mt-0.5"
-                                               name="email"
-                                               value="{{ emailaddress.email }}"
-                                               id="{{ radio.id }}"
-                                               {% if radio.checked %}checked{% endif %}>
-                                        <span class="flex flex-wrap items-center gap-2 text-fg">
-                                            <span class="font-medium">{{ emailaddress.email }}</span>
-                                            {% if emailaddress.verified %}
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-success/10 text-success">
-                                                    {% translate "Verified" %}
-                                                </span>
-                                            {% else %}
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-warning/10 text-warning">
-                                                    {% translate "Unverified" %}
-                                                </span>
-                                            {% endif %}
-                                            {% if emailaddress.primary %}
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary">
-                                                    {% translate "Primary" %}
-                                                </span>
-                                            {% endif %}
+    <div class="card-header">
+        <h2 class="h3 mb-0">{% trans "Email Addresses" %}</h2>
+    </div>
+    <div class="card-body">
+        {% if emailaddresses %}
+            <p class="text-fg">{% trans 'The following email addresses are associated with your account:' %}</p>
+            {% url 'account_email' as email_url %}
+            {% element form form=form action=email_url method="post" %}
+                {% slot body %}
+                    {% csrf_token %}
+                    <ul class="list-group mb-4">
+                    {% for radio in emailaddress_radios %}
+                        {% with emailaddress=radio.emailaddress %}
+                        <li>
+                            <label class="list-group-item flex cursor-pointer items-start gap-3 transition-colors hover:bg-primary/5">
+                                <input type="radio"
+                                       class="radio mt-0.5"
+                                       name="email"
+                                       value="{{ emailaddress.email }}"
+                                       id="{{ radio.id }}"
+                                       {% if radio.checked %}checked{% endif %}>
+                                <span class="flex flex-wrap items-center gap-2 text-fg">
+                                    <span class="font-medium">{{ emailaddress.email }}</span>
+                                    {% if emailaddress.verified %}
+                                        <span class="badge badge-success">
+                                            {% translate "Verified" %}
                                         </span>
-                                    </label>
-                                </li>
-                                {% endwith %}
-                            {% endfor %}
-                            </ul>
-                        {% endslot %}
+                                    {% else %}
+                                        <span class="badge badge-warning">
+                                            {% translate "Unverified" %}
+                                        </span>
+                                    {% endif %}
+                                    {% if emailaddress.primary %}
+                                        <span class="badge badge-primary">
+                                            {% translate "Primary" %}
+                                        </span>
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </li>
+                        {% endwith %}
+                    {% endfor %}
+                    </ul>
+                {% endslot %}
 
-                        {% slot actions %}
-                            <div class="py-4 flex flex-wrap gap-2">
-                                <button type="submit" name="action_primary" class="btn btn-contained btn-primary btn-sm">
-                                    {% trans 'Make Primary' %}
-                                </button>
-                                <button type="submit" name="action_send" class="btn btn-outlined btn-primary btn-sm">
-                                    {% trans 'Re-send Verification' %}
-                                </button>
-                                <button type="submit" name="action_remove" class="btn btn-outlined btn-error btn-sm">
-                                    {% trans 'Remove' %}
-                                </button>
-                            </div>
-                        {% endslot %}
+                {% slot actions %}
+                    <div class="flex flex-wrap gap-2 py-4">
+                        <button type="submit" name="action_primary" class="btn btn-contained btn-primary btn-sm">
+                            {% trans 'Make Primary' %}
+                        </button>
+                        <button type="submit" name="action_send" class="btn btn-outlined btn-primary btn-sm">
+                            {% trans 'Re-send Verification' %}
+                        </button>
+                        <button type="submit" name="action_remove" class="btn btn-outlined btn-error btn-sm">
+                            {% trans 'Remove' %}
+                        </button>
+                    </div>
+                {% endslot %}
 
-                    {% endelement %}
-                {% else %}
-                    {% include "account/snippets/warn_no_email.html" %}
-                {% endif %}
-                {% if can_add_email %}
-                    <h3 class="mt-6 text-xl font-semibold leading-9 tracking-tight text-fg">
-                        {% trans "Add Email Address" %}
-                    </h3>
-                    {% url 'account_email' as action_url %}
-                    {% crispy form %}
-                {% endif %}
-            </div>
-        </div>
-
+            {% endelement %}
+        {% else %}
+            {% include "account/snippets/warn_no_email.html" %}
+        {% endif %}
+        {% if can_add_email %}
+            <h3 class="h3 mt-6">{% trans "Add Email Address" %}</h3>
+            {% url 'account_email' as action_url %}
+            {% crispy form %}
+        {% endif %}
+    </div>
 {% endblock main_content %}
+
 {% block extra_body %}
     <script type="text/javascript">
       (function () {

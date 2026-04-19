@@ -2,24 +2,22 @@
 {% block head_title %}My Dashboard{% endblock %}
 {% block main_content %}
 <main class="w-full">
-    <div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:py-12">
-        <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-                <p class="mb-1 text-sm font-semibold uppercase text-fg-secondary">Overview</p>
-                <h1 class="mb-0 text-3xl font-semibold leading-tight text-fg">My Dashboard</h1>
-            </div>
+    <div class="page-container max-w-5xl py-8 lg:py-12">
+        <div class="page-header mx-0 mb-6 text-left">
+            <p class="eyebrow">Overview</p>
+            <h1 class="h2 mb-0">My Dashboard</h1>
         </div>
 
-        <section class="rounded-lg border border-divider bg-background-paper shadow-speedpyui-16">
-            <div class="p-6 sm:p-8">
+        <section class="card">
+            <div class="card-body">
                 <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <div class="media-icon">
                         <svg class="h-6 w-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                             <path d="M3.5 10.5h5v6h-5v-6ZM11.5 3.5h5v13h-5v-13ZM3.5 3.5h5v4h-5v-4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
                         </svg>
                     </div>
                     <div class="min-w-0">
-                        <h2 class="mb-2 text-xl font-semibold text-fg">Start from here</h2>
+                        <h2 class="h3 mb-2">Start from here</h2>
                         <p class="mb-5 max-w-2xl text-sm leading-6 text-fg-secondary">
                             Edit this file to build your own dashboard.
                         </p>

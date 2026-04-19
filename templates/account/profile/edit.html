@@ -5,34 +5,30 @@
 {% block head_title %}{% trans "Your Profile" %}{% endblock %}
 
 {% block main_content %}
-    <div class="sm:w-full sm:max-w-md">
-        <h2 class="text-xl font-bold tracking-tight text-fg px-6 pt-6 sm:px-12">
-            {% trans "Your Profile" %}
-        </h2>
+    <div class="card-header">
+        <h2 class="h3 mb-0">{% trans "Your Profile" %}</h2>
     </div>
-    <div class="sm:mx-auto sm:w-full">
-        <div class="px-6 py-8 sm:px-12">
-            <form method="post" enctype="multipart/form-data" novalidate>
-                {% csrf_token %}
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
 
-                <div class="mb-6 flex items-center gap-4">
-                    {% if user.profile_picture %}
-                        <img src="{{ user.profile_picture.url }}"
-                             alt="{{ user.get_full_name|default:user.email }}"
-                             class="h-24 w-24 rounded-full object-cover border border-divider">
-                    {% else %}
-                        <div class="h-24 w-24 rounded-full bg-neutral-200 dark:bg-neutral-700 border border-divider flex items-center justify-center text-2xl font-semibold text-fg">
-                            {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
-                        </div>
-                    {% endif %}
-                    <div class="text-sm text-fg">
-                        <p class="font-medium">{{ user.get_full_name|default:user.email }}</p>
-                        <p class="text-neutral-500">{{ user.email }}</p>
+            <div class="mb-6 flex items-center gap-4">
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}"
+                         alt="{{ user.get_full_name|default:user.email }}"
+                         class="h-24 w-24 rounded-full border border-divider object-cover">
+                {% else %}
+                    <div class="media-icon h-24 w-24 rounded-full border border-divider bg-background text-2xl font-semibold text-fg">
+                        {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
                     </div>
+                {% endif %}
+                <div class="text-sm text-fg">
+                    <p class="font-medium">{{ user.get_full_name|default:user.email }}</p>
+                    <p class="text-fg-secondary">{{ user.email }}</p>
                 </div>
+            </div>
 
-                {% crispy form %}
-            </form>
-        </div>
+            {% crispy form %}
+        </form>
     </div>
 {% endblock %}

@@ -124,7 +124,7 @@ class UsermodelChangePasswordForm(ChangePasswordForm):
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Field("oldpassword", "password1", "password2"),
-            Submit("submit", _("Change password")),
+            Submit("submit", _("Change password"), css_class="btn btn-contained btn-primary"),
         )
 
 
@@ -134,7 +134,7 @@ class UsermodelAddEmailForm(AddEmailForm):
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Field("email"),
-            Submit("action_add", value=_("Add email")),
+            Submit("action_add", value=_("Add email"), css_class="btn btn-contained btn-primary"),
         )
 
 
@@ -159,7 +159,6 @@ class UserProfileForm(forms.ModelForm):
             Submit(
                 "submit",
                 _("Save changes"),
-                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
-                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
+                css_class="btn btn-contained btn-primary",
             ),
         )

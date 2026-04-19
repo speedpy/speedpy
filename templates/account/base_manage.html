@@ -1,35 +1,35 @@
 {% extends "allauth/layouts/manage.html" %}
 {% load i18n %}
 {% block content %}
-    <div class="mx-auto max-w-7xl pt-5 lg:flex lg:gap-x-16 lg:px-8">
+    <div class="account-shell">
         <aside class="flex overflow-x-auto border-b border-divider py-4 lg:block lg:w-64 lg:flex-none lg:border-0 lg:py-20">
             <nav class="flex-none px-4 sm:px-6 lg:px-0">
                 {% url "account_profile" as profile_url %}
                 {% url "account_change_password" as password_url %}
                 {% url "account_email" as email_url %}
                 {% url "account_otp_settings" as otp_url %}
-                <ul role="list" class="flex gap-x-3 gap-y-1 whitespace-nowrap lg:flex-col">
+                <ul role="list" class="account-nav">
                     <li>
                         <a href="{{ profile_url }}"
-                           class="block p-3 rounded-lg text-fg hover:bg-neutral-100 dark:hover:bg-neutral-800 {% if request.path == profile_url %}bg-primary/10 text-primary{% endif %}">
+                           class="account-nav-link {% if request.path == profile_url %}account-nav-link-active{% endif %}">
                             <span class="font-semibold">{% trans "Your Profile" %}</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ password_url }}"
-                           class="block p-3 rounded-lg text-fg hover:bg-neutral-100 dark:hover:bg-neutral-800 {% if request.path == password_url %}bg-primary/10 text-primary{% endif %}">
+                           class="account-nav-link {% if request.path == password_url %}account-nav-link-active{% endif %}">
                             <span class="font-semibold">{% trans "Change Password" %}</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ email_url }}"
-                           class="block p-3 rounded-lg text-fg hover:bg-neutral-100 dark:hover:bg-neutral-800 {% if request.path == email_url %}bg-primary/10 text-primary{% endif %}">
+                           class="account-nav-link {% if request.path == email_url %}account-nav-link-active{% endif %}">
                             <span class="font-semibold">{% trans "Change Email" %}</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ otp_url }}"
-                           class="block p-3 rounded-lg text-fg hover:bg-neutral-100 dark:hover:bg-neutral-800 {% if request.path == otp_url %}bg-primary/10 text-primary{% endif %}">
+                           class="account-nav-link {% if request.path == otp_url %}account-nav-link-active{% endif %}">
                             <span class="font-semibold">{% trans "Two-Factor Authentication" %}</span>
                         </a>
                     </li>
@@ -37,7 +37,7 @@
             </nav>
         </aside>
         <main class="px-4 py-16 sm:px-6 lg:flex-auto lg:px-0 lg:py-20">
-            <div class="mx-auto max-w-2xl space-y-16 sm:space-y-10 lg:mx-0 lg:max-w-none bg-background-paper border border-divider shadow-speedpyui-1 sm:rounded-lg">
+            <div class="card mx-auto max-w-2xl shadow-speedpyui-1 lg:mx-0 lg:max-w-none">
                 {% block main_content %}
                 {% endblock %}
             </div>
