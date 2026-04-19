@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}FormView Example | SpeedPy UI{% endblock %}
+
+{% block content %}
+<main class="section">
+    <div class="page-container">
+        <div class="mb-8">
+            <a href="{% url "speedpyui_preview" %}" class="btn btn-text btn-primary btn-sm">
+                Back to components
+            </a>
+        </div>
+
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,32rem)] lg:items-start">
+            <section>
+                <p class="eyebrow">Django integration</p>
+                <h1 class="h1">Crispy FormView Example</h1>
+                <p class="lead mt-4 max-w-2xl">
+                    This page is a real Django `FormView` using crispy forms. The form includes a
+                    CharField, select dropdown, radio buttons, textarea, and submit button. The
+                    POST handler is intentionally a no-op so boilerplate users can copy the pattern.
+                </p>
+
+                <div class="mt-8 card shadow-speedpyui-1">
+                    <div class="card-header">
+                        <h2 class="h3 mb-0">What the form uses</h2>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item flex items-center justify-between">
+                                <span class="font-medium text-fg">CharField</span>
+                                <span class="badge badge-primary">input-outlined</span>
+                            </li>
+                            <li class="list-group-item flex items-center justify-between">
+                                <span class="font-medium text-fg">ChoiceField</span>
+                                <span class="badge badge-info">select-outlined</span>
+                            </li>
+                            <li class="list-group-item flex items-center justify-between">
+                                <span class="font-medium text-fg">RadioSelect</span>
+                                <span class="badge badge-success">radio</span>
+                            </li>
+                            <li class="list-group-item flex items-center justify-between">
+                                <span class="font-medium text-fg">Textarea</span>
+                                <span class="badge badge-secondary">textarea-outlined</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-8 rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Template</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;form method="post" novalidate&gt;
+  {% templatetag openblock %} csrf_token {% templatetag closeblock %}
+  {% templatetag openblock %} crispy form {% templatetag closeblock %}
+&lt;/form&gt;</code></pre>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <h2 class="h3 mb-0">Project intake</h2>
+                </div>
+                <div class="card-body">
+                    {% if submitted %}
+                        <div class="alert alert-success mb-6">
+                            Form POST received. Nothing was saved; this is only a preview.
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% crispy form %}
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+{% endblock %}

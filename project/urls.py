@@ -13,6 +13,11 @@ urlpatterns = [
     path("contact/", views.ContactView.as_view(), name="contact"),
     path("dashboard/", views.DashboardView.as_view(), name="dashboard"),
     path("speedpyui-preview/", views.SpeedpyuiPreviewView.as_view(), name="speedpyui_preview"),
+    path(
+        "speedpyui-preview/FormView",
+        views.SpeedpyuiFormViewExampleView.as_view(),
+        name="speedpyui_preview_form_view",
+    ),
     path(settings.ADMIN_URL, admin.site.urls),
     path("accounts/", include("allauth.urls")),
     path("accounts/profile/", ProfileEditView.as_view(), name="account_profile"),

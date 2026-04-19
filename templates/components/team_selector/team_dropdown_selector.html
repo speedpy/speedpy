@@ -4,7 +4,7 @@
         @click="teamMenuOpen = !teamMenuOpen"
         @click.away="teamMenuOpen = false"
         type="button"
-        class="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-neutral-800"
+        class="sidebar-select"
         aria-haspopup="true"
         :aria-expanded="teamMenuOpen"
     >
@@ -16,7 +16,7 @@
                          alt="{{ team.name }}"
                          class="h-8 w-8 rounded-full object-cover flex-shrink-0">
                 {% else %}
-                    <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-contrast">
+                    <div class="avatar-sm">
                         {{ team.name|slice:":2"|upper }}
                     </div>
                 {% endif %}
@@ -47,7 +47,7 @@
     <!-- Dropdown Menu -->
     <div
         :class="teamMenuOpen ? '' : 'hidden'"
-        class="absolute z-50 w-full {% if dropdown_direction == 'up' %}bottom-full mb-2{% else %}mt-2{% endif %} overflow-hidden rounded-lg border border-divider bg-background-paper shadow-speedpyui-16"
+        class="sidebar-dropdown {% if dropdown_direction == 'up' %}bottom-full mb-2{% else %}mt-2{% endif %}"
         role="menu"
         aria-orientation="vertical"
     >
@@ -57,7 +57,7 @@
                 {% for membership in user.team_membership.all %}
                     <a
                         href="{% url "team_dashboard" team_id=membership.team.pk %}"
-                        class="flex items-center justify-between px-4 py-2 text-sm transition-colors hover:bg-primary/5 {% if team and membership.team.id == team.id %}bg-primary/10{% endif %}"
+                        class="sidebar-dropdown-item {% if team and membership.team.id == team.id %}sidebar-dropdown-item-active{% endif %}"
                         role="menuitem"
                     >
                         <div class="flex items-center gap-3 min-w-0 flex-1">
@@ -67,7 +67,7 @@
                                      alt="{{ membership.team.name }}"
                                      class="h-8 w-8 rounded-full object-cover flex-shrink-0">
                             {% else %}
-                                <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-contrast">
+                                <div class="avatar-xs">
                                     {{ membership.team.name|slice:":2"|upper }}
                                 </div>
                             {% endif %}

@@ -138,6 +138,9 @@ a deliberately static color is needed.
 
 Re-use these `@layer components` classes from `input.css` rather than hand-rolling new styles:
 
+Open `/speedpyui-preview/` before adding or changing UI. It shows rendered examples and
+copyable snippets for the current SpeedPy UI primitives.
+
 **Buttons** — compose three axes: variant + color + size. Size defaults to `btn-md`.
 
 ```html
@@ -155,16 +158,66 @@ Re-use these `@layer components` classes from `input.css` rather than hand-rolli
 `radio`, `switch` (with `.switch-track` and `.switch-thumb`). Pair with
 `.form-field`, `.input-label`, `.input-helper`, `.input-error`, `.input-error-text` for
 layout. `crispy-tailwind` field templates already emit these classes, so crispy forms pick
-them up automatically — see the Forms section below.
+them up automatically. Use `/speedpyui-preview/FormView` as the canonical working example
+of a Django `FormView` styled by crispy forms.
 
-**Cards** — prefer the raw tokens for new surfaces:
+**Typography and page layout** — use these for regular page structure instead of repeating
+long wrapper and heading utilities:
 
 ```html
-<div class="rounded-2xl bg-background-paper border border-divider shadow-speedpyui-16 p-8">…</div>
+<main class="section">
+  <div class="page-container">
+    <div class="section-header">
+      <p class="eyebrow">Overview</p>
+      <h1 class="h1">Dashboard</h1>
+      <p class="lead">Summary text.</p>
+    </div>
+  </div>
+</main>
 ```
 
-The legacy `.card` / `.card-body` classes still exist for pages not yet migrated, but new
-code should use the token utilities.
+- Layout: `section`, `section-paper`, `page-container`, `page-header`, `section-header`
+- Typography: `h1`, `h2`, `h3`, `h4`, `h5`, `eyebrow`, `lead`
+- Icons and avatars: `media-icon`, `avatar-sm`, `avatar-xs`
+
+**Cards, status, lists, and tables** — use these for dashboard panels, account pages, status
+rows, and simple data display:
+
+```html
+<div class="card">
+  <div class="card-header"><h2 class="h3">Title</h2></div>
+  <div class="card-body">Content</div>
+  <div class="card-footer">Actions</div>
+</div>
+
+<span class="badge badge-success">Verified</span>
+<div class="alert alert-warning">Review this setting.</div>
+```
+
+- Cards: `card`, `card-header`, `card-body`, `card-footer`
+- Lists: `list-group`, `list-group-item`
+- Badges: `badge`, `badge-lg`, `badge-primary`, `badge-secondary`, `badge-success`,
+  `badge-info`, `badge-warning`, `badge-error`
+- Alerts: `alert`, `alert-primary`, `alert-secondary`, `alert-success`, `alert-info`,
+  `alert-warning`, `alert-error`, `alert-danger`, `alert-light`, `alert-neutral`
+- Tables: `table`, `table-hover`, `table-striped`, `table-sm`
+
+**Account and sidebar navigation** — use these for settings pages and dashboard sidebar
+links rather than repeating link classes:
+
+```html
+<a href="..." class="account-nav-link account-nav-link-active">Profile</a>
+<a href="..." class="sidebar-link sidebar-link-active">
+  <svg class="sidebar-link-icon">...</svg>
+  Dashboard
+</a>
+```
+
+- Account: `account-shell`, `account-nav`, `account-nav-link`, `account-nav-link-active`
+- Sidebar: `sidebar`, `sidebar-brand`, `sidebar-brand-text`, `sidebar-section-label`,
+  `sidebar-nav`, `sidebar-link`, `sidebar-link-active`, `sidebar-link-icon`,
+  `sidebar-divider`, `sidebar-select`, `sidebar-dropdown`, `sidebar-dropdown-item`,
+  `sidebar-dropdown-item-active`
 
 ### Alpine.js conventions
 

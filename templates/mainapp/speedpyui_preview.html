@@ -1,15 +1,18 @@
 {% extends "base.html" %}
 
-{% block head_title %}SpeedpyUI Preview{% endblock %}
+{% block head_title %}SpeedPy UI Preview{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-background py-10 px-6">
-    <div class="max-w-6xl mx-auto space-y-12">
-
-        <header class="flex items-center justify-between">
+<main class="section">
+    <div class="page-container space-y-14">
+        <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-                <h1 class="text-3xl font-bold text-fg">SpeedpyUI Component Preview</h1>
-                <p class="text-fg-secondary mt-1">Phase 1 — buttons and form inputs.</p>
+                <p class="eyebrow">SpeedPy UI</p>
+                <h1 class="h1 mb-2">Component Preview</h1>
+                <p class="lead max-w-3xl">
+                    Reusable Tailwind-backed classes for SpeedPy pages, forms, account screens,
+                    navigation, and dashboard surfaces.
+                </p>
             </div>
             <button type="button"
                     id="preview-theme-toggle"
@@ -19,159 +22,368 @@
             </button>
         </header>
 
+        {# ---------- Typography and layout ---------- #}
+        <section class="space-y-6">
+            <div class="section-header text-left mx-0">
+                <p class="eyebrow">Foundation</p>
+                <h2 class="h2">Typography and Page Layout</h2>
+                <p class="lead">
+                    Use page and section helpers before reaching for long wrapper utilities.
+                </p>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="card shadow-speedpyui-1">
+                    <div class="card-body space-y-3">
+                        <p class="eyebrow">Overview</p>
+                        <h1 class="h1">Heading One</h1>
+                        <h2 class="h2">Heading Two</h2>
+                        <h3 class="h3">Heading Three</h3>
+                        <p class="lead">Lead copy is for page intros and section summaries.</p>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="page-container"&gt;
+  &lt;div class="section-header"&gt;
+    &lt;p class="eyebrow"&gt;Overview&lt;/p&gt;
+    &lt;h1 class="h1"&gt;Dashboard&lt;/h1&gt;
+    &lt;p class="lead"&gt;Summary text.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+                </div>
+            </div>
+        </section>
+
         {# ---------- Buttons ---------- #}
         <section class="space-y-6">
-            <h2 class="text-xl font-semibold text-fg">Buttons</h2>
+            <div class="section-header text-left mx-0">
+                <p class="eyebrow">Actions</p>
+                <h2 class="h2">Buttons</h2>
+                <p class="lead">
+                    Compose variant, color, and size. Size defaults to medium.
+                </p>
+            </div>
 
-            <div class="bg-background-paper rounded-lg p-6 shadow-speedpyui-1 space-y-6">
-                <div>
-                    <h3 class="text-sm font-semibold text-fg-secondary uppercase tracking-wide mb-3">Contained</h3>
-                    <div class="flex flex-wrap gap-3">
-                        <button class="btn btn-contained btn-primary">Primary</button>
-                        <button class="btn btn-contained btn-secondary">Secondary</button>
-                        <button class="btn btn-contained btn-success">Success</button>
-                        <button class="btn btn-contained btn-info">Info</button>
-                        <button class="btn btn-contained btn-warning">Warning</button>
-                        <button class="btn btn-contained btn-error">Error</button>
-                        <button class="btn btn-contained btn-primary" disabled>Disabled</button>
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="card shadow-speedpyui-1">
+                    <div class="card-body space-y-6">
+                        <div>
+                            <h3 class="h4 mb-3">Contained</h3>
+                            <div class="flex flex-wrap gap-3">
+                                <button class="btn btn-contained btn-primary">Primary</button>
+                                <button class="btn btn-contained btn-secondary">Secondary</button>
+                                <button class="btn btn-contained btn-success">Success</button>
+                                <button class="btn btn-contained btn-info">Info</button>
+                                <button class="btn btn-contained btn-warning">Warning</button>
+                                <button class="btn btn-contained btn-error">Error</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="h4 mb-3">Outlined and Text</h3>
+                            <div class="flex flex-wrap gap-3">
+                                <button class="btn btn-outlined btn-primary">Outlined</button>
+                                <button class="btn btn-text btn-primary">Text</button>
+                                <button class="btn btn-outlined btn-error btn-sm">Small</button>
+                                <button class="btn btn-contained btn-primary btn-lg">Large</button>
+                                <button class="btn btn-contained btn-primary" disabled>Disabled</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    <h3 class="text-sm font-semibold text-fg-secondary uppercase tracking-wide mb-3">Outlined</h3>
-                    <div class="flex flex-wrap gap-3">
-                        <button class="btn btn-outlined btn-primary">Primary</button>
-                        <button class="btn btn-outlined btn-secondary">Secondary</button>
-                        <button class="btn btn-outlined btn-success">Success</button>
-                        <button class="btn btn-outlined btn-info">Info</button>
-                        <button class="btn btn-outlined btn-warning">Warning</button>
-                        <button class="btn btn-outlined btn-error">Error</button>
-                        <button class="btn btn-outlined btn-primary" disabled>Disabled</button>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-sm font-semibold text-fg-secondary uppercase tracking-wide mb-3">Text</h3>
-                    <div class="flex flex-wrap gap-3">
-                        <button class="btn btn-text btn-primary">Primary</button>
-                        <button class="btn btn-text btn-secondary">Secondary</button>
-                        <button class="btn btn-text btn-success">Success</button>
-                        <button class="btn btn-text btn-info">Info</button>
-                        <button class="btn btn-text btn-warning">Warning</button>
-                        <button class="btn btn-text btn-error">Error</button>
-                        <button class="btn btn-text btn-primary" disabled>Disabled</button>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-sm font-semibold text-fg-secondary uppercase tracking-wide mb-3">Sizes</h3>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <button class="btn btn-contained btn-primary btn-sm">Small</button>
-                        <button class="btn btn-contained btn-primary btn-md">Medium</button>
-                        <button class="btn btn-contained btn-primary btn-lg">Large</button>
-                        <button class="btn btn-outlined btn-primary btn-sm">Small</button>
-                        <button class="btn btn-outlined btn-primary btn-md">Medium</button>
-                        <button class="btn btn-outlined btn-primary btn-lg">Large</button>
-                        <button class="btn btn-text btn-primary btn-sm">Small</button>
-                        <button class="btn btn-text btn-primary btn-md">Medium</button>
-                        <button class="btn btn-text btn-primary btn-lg">Large</button>
-                    </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;button class="btn btn-contained btn-primary"&gt;Save&lt;/button&gt;
+&lt;button class="btn btn-outlined btn-error btn-sm"&gt;Delete&lt;/button&gt;
+&lt;a href="#" class="btn btn-text btn-secondary btn-lg"&gt;Learn more&lt;/a&gt;</code></pre>
                 </div>
             </div>
         </section>
 
-        {# ---------- Form inputs ---------- #}
+        {# ---------- Forms ---------- #}
         <section class="space-y-6">
-            <h2 class="text-xl font-semibold text-fg">Form inputs</h2>
-
-            <div class="bg-background-paper rounded-lg p-6 shadow-speedpyui-1 grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <div class="form-field">
-                    <label class="input-label" for="preview-text">Text input</label>
-                    <input class="input-outlined" id="preview-text" type="text" placeholder="Placeholder">
-                    <p class="input-helper">Helper text sits beneath the field.</p>
+            <div class="section-header text-left mx-0">
+                <p class="eyebrow">Forms</p>
+                <h2 class="h2">Inputs and Controls</h2>
+                <p class="lead">
+                    Crispy templates already emit these classes for most form fields.
+                </p>
+                <div class="mt-4">
+                    <a href="{% url "speedpyui_preview_form_view" %}" class="btn btn-contained btn-primary">
+                        Open Django FormView example
+                    </a>
                 </div>
+            </div>
 
-                <div class="form-field">
-                    <label class="input-label" for="preview-email">Email</label>
-                    <input class="input-outlined" id="preview-email" type="email" placeholder="you@example.com">
-                </div>
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="card shadow-speedpyui-1">
+                    <div class="card-body grid gap-6 md:grid-cols-2">
+                        <div class="form-field">
+                            <label class="input-label" for="preview-text">Text input</label>
+                            <input class="input-outlined" id="preview-text" type="text" placeholder="Placeholder">
+                            <p class="input-helper">Helper text sits beneath the field.</p>
+                        </div>
 
-                <div class="form-field">
-                    <label class="input-label" for="preview-password">Password</label>
-                    <input class="input-outlined" id="preview-password" type="password" placeholder="••••••••">
-                </div>
+                        <div class="form-field">
+                            <label class="input-label" for="preview-email">Email</label>
+                            <input class="input-outlined" id="preview-email" type="email" placeholder="you@example.com">
+                        </div>
 
-                <div class="form-field">
-                    <label class="input-label" for="preview-error">With error</label>
-                    <input class="input-outlined input-error" id="preview-error" type="text" value="Invalid value">
-                    <p class="input-error-text">This field is required.</p>
-                </div>
+                        <div class="form-field">
+                            <label class="input-label" for="preview-error">With error</label>
+                            <input class="input-outlined input-error" id="preview-error" type="text" value="Invalid value">
+                            <p class="input-error-text">This field is required.</p>
+                        </div>
 
-                <div class="form-field">
-                    <label class="input-label" for="preview-sm">Small</label>
-                    <input class="input-outlined input-outlined-sm" id="preview-sm" type="text" placeholder="Small">
-                </div>
+                        <div class="form-field">
+                            <label class="input-label" for="preview-select">Select</label>
+                            <select class="select-outlined" id="preview-select">
+                                <option>Option one</option>
+                                <option>Option two</option>
+                                <option>Option three</option>
+                            </select>
+                        </div>
 
-                <div class="form-field">
-                    <label class="input-label" for="preview-lg">Large</label>
-                    <input class="input-outlined input-outlined-lg" id="preview-lg" type="text" placeholder="Large">
-                </div>
+                        <div class="form-field md:col-span-2">
+                            <label class="input-label" for="preview-textarea">Textarea</label>
+                            <textarea class="textarea-outlined" id="preview-textarea" rows="4" placeholder="Type something..."></textarea>
+                        </div>
 
-                <div class="form-field md:col-span-2">
-                    <label class="input-label" for="preview-textarea">Textarea</label>
-                    <textarea class="textarea-outlined" id="preview-textarea" rows="4" placeholder="Type something..."></textarea>
-                </div>
+                        <div class="form-field">
+                            <span class="input-label">Input group</span>
+                            <div class="input-group">
+                                <span class="input-group-text">@</span>
+                                <input class="input-outlined" type="text" placeholder="username">
+                            </div>
+                        </div>
 
-                <div class="form-field">
-                    <label class="input-label" for="preview-select">Select</label>
-                    <select class="select-outlined" id="preview-select">
-                        <option>Option one</option>
-                        <option>Option two</option>
-                        <option>Option three</option>
-                    </select>
-                </div>
-
-                <div class="form-field">
-                    <label class="input-label">Input group</label>
-                    <div class="input-group">
-                        <span class="input-group-text">@</span>
-                        <input class="input-outlined" type="text" placeholder="username">
+                        <div class="form-field">
+                            <span class="input-label">Choices</span>
+                            <label class="mr-4 inline-flex items-center gap-2 text-fg">
+                                <input type="checkbox" class="checkbox" checked> Subscribe
+                            </label>
+                            <label class="mr-4 inline-flex items-center gap-2 text-fg">
+                                <input type="radio" name="preview-radio" class="radio" checked> One
+                            </label>
+                            <label class="switch ml-1">
+                                <input type="checkbox" class="sr-only peer" checked>
+                                <span class="switch-track"></span>
+                                <span class="switch-thumb"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-field">
-                    <span class="input-label">Checkboxes</span>
-                    <label class="inline-flex items-center gap-2 text-fg mr-4">
-                        <input type="checkbox" class="checkbox" checked> Subscribe
-                    </label>
-                    <label class="inline-flex items-center gap-2 text-fg mr-4">
-                        <input type="checkbox" class="checkbox"> Remember me
-                    </label>
-                </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="form-field"&gt;
+  &lt;label class="input-label" for="email"&gt;Email&lt;/label&gt;
+  &lt;input class="input-outlined" id="email" type="email"&gt;
+  &lt;p class="input-helper"&gt;Helper text.&lt;/p&gt;
+&lt;/div&gt;
 
-                <div class="form-field">
-                    <span class="input-label">Radio</span>
-                    <label class="inline-flex items-center gap-2 text-fg mr-4">
-                        <input type="radio" name="preview-radio" class="radio" checked> One
-                    </label>
-                    <label class="inline-flex items-center gap-2 text-fg mr-4">
-                        <input type="radio" name="preview-radio" class="radio"> Two
-                    </label>
+&lt;label class="switch"&gt;
+  &lt;input type="checkbox" class="sr-only peer"&gt;
+  &lt;span class="switch-track"&gt;&lt;/span&gt;
+  &lt;span class="switch-thumb"&gt;&lt;/span&gt;
+&lt;/label&gt;</code></pre>
                 </div>
-
-                <div class="form-field">
-                    <span class="input-label">Switch</span>
-                    <label class="switch">
-                        <input type="checkbox" class="sr-only peer" checked>
-                        <span class="switch-track"></span>
-                        <span class="switch-thumb"></span>
-                    </label>
-                </div>
-
             </div>
         </section>
 
+        {# ---------- Surfaces ---------- #}
+        <section class="space-y-6">
+            <div class="section-header text-left mx-0">
+                <p class="eyebrow">Surfaces</p>
+                <h2 class="h2">Cards, Lists, Badges, and Alerts</h2>
+                <p class="lead">
+                    Use these for dashboard panels, account pages, status rows, and short messages.
+                </p>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="space-y-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h3 mb-0">Card title</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="lead mb-0">Card body content uses the theme surface, divider, and elevation tokens.</p>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-contained btn-primary btn-sm">Action</button>
+                        </div>
+                    </div>
+
+                    <ul class="list-group">
+                        <li class="list-group-item flex items-center justify-between">
+                            <span class="font-medium text-fg">Primary email</span>
+                            <span class="badge badge-primary">Primary</span>
+                        </li>
+                        <li class="list-group-item flex items-center justify-between">
+                            <span class="font-medium text-fg">Security status</span>
+                            <span class="badge badge-success">Verified</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="flex flex-wrap gap-2">
+                        <span class="badge badge-primary">Primary</span>
+                        <span class="badge badge-secondary">Secondary</span>
+                        <span class="badge badge-success">Success</span>
+                        <span class="badge badge-info">Info</span>
+                        <span class="badge badge-warning">Warning</span>
+                        <span class="badge badge-error">Error</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="alert alert-success">Your account settings were saved.</div>
+                        <div class="alert alert-warning">Two-factor authentication is not enabled.</div>
+                        <div class="alert alert-error">This destructive action needs confirmation.</div>
+                    </div>
+
+                    <div class="rounded-lg border border-divider bg-background-paper p-5">
+                        <p class="eyebrow">Code</p>
+                        <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="card"&gt;
+  &lt;div class="card-header"&gt;&lt;h2 class="h3"&gt;Title&lt;/h2&gt;&lt;/div&gt;
+  &lt;div class="card-body"&gt;Content&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;span class="badge badge-success"&gt;Verified&lt;/span&gt;
+&lt;div class="alert alert-warning"&gt;Review this setting.&lt;/div&gt;</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ---------- Tables ---------- #}
+        <section class="space-y-6">
+            <div class="section-header text-left mx-0">
+                <p class="eyebrow">Data Display</p>
+                <h2 class="h2">Tables</h2>
+                <p class="lead">
+                    Token-aware table classes cover simple admin and settings data.
+                </p>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="overflow-hidden rounded-lg border border-divider">
+                    <table class="table table-hover table-striped">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Role</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Mira Ruiz</td>
+                            <td><span class="badge badge-success">Active</span></td>
+                            <td>Owner</td>
+                        </tr>
+                        <tr>
+                            <td>Tom Nakamura</td>
+                            <td><span class="badge badge-warning">Pending</span></td>
+                            <td>Member</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;table class="table table-hover table-striped"&gt;
+  &lt;thead&gt;...&lt;/thead&gt;
+  &lt;tbody&gt;...&lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+                </div>
+            </div>
+        </section>
+
+        {# ---------- Account and sidebar navigation ---------- #}
+        <section class="space-y-6">
+            <div class="section-header text-left mx-0">
+                <p class="eyebrow">Navigation</p>
+                <h2 class="h2">Account and Sidebar Menus</h2>
+                <p class="lead">
+                    Navigation helpers keep account settings and dashboard sidebar links compact.
+                </p>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="card shadow-speedpyui-1">
+                    <div class="card-body space-y-6">
+                        <div>
+                            <h3 class="h4 mb-3">Account nav</h3>
+                            <ul class="account-nav max-w-md">
+                                <li><a href="#" class="account-nav-link account-nav-link-active">Your Profile</a></li>
+                                <li><a href="#" class="account-nav-link">Change Password</a></li>
+                                <li><a href="#" class="account-nav-link">Two-Factor Authentication</a></li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="h4 mb-3">Avatars and media icons</h3>
+                            <div class="flex items-center gap-3">
+                                <span class="media-icon">A</span>
+                                <span class="avatar-sm">SP</span>
+                                <span class="avatar-xs">UI</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg bg-neutral-900 p-4">
+                    <div class="sidebar-brand mb-4">
+                        <span class="avatar-sm">SP</span>
+                        <span class="sidebar-brand-text">SpeedPy</span>
+                    </div>
+                    <p class="sidebar-section-label">General</p>
+                    <ul class="sidebar-nav">
+                        <li>
+                            <a href="#" class="sidebar-link sidebar-link-active">
+                                <svg class="sidebar-link-icon" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                                    <path d="M3.5 10.5h5v6h-5v-6ZM11.5 3.5h5v13h-5v-13ZM3.5 3.5h5v4h-5v-4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                </svg>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="sidebar-link">
+                                <svg class="sidebar-link-icon" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                                    <path d="M5 3.5h7l3 3V16a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 5 16V3.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                </svg>
+                                Documentation
+                            </a>
+                        </li>
+                    </ul>
+                    <button class="sidebar-select mt-4 text-neutral-100">
+                        <span class="flex items-center gap-2">
+                            <span class="avatar-xs">TM</span>
+                            Select team
+                        </span>
+                        <span class="text-neutral-400">v</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="rounded-lg border border-divider bg-background-paper p-5">
+                <p class="eyebrow">Code</p>
+                <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;a href="#" class="account-nav-link account-nav-link-active"&gt;Profile&lt;/a&gt;
+
+&lt;a href="#" class="sidebar-link sidebar-link-active"&gt;
+  &lt;svg class="sidebar-link-icon"&gt;...&lt;/svg&gt;
+  Dashboard
+&lt;/a&gt;
+
+&lt;button class="sidebar-select"&gt;Select team&lt;/button&gt;</code></pre>
+            </div>
+        </section>
     </div>
-</div>
+</main>
 {% endblock %}

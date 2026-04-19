@@ -1,7 +1,7 @@
 from .welcome import WelcomeToSpeedPyView, PricingView
 from .contact import ContactView
 from .dashboard import DashboardView
-from .speedpyui_preview import SpeedpyuiPreviewView
+from .speedpyui_preview import SpeedpyuiFormViewExampleView, SpeedpyuiPreviewView
 from .tour_views import mark_tour_complete
 from .teams import TeamViewMixin, TeamCreateView, TeamAdminRequiredMixin, TeamSettingsView
 from .otp_views import (
@@ -22,6 +22,7 @@ __all__ = [
     "ContactView",
     "DashboardView",
     "SpeedpyuiPreviewView",
+    "SpeedpyuiFormViewExampleView",
     "mark_tour_complete",
     "TeamViewMixin",
     "TeamAdminRequiredMixin",

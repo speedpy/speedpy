@@ -285,6 +285,12 @@
   .media-icon {
     @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary;
   }
+  .avatar-sm {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-contrast;
+  }
+  .avatar-xs {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-contrast;
+  }
   .list-group {
     @apply overflow-hidden rounded-lg border border-divider divide-y divide-divider;
   }
@@ -302,6 +308,45 @@
   }
   .account-nav-link-active {
     @apply bg-primary/10 text-primary;
+  }
+  .sidebar {
+    @apply flex h-full flex-col overflow-y-auto bg-neutral-900 px-4 py-5;
+  }
+  .sidebar-brand {
+    @apply mb-8 flex items-center gap-3 px-2;
+  }
+  .sidebar-brand-text {
+    @apply text-xl font-semibold text-neutral-50;
+  }
+  .sidebar-section-label {
+    @apply mb-3 px-3 text-xs font-semibold uppercase text-neutral-500;
+  }
+  .sidebar-nav {
+    @apply space-y-1;
+  }
+  .sidebar-link {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-50;
+  }
+  .sidebar-link-active {
+    @apply bg-neutral-800 text-secondary hover:text-secondary;
+  }
+  .sidebar-link-icon {
+    @apply h-5 w-5 shrink-0;
+  }
+  .sidebar-divider {
+    @apply border-t border-neutral-800 pt-4;
+  }
+  .sidebar-select {
+    @apply flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-neutral-800;
+  }
+  .sidebar-dropdown {
+    @apply absolute z-50 w-full overflow-hidden rounded-lg border border-divider bg-background-paper shadow-speedpyui-16;
+  }
+  .sidebar-dropdown-item {
+    @apply flex items-center justify-between px-4 py-2 text-sm transition-colors hover:bg-primary/5;
+  }
+  .sidebar-dropdown-item-active {
+    @apply bg-primary/10;
   }
 
   /* ==========================================================================
