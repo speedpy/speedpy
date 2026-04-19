@@ -1,12 +1,12 @@
-<div x-data="{ open: false }" class="relative">
+<div x-data="{ teamMenuOpen: false }" class="relative">
     <!-- Toggle Button -->
     <button
-        @click="open = !open"
-        @click.away="open = false"
+        @click="teamMenuOpen = !teamMenuOpen"
+        @click.away="teamMenuOpen = false"
         type="button"
-        class="flex items-center justify-between gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left transition-colors"
+        class="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-neutral-800"
         aria-haspopup="true"
-        :aria-expanded="open"
+        :aria-expanded="teamMenuOpen"
     >
         <div class="flex items-center gap-2 min-w-0">
             {% if team %}
@@ -16,26 +16,26 @@
                          alt="{{ team.name }}"
                          class="h-8 w-8 rounded-full object-cover flex-shrink-0">
                 {% else %}
-                    <div class="h-8 w-8 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                    <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-contrast">
                         {{ team.name|slice:":2"|upper }}
                     </div>
                 {% endif %}
                 <!-- Team Name -->
-                <span class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ team.name }}</span>
+                <span class="truncate text-sm font-medium text-neutral-100">{{ team.name }}</span>
             {% else %}
                 <!-- No Active Team -->
-                <div class="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300 flex items-center justify-center flex-shrink-0">
+                <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-neutral-800 text-neutral-300">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                 </div>
-                <span class="text-sm font-medium text-gray-900 dark:text-white">Select Team</span>
+                <span class="text-sm font-medium text-neutral-100">Select Team</span>
             {% endif %}
         </div>
         <!-- Chevron Icon -->
         <svg
-            class="h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0"
-            :class="open ? 'rotate-180' : ''"
+            class="h-4 w-4 flex-shrink-0 text-neutral-400 transition-transform"
+            :class="teamMenuOpen ? 'rotate-180' : ''"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -46,8 +46,8 @@
 
     <!-- Dropdown Menu -->
     <div
-        :class="open ? '' : 'hidden'"
-        class="absolute z-50 w-full {% if dropdown_direction == 'up' %}bottom-full mb-2{% else %}mt-2{% endif %} bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden"
+        :class="teamMenuOpen ? '' : 'hidden'"
+        class="absolute z-50 w-full {% if dropdown_direction == 'up' %}bottom-full mb-2{% else %}mt-2{% endif %} overflow-hidden rounded-lg border border-divider bg-background-paper shadow-speedpyui-16"
         role="menu"
         aria-orientation="vertical"
     >
@@ -57,7 +57,7 @@
                 {% for membership in user.team_membership.all %}
                     <a
                         href="{% url "team_dashboard" team_id=membership.team.pk %}"
-                        class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {% if team and membership.team.id == team.id %}bg-primary-50 dark:bg-gray-700{% endif %}"
+                        class="flex items-center justify-between px-4 py-2 text-sm transition-colors hover:bg-primary/5 {% if team and membership.team.id == team.id %}bg-primary/10{% endif %}"
                         role="menuitem"
                     >
                         <div class="flex items-center gap-3 min-w-0 flex-1">
@@ -67,18 +67,18 @@
                                      alt="{{ membership.team.name }}"
                                      class="h-8 w-8 rounded-full object-cover flex-shrink-0">
                             {% else %}
-                                <div class="h-8 w-8 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                                <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-contrast">
                                     {{ membership.team.name|slice:":2"|upper }}
                                 </div>
                             {% endif %}
 
                             <div class="min-w-0 flex-1">
                                 <!-- Team Name -->
-                                <div class="font-medium {% if team and membership.team.id == team.id %}text-primary-700 dark:text-primary-400{% else %}text-gray-900 dark:text-white{% endif %} truncate">
+                                <div class="truncate font-medium {% if team and membership.team.id == team.id %}text-primary{% else %}text-fg{% endif %}">
                                     {{ membership.team.name }}
                                 </div>
                                 <!-- Role Badge -->
-                                <div class="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                                <div class="text-xs capitalize text-fg-secondary">
                                     {{ membership.role }}
                                 </div>
                             </div>
@@ -86,7 +86,7 @@
 
                         <!-- Active Team Checkmark -->
                         {% if team and membership.team.id == team.id %}
-                            <svg class="h-5 w-5 text-primary-600 dark:text-primary-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="h-5 w-5 flex-shrink-0 text-primary" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
                         {% endif %}
@@ -95,26 +95,26 @@
             </div>
 
             <!-- Divider -->
-            <div class="border-t border-gray-200 dark:border-gray-700"></div>
+            <div class="border-t border-divider"></div>
         {% else %}
             <!-- Empty State -->
             <div class="px-4 py-6 text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="mx-auto h-12 w-12 text-fg-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <p class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No teams yet</p>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Create a team to get started</p>
+                <p class="mt-2 text-sm font-medium text-fg">No teams yet</p>
+                <p class="mt-1 text-xs text-fg-secondary">Create a team to get started</p>
             </div>
 
             <!-- Divider -->
-            <div class="border-t border-gray-200 dark:border-gray-700"></div>
+            <div class="border-t border-divider"></div>
         {% endif %}
 
         <!-- Create New Team Link -->
         <div class="py-1">
             <a
                 href="{% url "team_create" %}"
-                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 hover:text-gray-200 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/5"
                 role="menuitem"
             >
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

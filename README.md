@@ -45,7 +45,7 @@ To use Tailwind, you need to have Node installed in your computer first. Go to [
 
 (Not sure if you have Node installed? Run `node -v` and `npm -v` in your terminal. If you get a version number in response, you have Node.js installed.)
 
-In addition to Tailwind, this project uses [Flowbite](https://flowbite.com), a set of components and utilities for Tailwind CSS. It's included in the `tailwind.config.js` file.
+In addition to Tailwind, this project uses Alpine.js for small interactive behaviors such as menus, toggles, and dismissible panels.
 
 (Not sure why you have a reference to the Tailwind installation here, so maybe consider removing it?)
 See [Tailwind Installation](https://tailwindcss.com/docs/installation).
@@ -280,4 +280,3 @@ Already includes `appliku.yml` file which will automatically configure your appl
   * `release`: `bash release.sh`
   * `celery`: `bash celery-worker.sh`
   * `beat`: `bash celery-beat.sh`
-

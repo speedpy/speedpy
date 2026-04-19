@@ -1,34 +1,34 @@
 <div x-show="userMenuOpen"
      x-cloak
      @click.outside="userMenuOpen = false"
-     class="z-50 absolute right-0 my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-sm shadow-sm dark:bg-gray-700 dark:divide-gray-600">
-    <div class="px-4 py-3" role="none">
-        <p class="text-sm text-gray-900 dark:text-white" role="none">
-            {{ user.get_full_name }}
+     class="absolute right-0 z-50 mt-3 w-64 overflow-hidden rounded-lg border border-divider bg-background-paper text-base shadow-speedpyui-16">
+    <div class="border-b border-divider px-4 py-3" role="none">
+        <p class="mb-1 truncate text-sm font-semibold text-fg" role="none">
+            {{ user.get_full_name|default:user.email }}
         </p>
-        <p class="text-sm font-medium text-gray-900 truncate dark:text-gray-300" role="none">
+        <p class="mb-0 truncate text-sm text-fg-secondary" role="none">
             {{ user.email }}
         </p>
     </div>
-    <ul class="py-1" role="none">
+    <ul class="py-2" role="none">
         <li>
             <a href="{% url "dashboard" %}"
-               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+               class="block px-4 py-2 text-sm font-medium text-fg-secondary transition-colors hover:bg-primary/5 hover:text-primary"
                role="menuitem">Dashboard</a>
         </li>
         <li>
             <a href="{% url "account_profile" %}"
-               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-               role="menuitem">Your Profile</a>
+               class="block px-4 py-2 text-sm font-medium text-fg-secondary transition-colors hover:bg-primary/5 hover:text-primary"
+               role="menuitem">Your profile</a>
         </li>
         <li>
             <a href="{% url "account_change_password" %}"
-               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-               role="menuitem">Account Settings</a>
+               class="block px-4 py-2 text-sm font-medium text-fg-secondary transition-colors hover:bg-primary/5 hover:text-primary"
+               role="menuitem">Account settings</a>
         </li>
         <li>
             <a href="{% url "account_logout" %}"
-               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+               class="block px-4 py-2 text-sm font-medium text-fg-secondary transition-colors hover:bg-primary/5 hover:text-primary"
                role="menuitem">Sign out</a>
         </li>
     </ul>
