@@ -368,16 +368,16 @@
     @apply flex items-center lg:order-2;
   }
   .top-nav-menu {
-    @apply hidden w-full items-center justify-between lg:order-1 lg:flex lg:w-auto;
+    @apply hidden w-full basis-full flex-col items-stretch justify-start lg:order-1 lg:flex lg:w-auto lg:basis-auto lg:flex-row lg:items-center lg:justify-between;
   }
   .top-nav-list {
-    @apply m-0 flex list-none flex-col p-0 font-semibold lg:flex-row lg:items-center;
+    @apply m-0 flex w-full list-none flex-col p-0 font-semibold lg:w-auto lg:flex-row lg:items-center;
   }
   .top-nav-item {
-    @apply text-left lg:ml-8;
+    @apply w-full text-left lg:ml-8 lg:w-auto;
   }
   .top-nav-link {
-    @apply block border-b border-divider px-3 py-2 text-fg-secondary transition-colors hover:text-primary hover:no-underline lg:border-0 lg:p-0;
+    @apply block w-full border-b border-divider px-3 py-2 text-fg-secondary transition-colors hover:text-primary hover:no-underline lg:w-auto lg:border-0 lg:p-0;
   }
   .top-nav-icon-button {
     @apply inline-flex items-center justify-center rounded-lg p-2 text-fg-secondary transition-colors hover:bg-primary/5 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40;
