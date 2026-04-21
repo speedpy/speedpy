@@ -80,7 +80,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="flex items-end gap-2">
+                    <div class="flex flex-wrap items-end gap-2">
                         <button type="submit" class="btn btn-contained btn-primary">Filter</button>
                         <a href="{% url 'demo_product_list' %}" class="btn btn-text btn-inherit">Reset</a>
                     </div>
@@ -156,7 +156,8 @@
                     <p class="pagination-summary">
                         Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count|intcomma }} results
                     </p>
-                    <nav class="pagination-list" aria-label="Pagination">
+                    <nav class="max-w-full overflow-x-auto" aria-label="Pagination">
+                        <div class="pagination-list min-w-max">
                         {% if page_obj.has_previous %}
                             <a class="pagination-link"
                                href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">
@@ -203,6 +204,7 @@
                                 </svg>
                             </span>
                         {% endif %}
+                        </div>
                     </nav>
                 </div>
             {% endif %}

@@ -488,3 +488,9 @@ It helps AI Agents to properly use Appliku CLI. If the project has more then one
 
 Team path: not set
 Application name: not set
+
+## Responsiveness
+
+All work must be responsive and work on both mobile and desktop.
+
+After completing every task, check the result on both mobile and desktop and fix any responsive issues you find.

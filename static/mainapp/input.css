@@ -291,6 +291,16 @@
   .lead {
     @apply text-base leading-7 text-fg-secondary sm:text-lg;
   }
+  .speedpyui-preview pre {
+    @apply max-w-full whitespace-pre-wrap break-words;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .speedpyui-preview pre code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
   .media-icon {
     @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary;
   }

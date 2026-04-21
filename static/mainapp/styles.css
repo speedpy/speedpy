@@ -1839,6 +1839,20 @@ select {
   }
 }
 
+.speedpyui-preview pre {
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.speedpyui-preview pre code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .media-icon {
   display: flex;
   height: 3rem;
@@ -4193,6 +4207,11 @@ h1, h2, h3, h4, h5, p {
   min-width: 100%;
 }
 
+.min-w-max {
+  min-width: -moz-max-content;
+  min-width: max-content;
+}
+
 .max-w-2xl {
   max-width: 42rem;
 }
@@ -5774,6 +5793,10 @@ h1, h2, h3, h4, h5, p {
 
   .sm\:justify-end {
     justify-content: flex-end;
+  }
+
+  .sm\:justify-between {
+    justify-content: space-between;
   }
 
   .sm\:rounded-lg {
