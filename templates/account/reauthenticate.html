@@ -1,0 +1,41 @@
+{% extends "account/base_reauthenticate.html" %}
+{% load i18n %}
+
+{% block reauthenticate_content %}
+    <form method="post" action="{% url 'account_reauthenticate' %}">
+        {% csrf_token %}
+        {{ redirect_field }}
+
+        {% if form.errors %}
+            <div class="alert alert-error mb-6">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <p class="text-sm">{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <p class="text-sm">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="form-field mb-6">
+                <label class="input-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                <input class="input-outlined"
+                       type="password"
+                       name="{{ field.html_name }}"
+                       id="{{ field.id_for_label }}"
+                       autocomplete="current-password"
+                       {% if field.value %}value="{{ field.value }}"{% endif %}>
+                {% if field.help_text %}
+                    <p class="input-helper">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-contained btn-primary btn-md w-full">
+            {% trans "Confirm" %}
+        </button>
+    </form>
+{% endblock %}

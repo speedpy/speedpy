@@ -1,6 +1,5 @@
-{% extends "account/base_manage.html" %}
-{% load allauth i18n socialaccount static %}
-{% load crispy_forms_tags %}
+{% extends "account/base_entrance.html" %}
+{% load i18n static %}
 
 {% block head_title %}{% trans "Sign Out" %}{% endblock %}
 
@@ -8,31 +7,23 @@
     <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
             <img class="mx-auto h-20 w-auto" src="{% static "mainapp/speedpy_logo.png" %}" alt="SpeedPy.Com">
-
-            <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 dark:text-white">
+            <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-fg">
                 {% trans "Sign Out" %}
             </h2>
-
         </div>
+
         <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
-            <div class="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12 text-center">
-                <div class="mb-10">{% trans 'Are you sure you want to sign out?' %}</div>
-                {% url 'account_logout' as action_url %}
-                {% element form method="post" action=action_url no_visible_fields=True %}
-                    {% slot body %}
-                        {% csrf_token %}
-                        {% if redirect_field_value %}
-                            <input type="hidden"
-                                   name="{{ redirect_field_name }}"
-                                   value="{{ redirect_field_value }}"/>
-                        {% endif %}
-                    {% endslot %}
-                    {% slot actions %}
-                        {% element button type="submit" %}
-                            {% trans 'Sign Out' %}
-                        {% endelement %}
-                    {% endslot %}
-                {% endelement %}
+            <div class="bg-background-paper px-6 py-12 shadow-speedpyui-8 sm:rounded-lg sm:px-12 text-center">
+                <p class="mb-8 text-sm text-fg-secondary">{% trans "Are you sure you want to sign out?" %}</p>
+                <form method="post" action="{% url 'account_logout' %}">
+                    {% csrf_token %}
+                    {% if redirect_field_value %}
+                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+                    {% endif %}
+                    <button type="submit" class="btn btn-contained btn-primary btn-md">
+                        {% trans "Sign Out" %}
+                    </button>
+                </form>
             </div>
         </div>
     </div>

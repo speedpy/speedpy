@@ -1,0 +1,73 @@
+{% extends "mfa/recovery_codes/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Recovery Codes" %}{% endblock %}
+
+{% block main_content %}
+    <div class="card-header">
+        <h2 class="h3 mb-0">{% trans "Recovery Codes" %}</h2>
+    </div>
+
+    <div class="card-body">
+
+        <div class="alert alert-info mb-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-info" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="h5 mb-1">{% trans "Save these codes in a safe place" %}</h3>
+                    <p class="mb-0 text-sm text-fg-secondary">
+                        {% trans "Each code can be used once to sign in if you lose access to your authenticator app." %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <p class="mb-4 text-sm text-fg-secondary">
+            {% blocktranslate count unused_count=unused_codes|length %}There is {{ unused_count }} out of {{ total_count }} recovery code available.{% plural %}There are {{ unused_count }} out of {{ total_count }} recovery codes available.{% endblocktranslate %}
+        </p>
+
+        {% if unused_codes %}
+            <div class="mb-6">
+                <div class="grid grid-cols-2 gap-3 p-6 bg-background border-2 border-divider rounded-lg">
+                    {% for code in unused_codes %}
+                        <div class="font-mono text-sm font-semibold text-fg p-2 bg-background-paper border border-divider rounded text-center">
+                            {{ code }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 mb-6">
+                <button onclick="copyCodes()" class="btn btn-outlined btn-primary btn-sm">
+                    {% trans "Copy to Clipboard" %}
+                </button>
+                <a href="{% url 'mfa_download_recovery_codes' %}" class="btn btn-outlined btn-secondary btn-sm">
+                    {% trans "Download Codes" %}
+                </a>
+            </div>
+        {% endif %}
+
+        <div class="border-t border-divider pt-6">
+            <a href="{% url 'mfa_generate_recovery_codes' %}" class="btn btn-outlined btn-secondary btn-sm">
+                {% trans "Generate New Codes" %}
+            </a>
+        </div>
+
+    </div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+function copyCodes() {
+    const codes = [{% for code in unused_codes %}'{{ code }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const text = codes.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+        alert('{% trans "Recovery codes copied to clipboard!" %}');
+    });
+}
+</script>
+{% endblock %}

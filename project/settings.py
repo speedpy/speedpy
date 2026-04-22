@@ -41,9 +41,6 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.gitlab",
     "debug_toolbar",
     "post_office",
-    "django_otp",
-    "django_otp.plugins.otp_totp",
-    "django_otp.plugins.otp_static",
     "usermodel.apps.UsermodelConfig",
     "speedpycom",
     "mainapp.apps.MainappConfig",
@@ -59,7 +56,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django_otp.middleware.OTPMiddleware",
+    # django_otp.middleware.OTPMiddleware inserted conditionally below
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
@@ -88,6 +85,7 @@ TEMPLATES = [
                 "project.context_processors.teams_enabled",
                 "project.context_processors.tours_enabled",
                 "project.context_processors.current_year",
+                "project.context_processors.mfa_backend",
             ],
         },
     },
@@ -244,7 +242,7 @@ TOS_LINK = env("TOS_LINK", default="/")
 DPA_LINK = env("DPA_LINK", default="/")
 
 DEBUG_TOOLBAR_CONFIG = {
-    "SHOW_TOOLBAR_CALLBACK": lambda request: False,
+    "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG,
 }
 _EMAIL_URL_DEFAULT = "smtp://user:password@localhost:25"
 # If EMAIL_URL is set but empty, remove it so the default is used.
@@ -280,6 +278,20 @@ AWS_SES_AUTO_THROTTLE = 0.5
 DEFAULT_ADMIN_PASSWORD = env("DEFAULT_ADMIN_PASSWORD", default=None)
 DEMO_MODE = env.bool("DEMO_MODE", default=False)  # fills login and password on login form for demo purposes
 SPEEDPY_TEAMS_ENABLED = env.bool("SPEEDPY_TEAMS_ENABLED", default=True)  # enable/disable teams functionality
+SPEEDPY_MFA_BACKEND = env.str("SPEEDPY_MFA_BACKEND", default="allauth_mfa")  # "django_otp" or "allauth_mfa"
+
+if SPEEDPY_MFA_BACKEND == "django_otp":
+    INSTALLED_APPS += [
+        "django_otp",
+        "django_otp.plugins.otp_totp",
+        "django_otp.plugins.otp_static",
+    ]
+elif SPEEDPY_MFA_BACKEND == "allauth_mfa":
+    INSTALLED_APPS += ["allauth.mfa"]
+
+if SPEEDPY_MFA_BACKEND == "django_otp":
+    _auth_idx = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.insert(_auth_idx + 1, "django_otp.middleware.OTPMiddleware")
 RECAPTCHA_PUBLIC_KEY = env("RECAPTCHA_PUBLIC_KEY", default="")
 RECAPTCHA_PRIVATE_KEY = env("RECAPTCHA_PRIVATE_KEY", default="")
 RECAPTCHA_REQUIRED_SCORE = env.float("RECAPTCHA_REQUIRED_SCORE", default=0.5)
@@ -302,6 +314,13 @@ if not SITE_URL:
 if not SITE_URL:
     logger.warning("SITE_URL not set")
 
-# OTP Configuration
-OTP_TOTP_ISSUER = env.str("OTP_TOTP_ISSUER", default="uptimefor.me")
-OTP_LOGIN_URL = reverse_lazy("account_login_otp")
+# MFA / TOTP Configuration
+TOTP_ISSUER = env.str("TOTP_ISSUER", default="")
+
+if SPEEDPY_MFA_BACKEND == "django_otp":
+    OTP_TOTP_ISSUER = TOTP_ISSUER
+    OTP_LOGIN_URL = reverse_lazy("account_login_otp")
+elif SPEEDPY_MFA_BACKEND == "allauth_mfa":
+    MFA_TOTP_ISSUER = TOTP_ISSUER
+    MFA_RECOVERY_CODE_COUNT = env.int("MFA_RECOVERY_CODE_COUNT", default=10)
+    MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]

@@ -7,7 +7,11 @@
                 {% url "account_profile" as profile_url %}
                 {% url "account_change_password" as password_url %}
                 {% url "account_email" as email_url %}
-                {% url "account_otp_settings" as otp_url %}
+                {% if SPEEDPY_MFA_BACKEND == "allauth_mfa" %}
+                    {% url "mfa_index" as mfa_url %}
+                {% else %}
+                    {% url "account_otp_settings" as mfa_url %}
+                {% endif %}
                 <ul role="list" class="account-nav">
                     <li>
                         <a href="{{ profile_url }}"
@@ -28,8 +32,8 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ otp_url }}"
-                           class="account-nav-link {% if request.path == otp_url %}account-nav-link-active{% endif %}">
+                        <a href="{{ mfa_url }}"
+                           class="account-nav-link {% if mfa_url in request.path %}account-nav-link-active{% endif %}">
                             <span class="font-semibold">{% trans "Two-Factor Authentication" %}</span>
                         </a>
                     </li>

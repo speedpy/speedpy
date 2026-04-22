@@ -1,0 +1,74 @@
+{% extends "mfa/base_entrance.html" %}
+{% load i18n static %}
+
+{% block head_title %}{% trans "Two-Factor Authentication" %}{% endblock %}
+
+{% block content %}
+    <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md">
+            <img class="mx-auto h-20 w-auto" src="{% static "mainapp/speedpy_logo.png" %}" alt="SpeedPy.Com">
+            <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-fg">
+                {% trans "Two-Factor Authentication" %}
+            </h2>
+            <p class="mt-2 text-center text-sm leading-6 text-fg-secondary">
+                {% trans "Enter the code from your authenticator app to continue." %}
+            </p>
+        </div>
+
+        <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
+            <div class="bg-background-paper px-6 py-12 shadow-speedpyui-8 sm:rounded-lg sm:px-12">
+
+                <form method="post" action="{% url 'mfa_authenticate' %}">
+                    {% csrf_token %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-error mb-6">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <p class="text-sm">{{ error }}</p>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <p class="text-sm">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% for field in form %}
+                        <div class="form-field mb-6">
+                            <label class="input-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            <input class="input-outlined"
+                                   type="text"
+                                   name="{{ field.html_name }}"
+                                   id="{{ field.id_for_label }}"
+                                   autocomplete="one-time-code"
+                                   inputmode="numeric"
+                                   autofocus
+                                   {% if field.value %}value="{{ field.value }}"{% endif %}>
+                            {% if field.help_text %}
+                                <p class="input-helper">{{ field.help_text }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="flex flex-col gap-3">
+                        <button type="submit" class="btn btn-contained btn-primary btn-md w-full">
+                            {% trans "Sign In" %}
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <form id="logout-from-stage" method="post" action="{% url 'account_logout' %}">
+                        <input type="hidden" name="next" value="{% url 'account_login' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-text btn-secondary btn-sm">
+                            {% trans "Cancel and sign out" %}
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
