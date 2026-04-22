@@ -29,3 +29,7 @@ def tours_enabled(request):
 def current_year(request):
     from datetime import date
     return {"current_year": date.today().year}
+
+
+def mfa_backend(request):
+    return {"SPEEDPY_MFA_BACKEND": getattr(settings, "SPEEDPY_MFA_BACKEND", "django_otp")}
