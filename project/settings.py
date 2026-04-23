@@ -323,3 +323,4 @@ if SPEEDPY_MFA_BACKEND == "django_otp":
 elif SPEEDPY_MFA_BACKEND == "allauth_mfa":
     MFA_TOTP_ISSUER = TOTP_ISSUER
     MFA_RECOVERY_CODE_COUNT = env.int("MFA_RECOVERY_CODE_COUNT", default=10)
+    MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]
