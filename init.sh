@@ -10,7 +10,7 @@ if echo "$remotes" | grep -q "^origin$"; then
   echo "Renamed remote 'origin' to 'speedpy'"
 fi
 echo "Creating a speedpy branch for future updates. "
-git branch speedpy
+git branch speedpy || true
 git branch --set-upstream-to=speedpy/master speedpy 2>/dev/null || true
 echo "Set speedpy branch to track speedpy/master"
 # Unset upstream tracking for master branch
@@ -18,9 +18,6 @@ if git rev-parse --verify master >/dev/null 2>&1; then
   git branch --unset-upstream master 2>/dev/null || true
   echo "Unset upstream tracking for 'master' branch"
 fi
-
-
-
 
 # Backup docker-compose.yml before modifications
 if [ ! -f "docker-compose.yml.bak" ]; then
