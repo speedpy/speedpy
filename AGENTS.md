@@ -4,50 +4,21 @@ This file provides guidance to AI Coding Agents when working with code in this r
 
 ## Project Overview
 
-SpeedPy Standard is a Django-based web application starter template featuring a single-app architecture with custom user
-authentication, Celery for background tasks, and Tailwind CSS for styling. The project follows a Docker-first
-development approach.
+SpeedPy Standard is a Django-based web application starter template featuring a single-app architecture with custom
+user authentication, Celery for background tasks, and Tailwind CSS for styling. The project supports two development
+modes — Docker Compose or local uv + npm — picked at init time.
 
 ## Development Commands
 
-### Docker Commands (Primary Development Method)
+For mode-specific run commands (Django management, Tailwind, migrations, tests, shell access, etc.) read
+**`AGENTS-local.md`** in this directory. It is populated by `init-docker.sh` or `init-local.sh` and reflects the
+active setup. Do not assume a particular wrapper (`docker compose run` vs `uv run`) — the cheat sheet is the source
+of truth for invocation.
 
-All development should be done through Docker containers:
+Initialization scripts:
 
-```bash
-# Initialize the project (first time setup)
-make init
-
-# Run development server
-docker compose up -d web
-# Database operations
-docker compose run --rm web python manage.py makemigrations
-docker compose run --rm web python manage.py migrate
-# tailwind
-docker compose run web npm run tailwind:build # to build once
-docker compose run web npm run tailwind:watch # to start watch & build
-
-# General command runner
-docker compose run --rm web <command>
-
-# Access shell
-docker compose run --rm web bash
-```
-
-### NPM Commands
-
-```bash
-npm run tailwind:build  # Build Tailwind CSS
-npm run tailwind:watch  # Watch Tailwind CSS changes
-```
-
-### Testing and Quality
-
-The project includes Django's testing framework. Run tests with:
-
-```bash
-docker compose run --rm web python manage.py test
-```
+- `bash init-docker.sh` — boots the project with Docker Compose (Postgres, Redis, Celery, nginx media).
+- `bash init-local.sh` — runs the project on the host with uv + npm, SQLite, no Redis, Celery in always-eager mode.
 
 ## Architecture
 

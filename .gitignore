@@ -1,4 +1,6 @@
 local_password.txt
+AGENTS-local.md
+dev.sh
 /media/*
 ### VisualStudioCode template
 .vscode/*

@@ -12,19 +12,21 @@ This is a standard project to start your Django based webapps.
 
 ## Requirements
 
-- You must have Docker installed on your machine.
 - Linux or Mac
 - Git installed and configured (`user.name` and `user.email`)
-- 
+- One of:
+  - **Docker mode:** Docker + Docker Compose
+  - **Local mode:** [`uv`](https://docs.astral.sh/uv/) and Node.js (LTS, e.g. via `nvm`)
 
 ## How to use
 
 ### If you have already cloned the repo
 
-To initialize environment please type in terminal in the root of the project:
+Pick a mode and run the matching init script in the project root:
 
 ```bash
-bash init.sh
+bash init-docker.sh   # Docker Compose: Postgres + Redis + Celery + nginx media
+bash init-local.sh    # uv + npm on the host: SQLite, no Redis, Celery in always-eager mode
 ```
 
 ### One line download and start
@@ -73,51 +75,34 @@ This will populate the `tailwind_directories.json` file which is used in the `ta
 
 In order to turn Tailwind CSS into regular CSS, you need to run the following command:
 
-To compile CSS once, run:(running this gives error: npm ERR! missing script: build:css)
-The correct command should be: `npm run tailwind:build`
-```bash
-npm run build:css
-```
-
-Alternatively, you can use make:
+To compile CSS once, run:
 
 ```bash
-make tw-build
+npm run tailwind:build
 ```
 
 #### Watching Tailwind (for changes)
 
-(This section needs rewrite when we update tailwind)
-
-To avoid having to run the above commands everytime you make changes to your templates using Tailwind, you can run the below command to watch for changes and recompile CSS automatically:
-(this also gives the same error as above, the correct command should be: `npm run tailwind:watch`)
-```bash
-npm run watch:css
-```
-
-Or use the shortcut:
+To avoid having to run the above command every time you change templates, watch for changes and recompile automatically:
 
 ```bash
-make tw
+npm run tailwind:watch
 ```
 
 
 ### Running the project
 
-(This section needs rewrite when we update tailwind)
-
-To run the project, type in terminal in the root of the project:
+After running `init-local.sh` (uv mode), start the dev server in one terminal and Tailwind watch in another:
 
 ```bash
-source env/bin/activate
-python manage.py runserver
-
+uv run bash dev.sh
+npm run tailwind:watch
 ```
 
-Or shorter, with `make`:
+After running `init-docker.sh` (Docker mode), the `web` service runs `bash dev.sh` automatically — bring everything up with:
 
 ```bash
-make run
+docker compose up -d
 ```
 
 
@@ -269,7 +254,7 @@ Already includes `appliku.yml` file which will automatically configure your appl
 
 * Create your app
 * Change the build image to Python 3.12 + node 20.10
-* Set the "Build command" to: `npm i && make tw-build`
+* Set the "Build command" to: `npm install && python manage.py generate_tailwind_directories && npm run tailwind:build`
 * Create Postgres 16 and Redis 7 databases
 * Add environment variables:
   * ALLOWED_HOSTS – if you have multiple domains make it a comma separated without spaces

@@ -22,6 +22,8 @@ app.conf.accept_content = ["application/json"]
 app.conf.task_serializer = "json"
 app.conf.result_serializer = "json"
 app.conf.result_backend = env("REDIS_URL", default=None)
+app.conf.task_always_eager = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
+app.conf.task_eager_propagates = True
 app.conf.task_default_queue = "default"
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#task-soft-time-limit
 # Task soft time limit in seconds.
