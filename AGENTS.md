@@ -1,6 +1,7 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to AI Coding Agents when working with code in this repository.
+This file is the source of truth for AI Coding Agents working in this repository.
+`CLAUDE.md` and `.cursorrules` exist only as pointers to this file — keep guidance here.
 
 ## Project Overview
 
@@ -22,23 +23,76 @@ Initialization scripts:
 
 ## Architecture
 
-### Apps Structure
+### Apps Structure (single-app architecture)
 
-- **`mainapp`**: Primary application containing all business logic
-    - Models organized in separate files under `mainapp/models/`
-    - Views organized in separate files under `mainapp/views/`
-    - Forms organized in separate files under `mainapp/forms/`
-    - All models/views/forms must be imported in respective `__init__.py` files
-- **`usermodel`**: Dedicated app for custom User model with email-based authentication
-- **`speedpycom`**: Contains management commands (e.g., `generate_tailwind_directories`)
+This is a **single-app Django project**. All business logic ships from `mainapp`.
+**Do not create a new Django app** for a new feature, page, or model — extend `mainapp`.
+The only existing apps and their narrow purposes:
+
+- **`mainapp`** — every piece of business logic, every page, every URL that is not user
+  auth and not the boilerplate demo. New models, views, forms, admin, Celery tasks,
+  templates all go here. Uses **package-style modules** (one file per concern, re-exported
+  through `__init__.py`):
+    - `mainapp/models/<group>.py` — re-export the class in `mainapp/models/__init__.py`
+      and add it to `__all__`
+    - `mainapp/views/<group>.py` — re-export in `mainapp/views/__init__.py` `__all__`
+      (class-based views only)
+    - `mainapp/forms/<group>.py` — re-export in `mainapp/forms/__init__.py` `__all__`
+    - `mainapp/admin/<group>.py` — re-export in `mainapp/admin/__init__.py`
+    - `mainapp/tasks/<group>.py` — Celery tasks, re-export in `mainapp/tasks/__init__.py`
+    - URL routes in `mainapp/urls.py`
+    - Templates in `templates/mainapp/<group>/...`
+- **`usermodel`** — custom email-based `User` model and anything that mutates that model
+  or its profile (avatar, OTP profile fields owned by the user, allauth adapter,
+  signup/login/profile forms). Uses **single-file modules** (`models.py`, `views.py`,
+  `forms.py`, `admin.py`, `managers.py`, `adapters.py`) — keep that shape; do not
+  package-split it. Anything user-adjacent that is really business logic (e.g. a Team a
+  user belongs to, a per-user setting that's part of a feature) belongs in `mainapp`,
+  not here.
+- **`demoapp`** — read-only reference for boilerplate users. The Product CRUD at
+  `/demo/products/` is the canonical example to copy when building new CRUD screens.
+  **Do not add real product features here.** If you need to extend the demo to teach a
+  new pattern, keep it conventional: `demoapp/models.py`, `demoapp/forms.py`,
+  `demoapp/views.py`, `demoapp/urls.py`, templates under `templates/demoapp/`.
+- **`speedpycom`** — framework-level utilities shared by every app: `BaseModel` (UUID
+  pk + timestamps — inherit it for new models), management commands like
+  `generate_tailwind_directories`, default OG image view. Add cross-cutting helpers
+  here, not feature code.
+
+There is no Django REST Framework / no serializers in this project — it is server-rendered
+with Django templates + crispy forms + Alpine.js. If a feature genuinely needs a JSON
+endpoint, ask the user before introducing DRF; otherwise return rendered templates or
+small `JsonResponse`s from class-based views in `mainapp/views/`.
+
+### Where new code goes — quick reference
+
+| You're adding…                                | Put it in                                                               |
+|-----------------------------------------------|-------------------------------------------------------------------------|
+| A business-logic model                        | `mainapp/models/<group>.py` + register in `__init__.py`                 |
+| A page / view                                 | `mainapp/views/<group>.py` (class-based) + route in `mainapp/urls.py`   |
+| A form                                        | `mainapp/forms/<group>.py` (crispy + SpeedPy UI classes)                |
+| A Celery task                                 | `mainapp/tasks/<group>.py`                                              |
+| Admin config for a model                      | `mainapp/admin/<group>.py`                                              |
+| A template for a `mainapp` page               | `templates/mainapp/<group>/<name>.html`                                 |
+| A reusable partial used by 2+ pages           | `templates/components/<name>.html` (or extend an existing subfolder)    |
+| A user / auth field, form, or profile screen  | `usermodel/` (single-file modules) + templates under `templates/account/` |
+| An email template                             | `templates/emails/<name>.html` (sent via django-post_office)            |
+| A management command                          | `speedpycom/management/commands/<name>.py`                              |
+| A new abstract base model or shared utility   | `speedpycom/`                                                           |
+| A new top-level Django app                    | Don't. Extend `mainapp` instead.                                        |
 
 ### Key Architectural Patterns
 
-- Single Django app architecture (mainapp + usermodel)
 - Class-based views preferred over function-based views
 - Foreign key references use string notation: `'mainapp.ModelName'`
-- Templates stored in root `templates/` directory, organized by app
-- Package-style organization for models, views, and forms (separate files in directories)
+- New concrete models inherit from `speedpycom.models.BaseModel` (UUID primary key + created/updated timestamps)
+- Templates live in the **root `templates/` directory**, namespaced by app:
+  `templates/mainapp/`, `templates/demoapp/`, `templates/account/` (allauth overrides
+  and user/profile pages owned by `usermodel`), `templates/components/` (reusable
+  partials), `templates/partials/`, `templates/emails/`.
+  No per-app `templates/` directories.
+- Package-style organization for `mainapp` (models, views, forms, admin, tasks);
+  single-file modules for `usermodel`, `demoapp`, `speedpycom`
 
 ### Technology Stack
 
@@ -66,6 +120,43 @@ Initialization scripts:
 The project uses an in-house design system called **SpeedPy UI**. A live catalogue of every
 primitive lives at `/speedpyui-preview/` — open it before designing new pages or components
 to see what's already available and reuse the existing look.
+
+### Before you build new UI — check what already exists
+
+Do not hand-roll a new component, CRUD screen, or layout if a reference already exists.
+In order, check:
+
+1. **`/speedpyui-preview/`** (rendered from `templates/mainapp/speedpyui_preview.html`) —
+   buttons, inputs, cards, badges, alerts, tables, pagination, breadcrumbs, chips,
+   timeline, stepper, accordion, etc. with copyable markup. If a primitive is here, use
+   the exact classes from the preview — do not redefine them.
+2. **`/speedpyui-preview/FormView`** + `mainapp/forms/speedpyui_preview.py` — canonical
+   crispy-forms `FormView` styled with SpeedPy UI. Copy this shape for any new form.
+3. **`demoapp` Product CRUD** (`/demo/products/`) — canonical full CRUD example. When
+   adding `ListView` / `CreateView` / `UpdateView` / `DetailView` / `DeleteView` for a
+   new model, mirror the structure of `demoapp/views.py`, `demoapp/forms.py`,
+   `demoapp/urls.py`, and the four templates under `templates/demoapp/`
+   (`product_list.html`, `product_form.html`, `product_detail.html`,
+   `product_confirm_delete.html`). Pagination, search/filter, empty state, and the
+   "Generate demo products" empty-table seed action are all already wired correctly there.
+4. **Reusable template partials** — include or extend instead of copy-pasting markup:
+    - `templates/base.html` — base page; extend for any public/authenticated page
+    - `templates/mainapp/layouts/dashboard.html` — dashboard chrome
+    - `templates/mainapp/layouts/sidebar_layout.html` — sidebar + content layout
+    - `templates/account/base_manage.html` — account/settings pages with left nav
+    - `templates/components/nav.html`, `nav_auth.html`, `footer.html`,
+      `messages.html`, `checkmark.html` — site-wide chrome
+    - `templates/components/sidebar_layout/` — `sidebar_menu.html`,
+      `user_menu.html`, `crud_navigation.html`
+    - `templates/components/team_selector/team_dropdown_selector.html`
+    - `templates/partials/_tour.html` — Driver.js tour wiring (only renders when
+      `tour_steps` is non-empty)
+
+If something close-but-not-identical exists, **extend or parameterize the existing
+partial/template**; do not fork a near-duplicate. If genuinely nothing exists, add the
+new component as a `@layer components` class in `static/mainapp/input.css`, document it
+in `/speedpyui-preview/`, and only then use it in pages — that keeps the design system
+the single source of truth.
 
 ### Design tokens (colors, surfaces, shadows)
 
@@ -109,17 +200,16 @@ a deliberately static color is needed.
 
 Re-use these `@layer components` classes from `input.css` rather than hand-rolling new styles:
 
-Open `/speedpyui-preview/` before adding or changing UI. It shows rendered examples and
-copyable snippets for the current SpeedPy UI primitives.
+Open `/speedpyui-preview/` before adding or changing UI — it shows rendered examples and
+copyable snippets for every SpeedPy UI primitive. (See "Before you build new UI" above for
+the full reuse checklist.)
 
-Full-page demos that are meant to teach boilerplate users should live in `demoapp`, not
-`mainapp`. Keep them conventional and easy to copy: model in `demoapp/models.py`, form in
+When extending the `demoapp` itself (teaching examples only — real features go in
+`mainapp`), keep its single-file shape: model in `demoapp/models.py`, form in
 `demoapp/forms.py`, generic class-based views in `demoapp/views.py`, routes in
-`demoapp/urls.py`, and templates under `templates/demoapp/`. The Product CRUD demo at
-`/demo/products/` is the canonical example for `ListView`, `CreateView`, `UpdateView`,
-`DetailView`, and `DeleteView` screens using SpeedPy UI classes. Do not seed demo rows in migrations; expose
-an explicit POST action, like the Product "Generate demo products" button, and only show it
-when the demo table is empty.
+`demoapp/urls.py`, and templates under `templates/demoapp/`. **Do not seed demo rows in
+migrations** — expose an explicit POST action like the Product "Generate demo products"
+button, and only show it when the demo table is empty.
 
 **Buttons** — compose three axes: variant + color + size. Size defaults to `btn-md`.
 
@@ -302,22 +392,33 @@ not in the `content` globs).
 
 ## Code Conventions
 
+For where each kind of file lives, see the **"Where new code goes — quick reference"**
+table above. The conventions below cover *how* to write each kind, not *where* to put it.
+
 ### Models
 
-- Create separate files in `mainapp/models/` for different model groups
-- Import all models in `mainapp/models/__init__.py` with `__all__` list
+- Inherit from `speedpycom.models.BaseModel` for new concrete models (gives a UUID
+  primary key and `created_at` / `updated_at` timestamps)
 - Use string references for foreign keys: `ForeignKey('mainapp.ModelName')`
+- After adding a model in `mainapp/models/<group>.py`, re-export it in
+  `mainapp/models/__init__.py` and append to `__all__`
+- Add a matching admin in `mainapp/admin/<group>.py` and re-export it from
+  `mainapp/admin/__init__.py`
 
 ### Views
 
-- Use class-based views (inherit from Django's generic views)
-- Organize views in separate files under `mainapp/views/`
-- Import all views in `mainapp/views/__init__.py`
+- Class-based views only (inherit from Django's generic views; function-based views
+  only for trivial endpoints like `mark_tour_complete`)
+- After adding a view in `mainapp/views/<group>.py`, re-export it in
+  `mainapp/views/__init__.py` and append to `__all__`
+- Wire the URL in `mainapp/urls.py` (or `project/urls.py` only for project-level routes)
+- For new CRUD screens, copy the structure of `demoapp/views.py` rather than rolling
+  your own list/filter/pagination logic
 
 ### Admin
 
 - Use meaningful `list_display`, `search_fields`, and filters
-- Implement `django_raw_fields` for foreign key fields
+- Use `raw_id_fields` for foreign keys to large tables
 
 ### Performance
 
