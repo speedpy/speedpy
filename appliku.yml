@@ -1,5 +1,5 @@
 build_settings:
-  build_command: npm i && npm run tailwind:build
+  build_command: npm i && npm run tailwind:build && uv run python manage.py compilemessages
   build_image: python-3.13-uv-node-25.6
   environment_variables:
     - from_database:
