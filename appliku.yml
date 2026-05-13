@@ -27,9 +27,9 @@ build_settings:
 cronjobs: { }
 databases:
   db:
-    type: postgresql_17
+    type: postgresql_18
   redis:
-    type: redis_7
+    type: redis_8
 services:
   beat:
     command: bash celery-beat.sh
