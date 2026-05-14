@@ -1,3 +1,5 @@
+import dns.exception
+import dns.resolver
 from allauth.account.forms import (
     SignupForm,
     PasswordField,
@@ -62,6 +64,24 @@ class UsermodelSignupForm(SignupForm):
                 "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
             ),
         )
+
+    def clean_email(self):
+        email = super().clean_email()
+        if email and not settings.DEBUG and getattr(settings, "SIGNUP_EMAIL_MX_CHECK", True):
+            domain = email.rsplit("@", 1)[-1]
+            try:
+                answers = dns.resolver.resolve(domain, "MX", lifetime=5)
+            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers):
+                raise forms.ValidationError(
+                    _("The email domain does not appear to accept mail. Please check for typos.")
+                )
+            except dns.exception.DNSException:
+                return email
+            if not list(answers):
+                raise forms.ValidationError(
+                    _("The email domain does not appear to accept mail. Please check for typos.")
+                )
+        return email
 
     def clean(self):
         super().clean()

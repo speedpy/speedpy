@@ -241,6 +241,8 @@ REQUIRE_DPA_ACCEPTANCE = True
 TOS_LINK = env("TOS_LINK", default="/")
 DPA_LINK = env("DPA_LINK", default="/")
 
+SIGNUP_EMAIL_MX_CHECK = env.bool("SIGNUP_EMAIL_MX_CHECK", default=True)
+
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG,
 }
