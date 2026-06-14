@@ -1,8 +1,12 @@
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.exceptions import ImmediateHttpResponse
 from django.conf import settings as django_settings
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.shortcuts import redirect
+
+from usermodel.validators import validate_no_url
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
@@ -39,3 +43,21 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                 request.session['otp_pre_auth_user_id'] = str(user.id)
                 request.session['otp_pre_auth_backend'] = 'allauth.account.auth_backends.AuthenticationBackend'
                 raise ImmediateHttpResponse(redirect(reverse('account_login_otp')))
+
+
+class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    def populate_user(self, request, sociallogin, data):
+        """
+        Names coming from social providers (Google, GitHub, GitLab) are
+        untrusted and never pass through a form, so they would otherwise
+        skip our name validation. Drop any name that contains a URL so it
+        can't be injected into outgoing emails (e.g. the confirmation mail).
+        """
+        user = super().populate_user(request, sociallogin, data)
+        for field in ("first_name", "last_name"):
+            value = getattr(user, field, "") or ""
+            try:
+                validate_no_url(value)
+            except ValidationError:
+                setattr(user, field, "")
+        return user

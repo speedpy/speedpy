@@ -160,6 +160,7 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 ACCOUNT_ADAPTER = "usermodel.adapters.CustomAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "usermodel.adapters.CustomSocialAccountAdapter"
 LOGIN_REDIRECT_URL = reverse_lazy("dashboard")
 
 LOGGING = {

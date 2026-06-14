@@ -13,6 +13,7 @@ from django.conf import settings
 from PIL import Image
 
 from usermodel.managers import UserManager
+from usermodel.validators import validate_no_url
 
 PROFILE_THUMBNAIL_SIZE = (96, 96)
 
@@ -28,8 +29,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         }
     )
 
-    first_name = models.CharField(_('First Name'), max_length=50, blank=True)
-    last_name = models.CharField(_('Last Name'), max_length=50, blank=True)
+    first_name = models.CharField(_('First Name'), max_length=50, blank=True, validators=[validate_no_url])
+    last_name = models.CharField(_('Last Name'), max_length=50, blank=True, validators=[validate_no_url])
     profile_picture = models.ImageField(
         _('Profile Picture'),
         upload_to='profile_pictures/',
