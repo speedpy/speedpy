@@ -2,9 +2,15 @@ from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from usermodel.adapters import CustomSocialAccountAdapter
+from usermodel.forms import (
+    UsermodelLoginForm,
+    UsermodelResetPasswordForm,
+    UsermodelResetPasswordKeyForm,
+    UsermodelSignupForm,
+)
 from usermodel.models import User
 from usermodel.validators import validate_no_url
 
@@ -79,3 +85,31 @@ class EmailConfirmationMessageTests(TestCase):
         )
         self.assertIn("your email address was used to register", rendered)
         self.assertIn("https://speedpy.test/confirm/abc", rendered)
+
+
+AUTH_FORMS = [
+    UsermodelSignupForm,
+    UsermodelLoginForm,
+    UsermodelResetPasswordForm,
+    UsermodelResetPasswordKeyForm,
+]
+
+
+class RecaptchaToggleTests(TestCase):
+    @override_settings(RECAPTCHA_PUBLIC_KEY="", RECAPTCHA_PRIVATE_KEY="")
+    def test_disabled_when_keys_missing(self):
+        for form_class in AUTH_FORMS:
+            with self.subTest(form=form_class.__name__):
+                self.assertNotIn("captcha", form_class().fields)
+
+    @override_settings(RECAPTCHA_PUBLIC_KEY="pub", RECAPTCHA_PRIVATE_KEY="priv")
+    def test_enabled_when_keys_present(self):
+        for form_class in AUTH_FORMS:
+            with self.subTest(form=form_class.__name__):
+                self.assertIn("captcha", form_class().fields)
+
+    @override_settings(RECAPTCHA_PUBLIC_KEY="pub", RECAPTCHA_PRIVATE_KEY="")
+    def test_disabled_when_only_one_key_present(self):
+        for form_class in AUTH_FORMS:
+            with self.subTest(form=form_class.__name__):
+                self.assertNotIn("captcha", form_class().fields)

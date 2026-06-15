@@ -11,6 +11,8 @@ from allauth.account.forms import (
 )
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV3
 
 from crispy_tailwind.layout import Submit
 from django import forms
@@ -18,6 +20,23 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from usermodel.models import User
+
+
+def recaptcha_enabled():
+    """reCAPTCHA is active only when both keys are configured via env vars."""
+    return bool(settings.RECAPTCHA_PUBLIC_KEY and settings.RECAPTCHA_PRIVATE_KEY)
+
+
+def attach_recaptcha(form):
+    """Add an invisible reCAPTCHA v3 field to the form when keys are configured.
+
+    Returns the crispy layout elements to splice into the form layout (an empty
+    list when reCAPTCHA is disabled, so the form renders exactly as before).
+    """
+    if not recaptcha_enabled():
+        return []
+    form.fields["captcha"] = ReCaptchaField(widget=ReCaptchaV3(), label="")
+    return [Field("captcha")]
 
 
 class UsermodelSignupForm(SignupForm):
@@ -45,6 +64,7 @@ class UsermodelSignupForm(SignupForm):
             )
         self.helper = FormHelper()
 
+        captcha = attach_recaptcha(self)
         self.helper.layout = Layout(
             Field("email", "password1"),
             (
@@ -57,6 +77,7 @@ class UsermodelSignupForm(SignupForm):
                 if settings.REQUIRE_DPA_ACCEPTANCE
                 else None
             ),
+            *captcha,
             Submit(
                 "submit",
                 _("Sign up"),
@@ -96,9 +117,11 @@ class UsermodelLoginForm(LoginForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        captcha = attach_recaptcha(self)
         self.helper.layout = Layout(
             Field("login", "password"),
             Field("remember"),
+            *captcha,
             Submit(
                 "submit",
                 _("Sign in"),
@@ -112,8 +135,10 @@ class UsermodelResetPasswordForm(ResetPasswordForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        captcha = attach_recaptcha(self)
         self.helper.layout = Layout(
             Field("email"),
+            *captcha,
             Submit(
                 "submit",
                 _("Reset password"),
@@ -127,8 +152,10 @@ class UsermodelResetPasswordKeyForm(ResetPasswordKeyForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        captcha = attach_recaptcha(self)
         self.helper.layout = Layout(
             Field("password1", "password2"),
+            *captcha,
             Submit(
                 "submit",
                 _("Reset password"),
