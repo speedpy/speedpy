@@ -169,6 +169,35 @@ class CurrentUserAPITests(TestCase):
         self.assertIsNone(response.data["profile_picture_url"])
         self.assertIsNone(response.data["profile_picture_thumbnail_url"])
 
+    def test_profile_image_urls_are_absolute(self):
+        import io
+
+        from PIL import Image
+
+        img = Image.new("RGB", (100, 100), color="red")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        buf.seek(0)
+        self.user.profile_picture.save("test.png", buf, save=True)
+        self.user.refresh_from_db()
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/v1/me/")
+        self.assertTrue(
+            response.data["profile_picture_url"].startswith("http"),
+            "profile_picture_url should be an absolute URL",
+        )
+        if self.user.profile_picture_thumbnail:
+            self.assertTrue(
+                response.data["profile_picture_thumbnail_url"].startswith("http"),
+                "profile_picture_thumbnail_url should be an absolute URL",
+            )
+
+        # Clean up uploaded file
+        self.user.profile_picture.delete(save=False)
+        if self.user.profile_picture_thumbnail:
+            self.user.profile_picture_thumbnail.delete(save=False)
+
 
 class APISchemaTests(TestCase):
     def setUp(self):
@@ -219,3 +248,258 @@ class APISchemaTests(TestCase):
         self.client.login(email="staff@example.com", password="staffpass123")
         response = self.client.get("/api/schema/")
         self.assertEqual(response.status_code, 200)
+
+    @override_settings(API_DOCS_PUBLIC=True)
+    def test_schema_includes_update_current_user(self):
+        response = self.client.get("/api/schema/")
+        self.assertIn("updateCurrentUser", str(response.content))
+
+    @override_settings(API_DOCS_PUBLIC=True)
+    def test_schema_includes_product_operations(self):
+        response = self.client.get("/api/schema/")
+        content = str(response.content)
+        self.assertIn("listProducts", content)
+        self.assertIn("getProduct", content)
+
+
+class UpdateProfileAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email="patch@example.com",
+            password="testpass123",
+            first_name="Ada",
+            last_name="Lovelace",
+        )
+
+    def test_anonymous_rejected(self):
+        response = self.client.patch(
+            "/api/v1/me/",
+            {"first_name": "Grace"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_patch_updates_first_name(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/api/v1/me/",
+            {"first_name": "Grace"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["first_name"], "Grace")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "Grace")
+
+    def test_patch_updates_last_name(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/api/v1/me/",
+            {"last_name": "Hopper"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["last_name"], "Hopper")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.last_name, "Hopper")
+
+    def test_patch_returns_full_user_response(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/api/v1/me/",
+            {"first_name": "Grace"},
+            format="json",
+        )
+        self.assertEqual(
+            set(response.data.keys()),
+            CurrentUserAPITests.EXPECTED_FIELDS,
+        )
+
+    def test_email_not_writable(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/api/v1/me/",
+            {"email": "hacked@example.com"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "patch@example.com")
+
+    def test_rejects_url_in_first_name(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/api/v1/me/",
+            {"first_name": "http://evil.com"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("first_name", response.data)
+
+    def test_rejects_url_in_last_name(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/api/v1/me/",
+            {"last_name": "https://phish.io"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("last_name", response.data)
+
+    def test_empty_patch_succeeds(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/api/v1/me/",
+            {},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_patch_multiple_fields(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/api/v1/me/",
+            {"first_name": "Grace", "last_name": "Hopper"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["first_name"], "Grace")
+        self.assertEqual(response.data["last_name"], "Hopper")
+        self.assertEqual(response.data["full_name"], "Grace Hopper")
+
+    def test_patch_with_session_auth_and_csrf(self):
+        """PATCH via session login requires CSRF token (DRF SessionAuthentication)."""
+        from django.test import Client
+
+        session_client = Client(enforce_csrf_checks=True)
+        session_client.login(email="patch@example.com", password="testpass123")
+
+        # Without CSRF token, should be rejected
+        response = session_client.patch(
+            "/api/v1/me/",
+            data='{"first_name": "Grace"}',
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+        # With CSRF token, should succeed
+        response = session_client.get("/api/v1/me/")
+        csrf_token = response.cookies.get("csrftoken")
+        if csrf_token:
+            response = session_client.patch(
+                "/api/v1/me/",
+                data='{"first_name": "Grace"}',
+                content_type="application/json",
+                headers={"X-CSRFToken": csrf_token.value},
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()["first_name"], "Grace")
+
+    def test_patch_profile_picture_upload(self):
+        """PATCH can upload a profile picture via multipart."""
+        import io
+
+        from PIL import Image
+
+        self.client.force_authenticate(user=self.user)
+
+        img = Image.new("RGB", (100, 100), color="blue")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        buf.name = "avatar.png"
+        buf.seek(0)
+
+        response = self.client.patch(
+            "/api/v1/me/",
+            {"profile_picture": buf},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.profile_picture)
+        self.assertIsNotNone(response.data["profile_picture_url"])
+
+        # Clean up
+        self.user.profile_picture.delete(save=False)
+        if self.user.profile_picture_thumbnail:
+            self.user.profile_picture_thumbnail.delete(save=False)
+
+    def test_patch_clear_profile_picture(self):
+        """PATCH with profile_picture=null clears the image."""
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            "/api/v1/me/",
+            {"profile_picture": None},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.profile_picture)
+
+
+class ProductAPITests(TestCase):
+    def setUp(self):
+        from demoapp.models import Product
+
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email="prodapi@example.com",
+            password="testpass123",
+        )
+        self.product = Product.objects.create(
+            name="Test Widget",
+            sku="TST-001",
+            category="software",
+            status="active",
+            price="29.99",
+            inventory=100,
+            description="A test product.",
+        )
+
+    def test_anonymous_rejected_list(self):
+        response = self.client.get("/api/v1/products/")
+        self.assertEqual(response.status_code, 403)
+
+    def test_anonymous_rejected_detail(self):
+        response = self.client.get(f"/api/v1/products/{self.product.pk}/")
+        self.assertEqual(response.status_code, 403)
+
+    def test_list_returns_200(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/v1/products/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["results"]), 1)
+
+    def test_list_pagination_keys(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/v1/products/")
+        self.assertEqual(
+            set(response.data.keys()),
+            {"count", "next", "previous", "results"},
+        )
+
+    def test_detail_returns_200(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(f"/api/v1/products/{self.product.pk}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["name"], "Test Widget")
+        self.assertEqual(response.data["sku"], "TST-001")
+
+    def test_detail_field_contract(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(f"/api/v1/products/{self.product.pk}/")
+        expected = {
+            "id", "name", "sku", "category", "status",
+            "price", "inventory", "description",
+            "created_at", "updated_at",
+        }
+        self.assertEqual(set(response.data.keys()), expected)
+
+    def test_detail_404_for_nonexistent(self):
+        import uuid
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(f"/api/v1/products/{uuid.uuid4()}/")
+        self.assertEqual(response.status_code, 404)

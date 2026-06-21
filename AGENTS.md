@@ -630,11 +630,91 @@ Every endpoint must include:
 
 Add new tags to `SPECTACULAR_SETTINGS["TAGS"]` when introducing a resource group.
 
+### Scope conventions
+
+Boilerplate ships scopes for profile and teams only:
+
+| Scope            | Grants                                          |
+|------------------|-------------------------------------------------|
+| `read:profile`   | `GET /api/v1/me/`                               |
+| `write:profile`  | `PATCH /api/v1/me/`                             |
+| `read:teams`     | Team list, detail, members (read)               |
+| `write:teams`    | Invitations and other team writes               |
+| `admin`          | Reserved for future elevated operations         |
+
+When adding a business API, agents must:
+
+1. Define scope names: `read:<domain>`, `write:<domain>` (e.g. `read:products`).
+2. Document scopes in OpenAPI endpoint descriptions.
+3. Add scope checks to permission classes using `HasScope` from
+   `speedpycom.api.permissions` and set `required_scopes` on the view.
+   Stub checks are acceptable before Phase 6; enforcement becomes mandatory
+   once OAuth/PAT lands.
+4. Never invent ad-hoc permission strings outside this taxonomy.
+
+Custom scopes are **user-owned**. SpeedPy documents the pattern; fork owners
+register scopes for their models.
+
+### Tenant isolation checklist
+
+Agents must follow this for every team-scoped endpoint:
+
+1. Filter querysets through the current user's `TeamMembership` rows.
+2. Object lookup must not bypass membership checks (return `404` for unknown or
+   inaccessible teams, matching web view behavior).
+3. Write actions require role checks (`owner`, `admin`, `member`).
+4. Use `select_related()` / `prefetch_related()` on list endpoints.
+5. Respect `SPEEDPY_TEAMS_ENABLED`; return `404` when teams are disabled.
+6. Add **cross-team negative tests** for every new resource.
+
+### Testing requirements
+
+For each new endpoint:
+
+- Anonymous requests are rejected.
+- Authenticated happy path returns expected status and field contract.
+- Field keys are stable (test exact keys for integration surfaces).
+- Tenant isolation: member of team A cannot access team B's objects.
+- Role boundaries: writes respect owner/admin/member rules.
+- Generated schema includes the new `operation_id`.
+
+Validation after changes:
+
+```bash
+uv run python manage.py spectacular --file /tmp/speedpy-openapi.yaml --validate
+uv run python manage.py test
+```
+
 ### Canonical examples
 
-| Pattern    | Reference implementation                       | Phase |
-|------------|------------------------------------------------|-------|
-| User read  | `GET /api/v1/me/` in `usermodel/api.py`        | 1     |
+| Pattern              | Reference implementation                           | Phase |
+|----------------------|----------------------------------------------------|-------|
+| User read            | `GET /api/v1/me/` in `usermodel/api.py`            | 1     |
+| User write           | `PATCH /api/v1/me/` in `usermodel/api.py`          | 2     |
+| Business list/detail | `mainapp/api/products.py` (read-only Product API)  | 2     |
+
+Agents should read the reference implementation before adding a new resource.
+
+### Agent workflow
+
+When adding a new API resource:
+
+1. Locate the model in `mainapp/models/<group>.py`.
+2. Add serializer + views in `mainapp/api/<group>.py`.
+3. Re-export views from `mainapp/api/__init__.py`.
+4. Register the URL under `/api/v1/` in `project/api_urls.py`.
+5. Add team-scoped permissions if the model inherits `TeamModel`.
+6. Define `read:<domain>` / `write:<domain>` scopes and set
+   `required_scopes` on the view with `HasScope` permission.
+7. Add tests (happy path + tenant isolation + role boundaries).
+8. Run schema validation and update `SPECTACULAR_SETTINGS["TAGS"]` if needed.
+
+### Explicit non-goals (ask user first)
+
+- JWT, OAuth2, CORS, custom error envelopes.
+- New top-level Django apps for API code.
+- Exposing `is_staff`, `is_superuser`, passwords, or raw storage paths.
+- Unscoped querysets on `TeamModel` subclasses.
 
 ### API docs visibility
 
@@ -642,9 +722,8 @@ Add new tags to `SPECTACULAR_SETTINGS["TAGS"]` when introducing a resource group
 - `API_DOCS_PUBLIC=False` (default in production): schema, Swagger, and ReDoc require
   staff login.
 
-### Current limitations (Phase 1)
+### Current limitations (Phase 2)
 
 - Session authentication only — no tokens, JWT, or OAuth2.
-- No write endpoints.
 - No CORS.
-- Further conventions (scopes, tenant checklist, additional examples) arrive in Phase 2.
+- Scope stubs pass through for session auth; enforcement arrives with token auth.

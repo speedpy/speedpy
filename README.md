@@ -237,6 +237,38 @@ This `Custom User` model has email as a login field.
 
 The `email` field is case-insensitive. (This next sentences are not very clear to me): Also, the initial migration for this field is created with collation set to `db_collation=settings.CI_COLLATION` and `CI_COLLATION` is it `project/settings.py` depending on the database you are using.
 
+## HTTP API
+
+SpeedPy includes a versioned REST API built with Django REST Framework and
+drf-spectacular.
+
+### Endpoints
+
+- `GET /api/v1/me/` — authenticated user profile (session auth)
+- `PATCH /api/v1/me/` — update profile (first_name, last_name, profile_picture)
+- `GET /api/v1/products/` — list products (demo)
+- `GET /api/v1/products/<uuid>/` — product detail (demo)
+
+### Documentation
+
+- **OpenAPI schema:** `/api/schema/`
+- **Swagger UI:** `/api/docs/`
+- **ReDoc:** `/api/redoc/`
+
+By default, API docs are public when `DEBUG=True` and staff-only in production.
+Set `API_DOCS_PUBLIC=True` to make docs public in all environments.
+
+### Authentication
+
+Phase 1–2 uses **session authentication only**. Token-based auth (JWT, OAuth2,
+personal access tokens) is planned for later phases. See `specs/api-final.md`
+for the full roadmap.
+
+### Extending the API
+
+See the `## HTTP API` section in `AGENTS.md` for conventions on adding new
+endpoints, scopes, and tenant-scoped resources.
+
 ## How to work on the project
 Add your models in new files under `mainapp/models/` directory. Then add the model to `mainapp/models/__init__.py` file. This way you can split your models into multiple files.
 

@@ -283,6 +283,7 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
     "TAGS": [
         {"name": "user", "description": "Authenticated user endpoints"},
+        {"name": "products", "description": "Product endpoints (demo)"},
     ],
 }
 
