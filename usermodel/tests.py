@@ -3,6 +3,7 @@ from unittest.mock import patch
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.test import TestCase, override_settings
+from rest_framework.test import APIClient
 
 from usermodel.adapters import CustomSocialAccountAdapter
 from usermodel.forms import (
@@ -113,3 +114,108 @@ class RecaptchaToggleTests(TestCase):
         for form_class in AUTH_FORMS:
             with self.subTest(form=form_class.__name__):
                 self.assertNotIn("captcha", form_class().fields)
+
+
+class CurrentUserAPITests(TestCase):
+    EXPECTED_FIELDS = {
+        "id",
+        "email",
+        "first_name",
+        "last_name",
+        "full_name",
+        "is_email_confirmed",
+        "profile_picture_url",
+        "profile_picture_thumbnail_url",
+        "date_joined",
+    }
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email="api@example.com",
+            password="testpass123",
+            first_name="Ada",
+            last_name="Lovelace",
+        )
+
+    def test_anonymous_rejected(self):
+        response = self.client.get("/api/v1/me/")
+        self.assertEqual(response.status_code, 403)
+
+    def test_authenticated_returns_200(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/v1/me/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_response_contains_exactly_approved_fields(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/v1/me/")
+        self.assertEqual(set(response.data.keys()), self.EXPECTED_FIELDS)
+
+    def test_response_values_match_user(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/v1/me/")
+        data = response.data
+        self.assertEqual(data["id"], str(self.user.id))
+        self.assertEqual(data["email"], self.user.email)
+        self.assertEqual(data["first_name"], "Ada")
+        self.assertEqual(data["last_name"], "Lovelace")
+        self.assertEqual(data["full_name"], "Ada Lovelace")
+        self.assertEqual(data["is_email_confirmed"], self.user.is_email_confirmed)
+
+    def test_missing_profile_images_serialize_as_null(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/v1/me/")
+        self.assertIsNone(response.data["profile_picture_url"])
+        self.assertIsNone(response.data["profile_picture_thumbnail_url"])
+
+
+class APISchemaTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    @override_settings(API_DOCS_PUBLIC=True)
+    def test_schema_returns_success(self):
+        response = self.client.get("/api/schema/")
+        self.assertEqual(response.status_code, 200)
+
+    @override_settings(API_DOCS_PUBLIC=True)
+    def test_schema_includes_get_current_user(self):
+        response = self.client.get("/api/schema/")
+        self.assertIn("getCurrentUser", str(response.content))
+
+    @override_settings(API_DOCS_PUBLIC=True)
+    def test_docs_render(self):
+        response = self.client.get("/api/docs/")
+        self.assertEqual(response.status_code, 200)
+
+    @override_settings(API_DOCS_PUBLIC=True)
+    def test_redoc_render(self):
+        response = self.client.get("/api/redoc/")
+        self.assertEqual(response.status_code, 200)
+
+    @override_settings(API_DOCS_PUBLIC=False)
+    def test_schema_requires_staff_when_not_public(self):
+        response = self.client.get("/api/schema/")
+        self.assertIn(response.status_code, [302, 403])
+
+    @override_settings(API_DOCS_PUBLIC=False)
+    def test_docs_require_staff_when_not_public(self):
+        response = self.client.get("/api/docs/")
+        self.assertIn(response.status_code, [302, 403])
+
+    @override_settings(API_DOCS_PUBLIC=False)
+    def test_redoc_requires_staff_when_not_public(self):
+        response = self.client.get("/api/redoc/")
+        self.assertIn(response.status_code, [302, 403])
+
+    @override_settings(API_DOCS_PUBLIC=False)
+    def test_staff_can_access_schema(self):
+        staff = User.objects.create_user(
+            email="staff@example.com",
+            password="staffpass123",
+            is_staff=True,
+        )
+        self.client.login(email="staff@example.com", password="staffpass123")
+        response = self.client.get("/api/schema/")
+        self.assertEqual(response.status_code, 200)

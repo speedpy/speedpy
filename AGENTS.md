@@ -59,10 +59,12 @@ The only existing apps and their narrow purposes:
   `generate_tailwind_directories`, default OG image view. Add cross-cutting helpers
   here, not feature code.
 
-There is no Django REST Framework / no serializers in this project — it is server-rendered
-with Django templates + crispy forms + Alpine.js. If a feature genuinely needs a JSON
-endpoint, ask the user before introducing DRF; otherwise return rendered templates or
-small `JsonResponse`s from class-based views in `mainapp/views/`.
+DRF (`rest_framework`) and `drf-spectacular` are installed for versioned integration
+endpoints under `/api/v1/`. New JSON integration endpoints follow the HTTP API guide
+below; do not add DRF to server-rendered HTML views. The primary UI remains
+Django templates + crispy forms + Alpine.js. Ad-hoc `JsonResponse`s in
+`mainapp/views/` are only for tiny UI helpers (tours, toggles). Require explicit user
+approval before adding JWT, OAuth2, or CORS.
 
 ### Where new code goes — quick reference
 
@@ -79,6 +81,10 @@ small `JsonResponse`s from class-based views in `mainapp/views/`.
 | An email template                             | `templates/emails/<name>.html` (sent via django-post_office)            |
 | A management command                          | `speedpycom/management/commands/<name>.py`                              |
 | A new abstract base model or shared utility   | `speedpycom/`                                                           |
+| User / profile API                            | `usermodel/api.py` (single-file; do not package-split `usermodel`)      |
+| Business resource API                         | `mainapp/api/<group>.py` + route in `project/api_urls.py`               |
+| Shared API permissions / mixins               | `speedpycom/api/` (cross-cutting helpers only, not feature code)        |
+| API tests                                     | `mainapp/tests/test_api_<group>.py` or next to the owning app           |
 | A new top-level Django app                    | Don't. Extend `mainapp` instead.                                        |
 
 ### Key Architectural Patterns
@@ -566,3 +572,79 @@ Application name: not set
 All work must be responsive and work on both mobile and desktop.
 
 After completing every task, check the result on both mobile and desktop and fix any responsive issues you find.
+
+## HTTP API
+
+### Philosophy
+
+- Server-rendered Django + crispy forms remains the default for product UI.
+- DRF is for versioned integration endpoints under `/api/v1/`.
+- Do not create a new `api` Django app. API code lives in the **owning app**.
+- OpenAPI schema at `/api/schema/` is the contract; every new endpoint must
+  appear there with `@extend_schema`.
+- Ad-hoc `JsonResponse` in `mainapp/views/` is only for tiny UI helpers (tours,
+  toggles). CRUD and integration surfaces go through DRF.
+
+### File layout
+
+| You're adding…                    | Put it in                                                                  |
+|-----------------------------------|----------------------------------------------------------------------------|
+| User / profile API                | `usermodel/api.py` (single-file; do not package-split `usermodel`)         |
+| Team / tenant API                 | `mainapp/api/teams.py`                                                     |
+| Business resource API             | `mainapp/api/<group>.py` + route in `project/api_urls.py`                  |
+| Shared API permissions / mixins   | `speedpycom/api/` (cross-cutting helpers only, not feature code)           |
+| API tests                         | `mainapp/tests/test_api_<group>.py` or next to the owning app              |
+
+Re-export public API views from `mainapp/api/__init__.py` when useful, mirroring
+the package-style pattern used for models and views.
+
+### URL conventions
+
+- Version prefix: `/api/v1/`
+- User-global resources: `/api/v1/me/`
+- Team-scoped resources: `/api/v1/teams/{team_id}/<resource>/`
+- Use UUID path segments for object IDs (matches `BaseModel` primary keys).
+- Timestamps: UTC ISO-8601. Pagination: global `PageNumberPagination` defaults.
+- Nested collections use trailing slashes consistently with existing Django URL style.
+
+### Serializer and view conventions
+
+- **Read-only, deliberately shaped responses** (e.g. `/me/`): plain `Serializer`,
+  not `ModelSerializer`, so every exposed field is explicit.
+- **CRUD on models**: `ModelSerializer` + generic views (`ListCreateAPIView`,
+  `RetrieveUpdateDestroyAPIView`) or thin `APIView` subclasses.
+- **Current user**: resolve from `request.user`, not a URL primary key. Use
+  `APIView`, not `RetrieveAPIView`, for `/me/`.
+- **Team context**: never trust `team_id` from the request body. Resolve from the
+  URL and verify membership before any queryset access.
+
+### OpenAPI requirements
+
+Every endpoint must include:
+
+- `@extend_schema` with `tags`, `operation_id`, `summary`, and request/response
+  serializers.
+- Tags mirror the resource group (`user`, `teams`, `<business-group>`).
+- Document auth requirements and common error responses (`401`, `403`, `404`,
+  validation errors).
+
+Add new tags to `SPECTACULAR_SETTINGS["TAGS"]` when introducing a resource group.
+
+### Canonical examples
+
+| Pattern    | Reference implementation                       | Phase |
+|------------|------------------------------------------------|-------|
+| User read  | `GET /api/v1/me/` in `usermodel/api.py`        | 1     |
+
+### API docs visibility
+
+- `API_DOCS_PUBLIC=True` (default in `DEBUG`): schema, Swagger, and ReDoc are public.
+- `API_DOCS_PUBLIC=False` (default in production): schema, Swagger, and ReDoc require
+  staff login.
+
+### Current limitations (Phase 1)
+
+- Session authentication only — no tokens, JWT, or OAuth2.
+- No write endpoints.
+- No CORS.
+- Further conventions (scopes, tenant checklist, additional examples) arrive in Phase 2.
