@@ -132,6 +132,123 @@ export SPEEDPY_BASE_URL=https://app.example.com
 All auth flows work the same way — the device flow verification URL will
 point to your production domain automatically.
 
+## Distributing the CLI via Homebrew
+
+Homebrew is the most popular way to distribute CLI tools on macOS (and Linux).
+A Python CLI is shipped as a **Homebrew formula** in a custom **tap**
+(Homebrew Cask is for GUI apps, not CLIs).
+
+### 1. Make the CLI pip-installable
+
+Add a `pyproject.toml` in `examples/cli/` (or at the project root if the CLI
+ships with the main package):
+
+```toml
+[project]
+name = "speedpy-cli"
+version = "0.1.0"
+description = "CLI client for the SpeedPy API"
+requires-python = ">=3.10"
+dependencies = ["httpx>=0.27"]
+
+[project.scripts]
+speedpy = "speedpy_cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+```
+
+Build a release tarball and publish to PyPI (or host it yourself):
+
+```bash
+cd examples/cli
+pip install build twine
+python -m build
+twine upload dist/*
+```
+
+### 2. Create a Homebrew tap repository
+
+Create a public GitHub repo named `homebrew-tap` under your org (e.g.
+`speedpycom/homebrew-tap`). Homebrew resolves `brew tap speedpycom/tap` to
+that repo automatically.
+
+### 3. Write the formula
+
+Create `Formula/speedpy-cli.rb` in the tap repo:
+
+```ruby
+class SpeedpyCli < Formula
+  include Language::Python::Virtualenv
+
+  desc "CLI client for the SpeedPy API"
+  homepage "https://github.com/speedpycom/speedpy"
+  url "https://files.pythonhosted.org/packages/source/s/speedpy-cli/speedpy_cli-0.1.0.tar.gz"
+  sha256 "REPLACE_WITH_SHA256_OF_TARBALL"
+  license "MIT"
+
+  depends_on "python@3.12"
+
+  resource "httpx" do
+    url "https://files.pythonhosted.org/packages/source/h/httpx/httpx-0.28.1.tar.gz"
+    sha256 "REPLACE_WITH_HTTPX_SHA256"
+  end
+
+  # Add additional resources for httpx's dependencies (httpcore, etc.)
+  # Generate them automatically with: brew update-python-resources speedpy-cli
+
+  def install
+    virtualenv_install_with_resources
+  end
+
+  test do
+    assert_match "usage:", shell_output("#{bin}/speedpy --help")
+  end
+end
+```
+
+Generate the `resource` blocks automatically instead of writing them by hand:
+
+```bash
+brew update-python-resources speedpy-cli
+```
+
+### 4. Compute the tarball SHA-256
+
+```bash
+curl -sL https://files.pythonhosted.org/packages/source/s/speedpy-cli/speedpy_cli-0.1.0.tar.gz \
+  | shasum -a 256
+```
+
+### 5. Users install with two commands
+
+```bash
+brew tap speedpycom/tap
+brew install speedpy-cli
+```
+
+After that `speedpy me` and `speedpy teams` work system-wide.
+
+### 6. Updating
+
+When you release a new version:
+
+1. Publish the new tarball to PyPI.
+2. Update `url` and `sha256` in the formula.
+3. Push to the tap repo — users pick it up on their next `brew upgrade`.
+
+### Self-hosted alternative (no PyPI)
+
+If you prefer not to publish to PyPI, host the tarball on GitHub Releases and
+point the formula `url` there:
+
+```ruby
+url "https://github.com/speedpycom/speedpy/releases/download/cli-v0.1.0/speedpy_cli-0.1.0.tar.gz"
+```
+
+The rest of the formula stays the same.
+
 ## Extending
 
 These examples are intentionally minimal. To add your own commands/tools:
