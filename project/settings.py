@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 import environ
 import os
@@ -48,6 +49,8 @@ INSTALLED_APPS = [
     "demoapp",
     "rest_framework",
     "drf_spectacular",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 MIDDLEWARE = [
@@ -242,6 +245,8 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "speedpycom.api.authentication.PersonalAccessTokenAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -274,6 +279,16 @@ if DEBUG:
 
 API_DOCS_PUBLIC = env.bool("API_DOCS_PUBLIC", default=DEBUG)
 
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+}
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "SpeedPy API",
     "DESCRIPTION": "HTTP API for SpeedPy.",
@@ -282,9 +297,35 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
     "TAGS": [
+        {"name": "auth", "description": "Authentication endpoints (JWT)"},
         {"name": "user", "description": "Authenticated user endpoints"},
         {"name": "products", "description": "Product endpoints (demo)"},
     ],
+    "SECURITY": [
+        {"sessionAuth": []},
+        {"bearerAuth": []},
+        {"jwtAuth": []},
+    ],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "sessionAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "sessionid",
+            },
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "Personal access token. Create at /accounts/tokens/.",
+            },
+            "jwtAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "JWT access token from /api/auth/token/.",
+            },
+        },
+    },
 }
 
 REQUIRE_TOS_ACCEPTANCE = True

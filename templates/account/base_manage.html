@@ -12,6 +12,7 @@
                 {% else %}
                     {% url "account_otp_settings" as mfa_url %}
                 {% endif %}
+                {% url "account_pat_list" as pat_url %}
                 <ul role="list" class="account-nav">
                     <li>
                         <a href="{{ profile_url }}"
@@ -35,6 +36,12 @@
                         <a href="{{ mfa_url }}"
                            class="account-nav-link {% if mfa_url in request.path %}account-nav-link-active{% endif %}">
                             <span class="font-semibold">{% trans "Two-Factor Authentication" %}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ pat_url }}"
+                           class="account-nav-link {% if 'tokens' in request.path %}account-nav-link-active{% endif %}">
+                            <span class="font-semibold">{% trans "API Tokens" %}</span>
                         </a>
                     </li>
                 </ul>

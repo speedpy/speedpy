@@ -1,8 +1,10 @@
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from usermodel.adapters import CustomSocialAccountAdapter
@@ -12,7 +14,7 @@ from usermodel.forms import (
     UsermodelResetPasswordKeyForm,
     UsermodelSignupForm,
 )
-from usermodel.models import User
+from usermodel.models import PersonalAccessToken, User, _hash_token
 from usermodel.validators import validate_no_url
 
 
@@ -140,7 +142,7 @@ class CurrentUserAPITests(TestCase):
 
     def test_anonymous_rejected(self):
         response = self.client.get("/api/v1/me/")
-        self.assertEqual(response.status_code, 403)
+        self.assertIn(response.status_code, [401, 403])
 
     def test_authenticated_returns_200(self):
         self.client.force_authenticate(user=self.user)
@@ -278,7 +280,7 @@ class UpdateProfileAPITests(TestCase):
             {"first_name": "Grace"},
             format="json",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertIn(response.status_code, [401, 403])
 
     def test_patch_updates_first_name(self):
         self.client.force_authenticate(user=self.user)
@@ -381,7 +383,7 @@ class UpdateProfileAPITests(TestCase):
             data='{"first_name": "Grace"}',
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertIn(response.status_code, [401, 403])
 
         # With CSRF token, should succeed
         response = session_client.get("/api/v1/me/")
@@ -459,11 +461,11 @@ class ProductAPITests(TestCase):
 
     def test_anonymous_rejected_list(self):
         response = self.client.get("/api/v1/products/")
-        self.assertEqual(response.status_code, 403)
+        self.assertIn(response.status_code, [401, 403])
 
     def test_anonymous_rejected_detail(self):
         response = self.client.get(f"/api/v1/products/{self.product.pk}/")
-        self.assertEqual(response.status_code, 403)
+        self.assertIn(response.status_code, [401, 403])
 
     def test_list_returns_200(self):
         self.client.force_authenticate(user=self.user)
@@ -503,3 +505,353 @@ class ProductAPITests(TestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.get(f"/api/v1/products/{uuid.uuid4()}/")
         self.assertEqual(response.status_code, 404)
+
+
+class PersonalAccessTokenModelTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="pat@example.com", password="testpass123"
+        )
+
+    def test_create_token_returns_instance_and_raw(self):
+        pat, raw_token = PersonalAccessToken.create_token(
+            user=self.user, name="Test token"
+        )
+        self.assertIsNotNone(pat.id)
+        self.assertTrue(raw_token.startswith("spd_"))
+        self.assertEqual(pat.name, "Test token")
+
+    def test_token_stored_as_hash(self):
+        pat, raw_token = PersonalAccessToken.create_token(
+            user=self.user, name="Hashed"
+        )
+        self.assertNotEqual(pat.token_hash, raw_token)
+        self.assertEqual(pat.token_hash, _hash_token(raw_token))
+        self.assertEqual(len(pat.token_hash), 64)  # SHA-256 hex
+
+    def test_authenticate_valid_token(self):
+        pat, raw_token = PersonalAccessToken.create_token(
+            user=self.user, name="Auth test"
+        )
+        found = PersonalAccessToken.authenticate(raw_token)
+        self.assertIsNotNone(found)
+        self.assertEqual(found.id, pat.id)
+
+    def test_authenticate_invalid_token(self):
+        found = PersonalAccessToken.authenticate("spd_invalid_token_value")
+        self.assertIsNone(found)
+
+    def test_authenticate_revoked_token(self):
+        pat, raw_token = PersonalAccessToken.create_token(
+            user=self.user, name="Revokable"
+        )
+        pat.revoke()
+        found = PersonalAccessToken.authenticate(raw_token)
+        self.assertIsNone(found)
+
+    def test_revocation_is_immediate(self):
+        pat, _ = PersonalAccessToken.create_token(
+            user=self.user, name="Revoke me"
+        )
+        self.assertFalse(pat.is_revoked)
+        pat.revoke()
+        pat.refresh_from_db()
+        self.assertTrue(pat.is_revoked)
+
+    def test_authenticate_expired_token(self):
+        pat, raw_token = PersonalAccessToken.create_token(
+            user=self.user,
+            name="Expired",
+            expires_at=timezone.now() - timedelta(hours=1),
+        )
+        found = PersonalAccessToken.authenticate(raw_token)
+        self.assertIsNone(found)
+
+    def test_authenticate_not_yet_expired(self):
+        pat, raw_token = PersonalAccessToken.create_token(
+            user=self.user,
+            name="Future",
+            expires_at=timezone.now() + timedelta(days=30),
+        )
+        found = PersonalAccessToken.authenticate(raw_token)
+        self.assertIsNotNone(found)
+
+    def test_record_usage_updates_last_used_at(self):
+        pat, _ = PersonalAccessToken.create_token(
+            user=self.user, name="Usage test"
+        )
+        self.assertIsNone(pat.last_used_at)
+        pat.record_usage()
+        pat.refresh_from_db()
+        self.assertIsNotNone(pat.last_used_at)
+
+    def test_scopes_stored(self):
+        pat, _ = PersonalAccessToken.create_token(
+            user=self.user,
+            name="Scoped",
+            scopes=["read:profile", "read:teams"],
+        )
+        pat.refresh_from_db()
+        self.assertEqual(pat.scopes, ["read:profile", "read:teams"])
+
+
+class PersonalAccessTokenAuthTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email="bearer@example.com", password="testpass123"
+        )
+        self.pat, self.raw_token = PersonalAccessToken.create_token(
+            user=self.user, name="Bearer test"
+        )
+
+    def test_bearer_auth_succeeds(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.raw_token}")
+        response = self.client.get("/api/v1/me/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["email"], "bearer@example.com")
+
+    def test_bearer_auth_updates_last_used(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.raw_token}")
+        self.client.get("/api/v1/me/")
+        self.pat.refresh_from_db()
+        self.assertIsNotNone(self.pat.last_used_at)
+
+    def test_invalid_bearer_token_rejected(self):
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer spd_invalid")
+        response = self.client.get("/api/v1/me/")
+        self.assertEqual(response.status_code, 401)
+
+    def test_revoked_token_rejected(self):
+        self.pat.revoke()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.raw_token}")
+        response = self.client.get("/api/v1/me/")
+        self.assertEqual(response.status_code, 401)
+
+    def test_expired_token_rejected(self):
+        self.pat.expires_at = timezone.now() - timedelta(hours=1)
+        self.pat.save(update_fields=["expires_at"])
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.raw_token}")
+        response = self.client.get("/api/v1/me/")
+        self.assertEqual(response.status_code, 401)
+
+    def test_inactive_user_rejected(self):
+        self.user.is_active = False
+        self.user.save(update_fields=["is_active"])
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.raw_token}")
+        response = self.client.get("/api/v1/me/")
+        self.assertEqual(response.status_code, 401)
+
+    def test_no_auth_header_falls_through(self):
+        response = self.client.get("/api/v1/me/")
+        self.assertIn(response.status_code, [401, 403])
+
+    def test_scoped_token_allowed_for_matching_scope(self):
+        pat, raw = PersonalAccessToken.create_token(
+            user=self.user, name="Scoped read", scopes=["read:products"]
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {raw}")
+        response = self.client.get("/api/v1/products/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_scoped_token_denied_for_wrong_scope(self):
+        pat, raw = PersonalAccessToken.create_token(
+            user=self.user, name="Wrong scope", scopes=["read:teams"]
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {raw}")
+        response = self.client.get("/api/v1/products/")
+        self.assertIn(response.status_code, [401, 403])
+
+    def test_empty_scopes_grants_full_access(self):
+        pat, raw = PersonalAccessToken.create_token(
+            user=self.user, name="Full access", scopes=[]
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {raw}")
+        response = self.client.get("/api/v1/products/")
+        self.assertEqual(response.status_code, 200)
+
+
+class PersonalAccessTokenUITests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="uitest@example.com", password="testpass123"
+        )
+        self.client.login(email="uitest@example.com", password="testpass123")
+
+    def test_list_page_loads(self):
+        response = self.client.get("/accounts/tokens/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "API Tokens")
+
+    def test_create_page_loads(self):
+        response = self.client.get("/accounts/tokens/create/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Create API Token")
+
+    def test_create_token_flow(self):
+        response = self.client.post(
+            "/accounts/tokens/create/",
+            {"name": "My CI Token"},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "spd_")
+        self.assertEqual(PersonalAccessToken.objects.filter(user=self.user).count(), 1)
+
+    def test_one_time_reveal(self):
+        # Create a token
+        self.client.post("/accounts/tokens/create/", {"name": "Once"}, follow=False)
+        # First visit shows the token
+        response = self.client.get("/accounts/tokens/")
+        self.assertContains(response, "spd_")
+        # Second visit should NOT show the token
+        response = self.client.get("/accounts/tokens/")
+        self.assertNotContains(response, "spd_")
+
+    def test_revoke_token(self):
+        pat, _ = PersonalAccessToken.create_token(user=self.user, name="Revoke UI")
+        response = self.client.post(
+            f"/accounts/tokens/{pat.pk}/revoke/", follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        pat.refresh_from_db()
+        self.assertTrue(pat.is_revoked)
+
+    def test_anonymous_cannot_access_tokens(self):
+        self.client.logout()
+        response = self.client.get("/accounts/tokens/")
+        self.assertEqual(response.status_code, 302)
+
+    def test_list_shows_token_status(self):
+        PersonalAccessToken.create_token(user=self.user, name="Active one")
+        pat2, _ = PersonalAccessToken.create_token(user=self.user, name="Revoked one")
+        pat2.revoke()
+        # Clear session so no raw token is shown
+        self.client.get("/accounts/tokens/")
+        response = self.client.get("/accounts/tokens/")
+        self.assertContains(response, "Active")
+        self.assertContains(response, "Revoked")
+
+
+class JWTAuthTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email="jwt@example.com", password="jwtpass123"
+        )
+
+    def test_obtain_token_pair(self):
+        response = self.client.post(
+            "/api/auth/token/",
+            {"email": "jwt@example.com", "password": "jwtpass123"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+
+    def test_obtain_token_invalid_credentials(self):
+        response = self.client.post(
+            "/api/auth/token/",
+            {"email": "jwt@example.com", "password": "wrong"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_access_token_authenticates(self):
+        response = self.client.post(
+            "/api/auth/token/",
+            {"email": "jwt@example.com", "password": "jwtpass123"},
+            format="json",
+        )
+        access = response.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+        response = self.client.get("/api/v1/me/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["email"], "jwt@example.com")
+
+    def test_refresh_token_rotates(self):
+        response = self.client.post(
+            "/api/auth/token/",
+            {"email": "jwt@example.com", "password": "jwtpass123"},
+            format="json",
+        )
+        refresh = response.data["refresh"]
+        response = self.client.post(
+            "/api/auth/token/refresh/",
+            {"refresh": refresh},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+        # Old refresh should now be blacklisted
+        self.assertNotEqual(response.data["refresh"], refresh)
+
+    def test_blacklisted_refresh_rejected(self):
+        response = self.client.post(
+            "/api/auth/token/",
+            {"email": "jwt@example.com", "password": "jwtpass123"},
+            format="json",
+        )
+        refresh = response.data["refresh"]
+        # Rotate: this blacklists the old token
+        self.client.post(
+            "/api/auth/token/refresh/",
+            {"refresh": refresh},
+            format="json",
+        )
+        # Old refresh should be rejected
+        response = self.client.post(
+            "/api/auth/token/refresh/",
+            {"refresh": refresh},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_revoke_refresh_token(self):
+        response = self.client.post(
+            "/api/auth/token/",
+            {"email": "jwt@example.com", "password": "jwtpass123"},
+            format="json",
+        )
+        refresh = response.data["refresh"]
+        response = self.client.post(
+            "/api/auth/token/revoke/",
+            {"refresh": refresh},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 205)
+        # Revoked token should no longer refresh
+        response = self.client.post(
+            "/api/auth/token/refresh/",
+            {"refresh": refresh},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_revoke_invalid_token(self):
+        response = self.client.post(
+            "/api/auth/token/revoke/",
+            {"refresh": "invalid.token.value"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_expired_access_token_rejected(self):
+        """Access tokens with past expiry should be rejected."""
+        from rest_framework_simplejwt.tokens import AccessToken
+
+        token = AccessToken.for_user(self.user)
+        token.set_exp(lifetime=timedelta(seconds=-1))
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
+        response = self.client.get("/api/v1/me/")
+        self.assertEqual(response.status_code, 401)
+
+    @override_settings(API_DOCS_PUBLIC=True)
+    def test_schema_includes_jwt_operations(self):
+        response = self.client.get("/api/schema/")
+        content = str(response.content)
+        self.assertIn("createToken", content)
+        self.assertIn("refreshToken", content)
+        self.assertIn("revokeToken", content)

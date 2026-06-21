@@ -1,8 +1,12 @@
-from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_field
-from rest_framework import serializers
-from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_field, extend_schema_view
+from rest_framework import serializers, status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from speedpycom.api.permissions import HasScope
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
 class CurrentUserSerializer(serializers.Serializer):
@@ -61,7 +65,16 @@ class UpdateProfileSerializer(serializers.Serializer):
 
 
 class CurrentUserAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasScope]
+
+    def get_required_scopes(self):
+        if self.request.method == "PATCH":
+            return ["write:profile"]
+        return ["read:profile"]
+
+    @property
+    def required_scopes(self):
+        return self.get_required_scopes()
 
     @extend_schema(
         tags=["user"],
@@ -97,3 +110,60 @@ class CurrentUserAPIView(APIView):
         return Response(
             CurrentUserSerializer(user, context={"request": request}).data
         )
+
+
+class RefreshTokenSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+
+class JWTLogoutView(APIView):
+    """Blacklist a refresh token to revoke access."""
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["auth"],
+        request=RefreshTokenSerializer,
+        responses={
+            205: OpenApiResponse(description="Token revoked."),
+            400: OpenApiResponse(description="Invalid or already revoked token."),
+        },
+        operation_id="revokeToken",
+        summary="Revoke a JWT refresh token",
+    )
+    def post(self, request):
+        serializer = RefreshTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            token = RefreshToken(serializer.validated_data["refresh"])
+            token.blacklist()
+        except TokenError:
+            return Response(
+                {"detail": "Invalid or already revoked token."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(status=status.HTTP_205_RESET_CONTENT)
+
+
+@extend_schema_view(
+    post=extend_schema(
+        tags=["auth"],
+        operation_id="createToken",
+        summary="Obtain JWT access and refresh tokens",
+    )
+)
+class TokenObtainView(TokenObtainPairView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+
+@extend_schema_view(
+    post=extend_schema(
+        tags=["auth"],
+        operation_id="refreshToken",
+        summary="Refresh JWT access token",
+    )
+)
+class TokenRefreshSchemaView(TokenRefreshView):
+    authentication_classes = []
+    permission_classes = [AllowAny]

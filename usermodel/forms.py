@@ -10,7 +10,7 @@ from allauth.account.forms import (
     AddEmailForm,
 )
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field
+from crispy_forms.layout import Div, Layout, Field
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
 
@@ -206,6 +206,53 @@ class UserProfileForm(forms.ModelForm):
             Submit(
                 "submit",
                 _("Save changes"),
+                css_class="btn btn-contained btn-primary",
+            ),
+        )
+
+
+SCOPE_CHOICES = [
+    ("read:profile", "Read profile"),
+    ("write:profile", "Write profile"),
+    ("read:teams", "Read teams"),
+    ("write:teams", "Write teams"),
+    ("read:products", "Read products"),
+]
+
+
+class PersonalAccessTokenForm(forms.Form):
+    """Form for creating a personal access token."""
+
+    name = forms.CharField(
+        max_length=255,
+        help_text=_("A descriptive name for this token, e.g. 'n8n integration'."),
+    )
+    scopes = forms.MultipleChoiceField(
+        choices=SCOPE_CHOICES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "checkbox"}),
+        help_text=_("Select which API scopes this token can access. Leave empty for full access."),
+    )
+    expires_at = forms.DateTimeField(
+        required=False,
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local", "class": "input-outlined"}),
+        help_text=_("Optional expiry date. Leave blank for a non-expiring token."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Field("name"),
+            Div(
+                Field("scopes"),
+                css_class="text-fg [&_label]:text-fg [&_label]:font-normal [&_label]:cursor-pointer",
+            ),
+            Field("expires_at"),
+            Submit(
+                "submit",
+                _("Create token"),
                 css_class="btn btn-contained btn-primary",
             ),
         )

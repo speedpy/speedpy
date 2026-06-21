@@ -1,4 +1,6 @@
+import hashlib
 import os
+import secrets
 import uuid
 from io import BytesIO
 
@@ -133,3 +135,107 @@ class User(AbstractBaseUser, PermissionsMixin):
             ContentFile(buffer.getvalue()),
             save=False,
         )
+
+
+TOKEN_PREFIX = "spd_"
+TOKEN_BYTE_LENGTH = 32
+
+
+def _generate_token():
+    """Generate a random token with a recognizable prefix."""
+    raw = secrets.token_hex(TOKEN_BYTE_LENGTH)
+    return f"{TOKEN_PREFIX}{raw}"
+
+
+def _hash_token(raw_token):
+    """SHA-256 hash for token storage."""
+    return hashlib.sha256(raw_token.encode()).hexdigest()
+
+
+class PersonalAccessToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="personal_access_tokens",
+    )
+    name = models.CharField(_("Token name"), max_length=255)
+    token_hash = models.CharField(
+        _("Token hash"), max_length=64, unique=True, editable=False
+    )
+    scopes = models.JSONField(
+        _("Scopes"),
+        default=list,
+        blank=True,
+        help_text=_("List of scope strings, e.g. ['read:profile', 'read:teams']."),
+    )
+    created_at = models.DateTimeField(_("Created"), auto_now_add=True)
+    last_used_at = models.DateTimeField(_("Last used"), null=True, blank=True)
+    expires_at = models.DateTimeField(
+        _("Expires"),
+        null=True,
+        blank=True,
+        help_text=_("Leave blank for a non-expiring token."),
+    )
+    is_revoked = models.BooleanField(_("Revoked"), default=False)
+
+    class Meta:
+        ordering = ("-created_at",)
+        verbose_name = _("Personal access token")
+        verbose_name_plural = _("Personal access tokens")
+
+    def __str__(self):
+        return f"{self.name} ({self.user.email})"
+
+    @classmethod
+    def create_token(cls, user, name, scopes=None, expires_at=None):
+        """
+        Create a new PAT and return (instance, raw_token).
+
+        The raw_token is only available at creation time — it is not stored.
+        """
+        raw_token = _generate_token()
+        pat = cls.objects.create(
+            user=user,
+            name=name,
+            token_hash=_hash_token(raw_token),
+            scopes=scopes or [],
+            expires_at=expires_at,
+        )
+        return pat, raw_token
+
+    @classmethod
+    def authenticate(cls, raw_token):
+        """
+        Look up a PAT by its raw token value.
+
+        Returns the PAT instance if valid, None otherwise.
+        """
+        token_hash = _hash_token(raw_token)
+        try:
+            pat = cls.objects.select_related("user").get(
+                token_hash=token_hash, is_revoked=False
+            )
+        except cls.DoesNotExist:
+            return None
+
+        if pat.expires_at and pat.expires_at <= timezone.now():
+            return None
+
+        return pat
+
+    def revoke(self):
+        """Immediately revoke this token."""
+        self.is_revoked = True
+        self.save(update_fields=["is_revoked"])
+
+    def record_usage(self):
+        """Update last_used_at timestamp."""
+        self.last_used_at = timezone.now()
+        self.save(update_fields=["last_used_at"])
+
+    @property
+    def is_expired(self):
+        if not self.expires_at:
+            return False
+        return self.expires_at <= timezone.now()

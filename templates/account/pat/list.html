@@ -1,0 +1,116 @@
+{% extends "account/base_manage.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "API Tokens" %}{% endblock %}
+
+{% block main_content %}
+    <div class="card-header">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="h3 mb-0">{% trans "API Tokens" %}</h2>
+            <a href="{% url 'account_pat_create' %}" class="btn btn-contained btn-primary btn-sm">
+                {% trans "Create token" %}
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if new_token %}
+            <div class="alert alert-success mb-6">
+                <div class="mb-2">
+                    <strong>{% blocktrans with name=new_token_name %}Token "{{ name }}" created.{% endblocktrans %}</strong>
+                    {% trans "Copy it now — it won't be shown again." %}
+                </div>
+                <div class="flex items-center gap-2">
+                    <code id="new-token-value"
+                          class="block w-full break-all rounded bg-background p-3 font-mono text-sm text-fg">{{ new_token }}</code>
+                    <button type="button"
+                            class="btn btn-outlined btn-secondary btn-sm flex-shrink-0"
+                            onclick="navigator.clipboard.writeText(document.getElementById('new-token-value').textContent)">
+                        {% trans "Copy" %}
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if tokens %}
+            <div class="overflow-x-auto">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Name" %}</th>
+                            <th class="hidden sm:table-cell">{% trans "Scopes" %}</th>
+                            <th class="hidden md:table-cell">{% trans "Created" %}</th>
+                            <th class="hidden lg:table-cell">{% trans "Last used" %}</th>
+                            <th class="hidden sm:table-cell">{% trans "Expires" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for token in tokens %}
+                            <tr>
+                                <td class="font-medium">{{ token.name }}</td>
+                                <td class="hidden sm:table-cell">
+                                    {% if token.scopes %}
+                                        {% for scope in token.scopes %}
+                                            <span class="chip chip-sm chip-secondary">{{ scope }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-fg-secondary text-sm">{% trans "Full access" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="hidden md:table-cell text-fg-secondary text-sm">
+                                    {{ token.created_at|date:"M d, Y" }}
+                                </td>
+                                <td class="hidden lg:table-cell text-fg-secondary text-sm">
+                                    {% if token.last_used_at %}
+                                        {{ token.last_used_at|timesince }} {% trans "ago" %}
+                                    {% else %}
+                                        {% trans "Never" %}
+                                    {% endif %}
+                                </td>
+                                <td class="hidden sm:table-cell text-fg-secondary text-sm">
+                                    {% if token.expires_at %}
+                                        {% if token.is_expired %}
+                                            <span class="badge badge-error">{% trans "Expired" %}</span>
+                                        {% else %}
+                                            {{ token.expires_at|date:"M d, Y" }}
+                                        {% endif %}
+                                    {% else %}
+                                        {% trans "Never" %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if token.is_revoked %}
+                                        <span class="badge badge-error">{% trans "Revoked" %}</span>
+                                    {% elif token.is_expired %}
+                                        <span class="badge badge-warning">{% trans "Expired" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-success">{% trans "Active" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-right">
+                                    {% if not token.is_revoked %}
+                                        <form method="post" action="{% url 'account_pat_revoke' token.pk %}"
+                                              onsubmit="return confirm('{% trans "Revoke this token? This cannot be undone." %}')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-text btn-error btn-sm">
+                                                {% trans "Revoke" %}
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="py-8 text-center text-fg-secondary">
+                <p class="mb-4">{% trans "You don't have any API tokens yet." %}</p>
+                <a href="{% url 'account_pat_create' %}" class="btn btn-contained btn-primary">
+                    {% trans "Create your first token" %}
+                </a>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

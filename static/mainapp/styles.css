@@ -2848,6 +2848,16 @@ html,
   background-color: rgb(var(--color-primary-main) / 0.05);
 }
 
+.table-sm>tbody>tr>td {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.table-sm>thead>tr>th {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
 .table-striped>tbody>tr:nth-child(even) {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--color-background-default) / var(--tw-bg-opacity));
@@ -3261,10 +3271,26 @@ h1, h2, h3, h4, h5, p {
   color: rgb(var(--color-text-primary) / var(--tw-text-opacity));
 }
 
+.chip-sm {
+  min-height: 1.75rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
 .chip-primary {
   background-color: rgb(var(--color-primary-main) / 0.1);
   --tw-text-opacity: 1;
   color: rgb(var(--color-primary-main) / var(--tw-text-opacity));
+}
+
+.chip-secondary {
+  background-color: rgb(var(--color-secondary-main) / 0.1);
+  --tw-text-opacity: 1;
+  color: rgb(var(--color-secondary-main) / var(--tw-text-opacity));
 }
 
 .chip-success {
@@ -5040,6 +5066,10 @@ h1, h2, h3, h4, h5, p {
   padding: 2rem;
 }
 
+.p-3 {
+  padding: 0.75rem;
+}
+
 .px-1 {
   padding-left: 0.25rem;
   padding-right: 0.25rem;
@@ -5946,6 +5976,10 @@ h1, h2, h3, h4, h5, p {
     display: inline-flex;
   }
 
+  .sm\:table-cell {
+    display: table-cell;
+  }
+
   .sm\:h-8 {
     height: 2rem;
   }
@@ -6055,6 +6089,10 @@ h1, h2, h3, h4, h5, p {
     display: flex;
   }
 
+  .md\:table-cell {
+    display: table-cell;
+  }
+
   .md\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -6118,6 +6156,10 @@ h1, h2, h3, h4, h5, p {
 
   .lg\:flex {
     display: flex;
+  }
+
+  .lg\:table-cell {
+    display: table-cell;
   }
 
   .lg\:hidden {
@@ -6406,4 +6448,17 @@ h1, h2, h3, h4, h5, p {
 :is(:where(.dark) .dark\:hover\:text-red-300:hover) {
   --tw-text-opacity: 1;
   color: rgb(252 165 165 / var(--tw-text-opacity));
+}
+
+.\[\&_label\]\:cursor-pointer label {
+  cursor: pointer;
+}
+
+.\[\&_label\]\:font-normal label {
+  font-weight: 400;
+}
+
+.\[\&_label\]\:text-fg label {
+  --tw-text-opacity: 1;
+  color: rgb(var(--color-text-primary) / var(--tw-text-opacity));
 }

@@ -692,6 +692,9 @@ uv run python manage.py test
 | User read            | `GET /api/v1/me/` in `usermodel/api.py`            | 1     |
 | User write           | `PATCH /api/v1/me/` in `usermodel/api.py`          | 2     |
 | Business list/detail | `mainapp/api/products.py` (read-only Product API)  | 2     |
+| JWT auth             | `POST /api/auth/token/` (simplejwt)                 | 3     |
+| PAT management       | `usermodel/models.PersonalAccessToken`              | 4     |
+| Bearer auth          | `speedpycom/api/authentication.py`                  | 4     |
 
 Agents should read the reference implementation before adding a new resource.
 
@@ -709,9 +712,40 @@ When adding a new API resource:
 7. Add tests (happy path + tenant isolation + role boundaries).
 8. Run schema validation and update `SPECTACULAR_SETTINGS["TAGS"]` if needed.
 
+### Personal access tokens (PATs)
+
+Users create and manage PATs at `/accounts/tokens/`. Tokens authenticate API
+requests via the `Authorization: Bearer spd_<hex>` header.
+
+**Model:** `usermodel.models.PersonalAccessToken`
+- Tokens are **never stored in plaintext** — only a SHA-256 hash is persisted.
+- The raw token is returned **once** at creation time and cannot be recovered.
+- Each token has: `name`, `scopes` (JSON list), `expires_at` (optional),
+  `last_used_at` (updated on every authenticated request), `is_revoked`.
+
+**Authentication:** `speedpycom.api.authentication.PersonalAccessTokenAuthentication`
+is registered in `REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]`. It runs
+after `SessionAuthentication`, so session-authenticated browser requests still
+work without a token.
+
+**Audit logging:** Token creation, revocation, successful auth, and failed auth
+attempts are logged via `structlog` with `user_id`, `token_id`, and `token_name`.
+
+**Scopes on PATs:** Tokens can carry optional scopes (e.g.
+`["read:profile", "read:teams"]`). An empty scopes list means full access.
+Scope enforcement against token scopes will be wired once `HasScope` checks
+`request.auth` in a future phase.
+
+**Adding custom scopes for PATs:** When you add a new business API resource:
+
+1. Define `read:<domain>` / `write:<domain>` scopes.
+2. Add the scope choices to `SCOPE_CHOICES` in `usermodel/forms.py` so users
+   can select them when creating a token.
+3. Set `required_scopes` on the view with `HasScope` permission class.
+
 ### Explicit non-goals (ask user first)
 
-- JWT, OAuth2, CORS, custom error envelopes.
+- OAuth2, CORS, custom error envelopes.
 - New top-level Django apps for API code.
 - Exposing `is_staff`, `is_superuser`, passwords, or raw storage paths.
 - Unscoped querysets on `TeamModel` subclasses.
@@ -722,8 +756,18 @@ When adding a new API resource:
 - `API_DOCS_PUBLIC=False` (default in production): schema, Swagger, and ReDoc require
   staff login.
 
-### Current limitations (Phase 2)
+### Authentication
 
-- Session authentication only — no tokens, JWT, or OAuth2.
-- No CORS.
-- Scope stubs pass through for session auth; enforcement arrives with token auth.
+Three authentication methods are supported (tried in order):
+
+1. **Personal access token** (automation): `Authorization: Bearer spd_<hex>`.
+   Created at `/accounts/tokens/`. Supports optional scopes and expiry.
+2. **JWT** (first-party clients): `Authorization: Bearer <jwt>`.
+   Obtain at `POST /api/auth/token/` with email+password.
+   Refresh at `POST /api/auth/token/refresh/`.
+   Revoke at `POST /api/auth/token/revoke/`.
+   Access tokens expire in 15 minutes; refresh tokens in 7 days.
+   Refresh tokens rotate on use and old tokens are blacklisted.
+3. **Session auth** (browser): works with allauth login, CSRF enforced on writes.
+
+No CORS — cross-origin clients should be designed with OAuth work (Phase 6).

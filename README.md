@@ -260,9 +260,13 @@ Set `API_DOCS_PUBLIC=True` to make docs public in all environments.
 
 ### Authentication
 
-Phase 1–2 uses **session authentication only**. Token-based auth (JWT, OAuth2,
-personal access tokens) is planned for later phases. See `specs/api-final.md`
-for the full roadmap.
+- **Session auth** (browser): works with the allauth login flow, CSRF enforced on writes.
+- **JWT** (first-party clients): `POST /api/auth/token/` to obtain access+refresh tokens.
+  Access tokens expire in 15 min, refresh tokens in 7 days with rotation and blacklisting.
+- **Personal access tokens** (automation): create at `/accounts/tokens/`, use as
+  `Authorization: Bearer spd_<hex>`. Tokens are hashed at rest and support optional
+  scopes and expiry.
+- OAuth2 is planned for a later phase. See `specs/api-final.md` for the roadmap.
 
 ### Extending the API
 

@@ -1,0 +1,16 @@
+{% extends "account/base_manage.html" %}
+{% load i18n crispy_forms_tags %}
+
+{% block head_title %}{% trans "Create API Token" %}{% endblock %}
+
+{% block main_content %}
+    <div class="card-header">
+        <h2 class="h3 mb-0">{% trans "Create API Token" %}</h2>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% crispy form %}
+        </form>
+    </div>
+{% endblock %}

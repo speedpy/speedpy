@@ -11,7 +11,12 @@ from drf_spectacular.views import (
 )
 from mainapp import views
 import speedpycom.views
-from usermodel.views import ProfileEditView
+from usermodel.views import (
+    PersonalAccessTokenCreateView,
+    PersonalAccessTokenListView,
+    PersonalAccessTokenRevokeView,
+    ProfileEditView,
+)
 
 
 def api_docs_view(view_class, **kwargs):
@@ -41,6 +46,9 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     path("accounts/", include("allauth.urls")),
     path("accounts/profile/", ProfileEditView.as_view(), name="account_profile"),
+    path("accounts/tokens/", PersonalAccessTokenListView.as_view(), name="account_pat_list"),
+    path("accounts/tokens/create/", PersonalAccessTokenCreateView.as_view(), name="account_pat_create"),
+    path("accounts/tokens/<uuid:pk>/revoke/", PersonalAccessTokenRevokeView.as_view(), name="account_pat_revoke"),
     path("og-image.png", speedpycom.views.default_og_image, name="default-og-image"),
     path("__debug__/", include("debug_toolbar.urls")),
     path("api/schema/", api_docs_view(SpectacularAPIView), name="api_schema"),

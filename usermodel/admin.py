@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-from usermodel.models import User
+from usermodel.models import PersonalAccessToken, User
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 
 
@@ -59,3 +59,12 @@ class UserAdmin(DefaultUserAdmin):
     list_display = ('email', 'first_name', 'last_name', 'is_staff')
     search_fields = ('first_name', 'last_name', 'email')
     ordering = ('email',)
+
+
+@admin.register(PersonalAccessToken)
+class PersonalAccessTokenAdmin(admin.ModelAdmin):
+    list_display = ('name', 'user', 'created_at', 'last_used_at', 'expires_at', 'is_revoked')
+    list_filter = ('is_revoked',)
+    search_fields = ('name', 'user__email')
+    raw_id_fields = ('user',)
+    readonly_fields = ('token_hash', 'created_at', 'last_used_at')
