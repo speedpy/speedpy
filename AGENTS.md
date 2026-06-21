@@ -815,3 +815,22 @@ For CLI tools and MCP servers that cannot open a browser redirect:
 4. User opens `/o/device/` in a browser, enters `user_code`, and approves.
 5. Client polls `POST /o/token/` with `grant_type=urn:ietf:params:oauth:grant-type:device_code`
    and `device_code` until the user approves or the code expires.
+
+### CLI and MCP starter examples
+
+The `examples/` directory contains ready-to-use client code:
+
+| Example                           | Description                                    |
+|-----------------------------------|------------------------------------------------|
+| `examples/cli/speedpy_cli.py`     | CLI with PAT and device-flow auth, `me`/`teams` commands |
+| `examples/mcp_server/speedpy_mcp.py` | MCP server exposing API tools for AI assistants |
+| `examples/README.md`             | Setup, auth flows, and extension guide          |
+
+**Management command:** `python manage.py create_oauth2_app "App Name"` registers
+a device-flow OAuth2 application and prints the client ID.
+
+When adding a new business API endpoint, also add:
+1. A CLI subcommand in `examples/cli/speedpy_cli.py` using `api_get()`.
+2. An `@mcp.tool()` function in `examples/mcp_server/speedpy_mcp.py` using `_api_get()`.
+
+Examples must stay generic — avoid project-specific business assumptions.
