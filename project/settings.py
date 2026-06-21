@@ -299,6 +299,7 @@ SPECTACULAR_SETTINGS = {
     "TAGS": [
         {"name": "auth", "description": "Authentication endpoints (JWT)"},
         {"name": "user", "description": "Authenticated user endpoints"},
+        {"name": "teams", "description": "Team-scoped endpoints"},
         {"name": "products", "description": "Product endpoints (demo)"},
     ],
     "SECURITY": [

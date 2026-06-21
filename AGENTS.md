@@ -667,6 +667,11 @@ Agents must follow this for every team-scoped endpoint:
 5. Respect `SPEEDPY_TEAMS_ENABLED`; return `404` when teams are disabled.
 6. Add **cross-team negative tests** for every new resource.
 
+**Reference implementation:** `mainapp/api/teams.py` shows the canonical pattern.
+Use `_check_teams_enabled()` and `_get_membership(user, team_id)` helpers for
+consistent 404 behavior. Team-scoped business resources nest under
+`/api/v1/teams/{team_id}/<resource>/` — register routes in `project/api_urls.py`.
+
 ### Testing requirements
 
 For each new endpoint:
@@ -695,6 +700,9 @@ uv run python manage.py test
 | JWT auth             | `POST /api/auth/token/` (simplejwt)                 | 3     |
 | PAT management       | `usermodel/models.PersonalAccessToken`              | 4     |
 | Bearer auth          | `speedpycom/api/authentication.py`                  | 4     |
+| Team list/detail     | `mainapp/api/teams.py`                              | 5     |
+| Team members         | `GET /api/v1/teams/{id}/members/`                   | 5     |
+| Team invitations     | `POST /api/v1/teams/{id}/invitations/`              | 5     |
 
 Agents should read the reference implementation before adding a new resource.
 
@@ -725,16 +733,17 @@ requests via the `Authorization: Bearer spd_<hex>` header.
 
 **Authentication:** `speedpycom.api.authentication.PersonalAccessTokenAuthentication`
 is registered in `REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]`. It runs
-after `SessionAuthentication`, so session-authenticated browser requests still
-work without a token.
+before `SessionAuthentication` and only handles `spd_`-prefixed Bearer tokens,
+letting JWTs pass through to `JWTAuthentication`.
 
 **Audit logging:** Token creation, revocation, successful auth, and failed auth
 attempts are logged via `structlog` with `user_id`, `token_id`, and `token_name`.
 
 **Scopes on PATs:** Tokens can carry optional scopes (e.g.
 `["read:profile", "read:teams"]`). An empty scopes list means full access.
-Scope enforcement against token scopes will be wired once `HasScope` checks
-`request.auth` in a future phase.
+`HasScope` enforces scope checks: if a PAT has scopes, the request is only
+allowed when the token's scopes include all of the view's `required_scopes`.
+Session-authenticated users have implicit full access.
 
 **Adding custom scopes for PATs:** When you add a new business API resource:
 

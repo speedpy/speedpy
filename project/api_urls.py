@@ -1,7 +1,12 @@
 from django.urls import path
-from drf_spectacular.utils import extend_schema
 
 from mainapp.api.products import ProductDetailAPIView, ProductListAPIView
+from mainapp.api.teams import (
+    TeamDetailAPIView,
+    TeamInvitationCreateAPIView,
+    TeamListAPIView,
+    TeamMembersAPIView,
+)
 from usermodel.api import (
     CurrentUserAPIView,
     JWTLogoutView,
@@ -18,4 +23,8 @@ urlpatterns = [
     path("v1/me/", CurrentUserAPIView.as_view(), name="current_user"),
     path("v1/products/", ProductListAPIView.as_view(), name="product_list"),
     path("v1/products/<uuid:pk>/", ProductDetailAPIView.as_view(), name="product_detail"),
+    path("v1/teams/", TeamListAPIView.as_view(), name="team_list"),
+    path("v1/teams/<uuid:team_id>/", TeamDetailAPIView.as_view(), name="team_detail"),
+    path("v1/teams/<uuid:team_id>/members/", TeamMembersAPIView.as_view(), name="team_members"),
+    path("v1/teams/<uuid:team_id>/invitations/", TeamInvitationCreateAPIView.as_view(), name="team_invitation_create"),
 ]
