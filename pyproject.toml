@@ -36,4 +36,5 @@ dependencies = [
     "django-paddle-billing==0.1.14",
     "python-slugify==8.0.4",
     "djangorestframework-simplejwt>=5.5.1",
+    "django-oauth-toolkit>=3.3.0",
 ]

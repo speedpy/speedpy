@@ -9,7 +9,7 @@ Scope taxonomy:
     admin          — Reserved for future elevated operations
 
 Session-authenticated users have implicit full access (no scope restriction).
-PAT-authenticated requests are checked against the token's granted scopes.
+PAT and OAuth2 tokens are checked against the token's granted scopes.
 An empty scopes list on a PAT means full access (no restriction).
 
 Custom scopes follow the pattern: read:<domain>, write:<domain>
@@ -21,7 +21,7 @@ from rest_framework.permissions import IsAuthenticated
 
 class HasScope(IsAuthenticated):
     """
-    Permission class that enforces scope-based access control for PATs.
+    Permission class that enforces scope-based access control.
 
     Usage::
 
@@ -29,31 +29,37 @@ class HasScope(IsAuthenticated):
             permission_classes = [HasScope]
             required_scopes = ["read:products"]
 
-    - Session auth: implicit full access (no scope check).
+    - Session auth / JWT: implicit full access (no scope check).
     - PAT with empty scopes: full access.
-    - PAT with scopes: request is allowed only if the token's scopes
-      include all of the view's required_scopes.
+    - PAT with scopes: allowed only if token scopes include all required.
+    - OAuth2 token: allowed only if token scopes include all required.
     """
 
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
 
-        from usermodel.models import PersonalAccessToken
-
-        if not isinstance(request.auth, PersonalAccessToken):
-            # Session auth — full access.
-            return True
-
-        pat = request.auth
-        if not pat.scopes:
-            # Empty scopes list means full access.
-            return True
-
         required = set(getattr(view, "required_scopes", []))
         if not required:
-            # View doesn't declare required scopes — allow.
             return True
 
-        granted = set(pat.scopes)
-        return required.issubset(granted)
+        # Check PAT scopes
+        from usermodel.models import PersonalAccessToken
+
+        if isinstance(request.auth, PersonalAccessToken):
+            if not request.auth.scopes:
+                return True
+            return required.issubset(set(request.auth.scopes))
+
+        # Check OAuth2 token scopes
+        try:
+            from oauth2_provider.models import AccessToken as OAuth2AccessToken
+
+            if isinstance(request.auth, OAuth2AccessToken):
+                granted = set(request.auth.scope.split())
+                return required.issubset(granted)
+        except ImportError:
+            pass
+
+        # Session auth / JWT — full access
+        return True

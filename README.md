@@ -266,7 +266,9 @@ Set `API_DOCS_PUBLIC=True` to make docs public in all environments.
 - **Personal access tokens** (automation): create at `/accounts/tokens/`, use as
   `Authorization: Bearer spd_<hex>`. Tokens are hashed at rest and support optional
   scopes and expiry.
-- OAuth2 is planned for a later phase. See `specs/api-final.md` for the roadmap.
+- **OAuth2** (third-party apps): Authorization Code + PKCE and Device Code grant.
+  Manage applications in Django admin. Consent screen at `/o/authorize/`.
+  See `AGENTS.md` for device flow documentation.
 
 ### Extending the API
 

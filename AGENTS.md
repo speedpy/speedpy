@@ -703,6 +703,7 @@ uv run python manage.py test
 | Team list/detail     | `mainapp/api/teams.py`                              | 5     |
 | Team members         | `GET /api/v1/teams/{id}/members/`                   | 5     |
 | Team invitations     | `POST /api/v1/teams/{id}/invitations/`              | 5     |
+| OAuth2 provider      | `django-oauth-toolkit` at `/o/`                     | 6     |
 
 Agents should read the reference implementation before adding a new resource.
 
@@ -754,7 +755,7 @@ Session-authenticated users have implicit full access.
 
 ### Explicit non-goals (ask user first)
 
-- OAuth2, CORS, custom error envelopes.
+- CORS, custom error envelopes.
 - New top-level Django apps for API code.
 - Exposing `is_staff`, `is_superuser`, passwords, or raw storage paths.
 - Unscoped querysets on `TeamModel` subclasses.
@@ -767,7 +768,7 @@ Session-authenticated users have implicit full access.
 
 ### Authentication
 
-Three authentication methods are supported (tried in order):
+Four authentication methods are supported (tried in order):
 
 1. **Personal access token** (automation): `Authorization: Bearer spd_<hex>`.
    Created at `/accounts/tokens/`. Supports optional scopes and expiry.
@@ -777,6 +778,40 @@ Three authentication methods are supported (tried in order):
    Revoke at `POST /api/auth/token/revoke/`.
    Access tokens expire in 15 minutes; refresh tokens in 7 days.
    Refresh tokens rotate on use and old tokens are blacklisted.
-3. **Session auth** (browser): works with allauth login, CSRF enforced on writes.
+3. **OAuth2** (third-party apps, CLI, MCP): `Authorization: Bearer <oauth2_token>`.
+   Authorization Code + PKCE for web apps. Device Authorization Grant for
+   CLI/MCP clients. Manage applications in Django admin. Consent screen at
+   `/o/authorize/`. Token endpoint at `/o/token/`.
+   Scopes: `read:profile`, `write:profile`, `read:teams`, `write:teams`,
+   `read:products`, `admin`.
+4. **Session auth** (browser): works with allauth login, CSRF enforced on writes.
 
-No CORS — cross-origin clients should be designed with OAuth work (Phase 6).
+### OAuth2 application lifecycle
+
+1. Register the application in Django admin (`oauth2_provider > Applications`).
+2. Choose grant type: Authorization Code (web) or Device Code (CLI/MCP).
+3. PKCE is required for authorization code flows.
+4. Users authorize via the consent screen at `/o/authorize/`.
+5. Exchange authorization code for tokens at `/o/token/`.
+6. Refresh tokens rotate automatically; revoked tokens are rejected.
+
+### Registering custom scopes for OAuth2
+
+When adding a business API with new scopes:
+
+1. Add the scope to `OAUTH2_PROVIDER["SCOPES"]` in `project/settings.py`.
+2. Add it to `SCOPE_CHOICES` in `usermodel/forms.py` (for PAT UI).
+3. Add it to the `SPECTACULAR_SETTINGS["APPEND_COMPONENTS"]` OAuth2 flows.
+4. Set `required_scopes` on the view with `HasScope`.
+
+### CLI/MCP device flow
+
+For CLI tools and MCP servers that cannot open a browser redirect:
+
+1. Register a **public** application with grant type **Device Code**.
+2. Client calls `POST /o/device-authorization/` with `client_id` and `scope`
+   (content type `application/x-www-form-urlencoded`).
+3. Response includes `device_code`, `user_code`, and `verification_uri`.
+4. User opens `/o/device/` in a browser, enters `user_code`, and approves.
+5. Client polls `POST /o/token/` with `grant_type=urn:ietf:params:oauth:grant-type:device_code`
+   and `device_code` until the user approves or the code expires.

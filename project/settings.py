@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "oauth2_provider",
 ]
 
 MIDDLEWARE = [
@@ -246,6 +247,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "speedpycom.api.authentication.PersonalAccessTokenAuthentication",
+        "oauth2_provider.contrib.rest_framework.OAuth2Authentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
@@ -289,6 +291,25 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
 }
 
+OAUTH2_PROVIDER = {
+    "SCOPES": {
+        "read:profile": "Read your profile",
+        "write:profile": "Update your profile",
+        "read:teams": "Read your teams and members",
+        "write:teams": "Create invitations and manage teams",
+        "read:products": "Read products",
+        "admin": "Administrative access",
+    },
+    "DEFAULT_SCOPES": ["read:profile"],
+    "ACCESS_TOKEN_EXPIRE_SECONDS": 3600,
+    "REFRESH_TOKEN_EXPIRE_SECONDS": 86400 * 30,
+    "ROTATE_REFRESH_TOKEN": True,
+    "PKCE_REQUIRED": True,
+    "ALLOWED_REDIRECT_URI_SCHEMES": ["https", "http"],
+    "REQUEST_APPROVAL_PROMPT": "auto",
+    "OAUTH2_VALIDATOR_CLASS": "oauth2_provider.oauth2_validators.OAuth2Validator",
+}
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "SpeedPy API",
     "DESCRIPTION": "HTTP API for SpeedPy.",
@@ -306,6 +327,7 @@ SPECTACULAR_SETTINGS = {
         {"sessionAuth": []},
         {"bearerAuth": []},
         {"jwtAuth": []},
+        {"oauth2": ["read:profile"]},
     ],
     "APPEND_COMPONENTS": {
         "securitySchemes": {
@@ -324,6 +346,24 @@ SPECTACULAR_SETTINGS = {
                 "scheme": "bearer",
                 "bearerFormat": "JWT",
                 "description": "JWT access token from /api/auth/token/.",
+            },
+            "oauth2": {
+                "type": "oauth2",
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": "/o/authorize/",
+                        "tokenUrl": "/o/token/",
+                        "scopes": {
+                            "read:profile": "Read your profile",
+                            "write:profile": "Update your profile",
+                            "read:teams": "Read your teams and members",
+                            "write:teams": "Create invitations and manage teams",
+                            "read:products": "Read products",
+                            "admin": "Administrative access",
+                        },
+                    },
+                },
+                "description": "OAuth2 Authorization Code + PKCE. Device flow also available at /o/device-authorization/.",
             },
         },
     },
