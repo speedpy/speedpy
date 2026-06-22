@@ -10,6 +10,37 @@ from usermodel.validators import validate_no_url
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
+    def send_confirmation_mail(self, request, emailconfirmation, signup):
+        """
+        Override to strip the ``user`` object from the template context so
+        confirmation emails cannot include the user's name.
+
+        User-supplied names may contain URLs or other malicious content, and
+        embedding them in an email could turn a confirmation message into a
+        phishing vector.  The project template already avoids ``{{ user }}``,
+        but removing it from the context ensures future template edits cannot
+        accidentally re-introduce personalization.
+        """
+        from allauth.account import app_settings
+
+        # Explicitly shadow "user" so Django's auth context processor
+        # (which adds request.user to RequestContext) cannot leak it back.
+        ctx = {"user": ""}
+        if app_settings.EMAIL_VERIFICATION_BY_CODE_ENABLED:
+            ctx["code"] = emailconfirmation.key
+        else:
+            ctx["key"] = emailconfirmation.key
+            ctx["activate_url"] = self.get_email_confirmation_url(
+                request, emailconfirmation
+            )
+        if signup:
+            email_template = "account/email/email_confirmation_signup"
+        else:
+            email_template = "account/email/email_confirmation"
+        self.send_mail(
+            email_template, emailconfirmation.email_address.email, ctx
+        )
+
     def send_account_already_exists_mail(self, *args, **kwargs):
         """
         We don't need this feature ever. Nobody wants it. I swear.
