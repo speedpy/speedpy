@@ -1,12 +1,17 @@
 from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_field, extend_schema_view
 from rest_framework import serializers, status
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from speedpycom.api.permissions import HasScope
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from usermodel.mfa import user_has_totp, verify_totp
+from usermodel.tokens import email_verified
 
 
 class CurrentUserSerializer(serializers.Serializer):
@@ -145,6 +150,37 @@ class JWTLogoutView(APIView):
         return Response(status=status.HTTP_205_RESET_CONTENT)
 
 
+class GatedTokenObtainPairSerializer(TokenObtainPairSerializer):
+    mfa_code = serializers.CharField(required=False, write_only=True, help_text="TOTP code (required when MFA is enabled).")
+
+    def validate(self, attrs):
+        # Authenticate user (email + password) without minting tokens yet.
+        # TokenObtainSerializer.validate authenticates and sets self.user.
+        from rest_framework_simplejwt.serializers import TokenObtainSerializer
+
+        TokenObtainSerializer.validate(self, attrs)
+        user = self.user
+
+        # Gate: verified email.
+        if not email_verified(user):
+            raise AuthenticationFailed("Email address is not verified.")
+
+        # Gate: MFA (TOTP only).
+        if user_has_totp(user):
+            mfa_code = attrs.get("mfa_code")
+            if not mfa_code:
+                raise AuthenticationFailed("MFA code is required.")
+            if not verify_totp(user, mfa_code):
+                raise AuthenticationFailed("Invalid MFA code.")
+
+        # All gates passed — now mint the token pair.
+        refresh = self.get_token(user)
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
+
+
 @extend_schema_view(
     post=extend_schema(
         tags=["auth"],
@@ -155,6 +191,7 @@ class JWTLogoutView(APIView):
 class TokenObtainView(TokenObtainPairView):
     authentication_classes = []
     permission_classes = [AllowAny]
+    serializer_class = GatedTokenObtainPairSerializer
 
 
 @extend_schema_view(

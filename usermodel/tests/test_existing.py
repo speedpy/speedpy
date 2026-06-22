@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest.mock import patch
 
+from allauth.account.models import EmailAddress
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.test import TestCase, override_settings
@@ -16,6 +17,13 @@ from usermodel.forms import (
 )
 from usermodel.models import PersonalAccessToken, User, _hash_token
 from usermodel.validators import validate_no_url
+
+
+def _verified_email(user):
+    """Create a verified primary EmailAddress for the user."""
+    EmailAddress.objects.create(
+        user=user, email=user.email, primary=True, verified=True
+    )
 
 
 class ValidateNoUrlTests(TestCase):
@@ -672,10 +680,13 @@ class PersonalAccessTokenAuthTests(TestCase):
 
 
 class PersonalAccessTokenUITests(TestCase):
+    _reauth_patch = "allauth.account.internal.flows.reauthentication.did_recently_authenticate"
+
     def setUp(self):
         self.user = User.objects.create_user(
             email="uitest@example.com", password="testpass123"
         )
+        _verified_email(self.user)
         self.client.login(email="uitest@example.com", password="testpass123")
 
     def test_list_page_loads(self):
@@ -689,18 +700,20 @@ class PersonalAccessTokenUITests(TestCase):
         self.assertContains(response, "Create API Token")
 
     def test_create_token_flow(self):
-        response = self.client.post(
-            "/accounts/tokens/create/",
-            {"name": "My CI Token"},
-            follow=True,
-        )
+        with patch(self._reauth_patch, return_value=True):
+            response = self.client.post(
+                "/accounts/tokens/create/",
+                {"name": "My CI Token"},
+                follow=True,
+            )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "spd_")
         self.assertEqual(PersonalAccessToken.objects.filter(user=self.user).count(), 1)
 
     def test_one_time_reveal(self):
-        # Create a token
-        self.client.post("/accounts/tokens/create/", {"name": "Once"}, follow=False)
+        with patch(self._reauth_patch, return_value=True):
+            # Create a token
+            self.client.post("/accounts/tokens/create/", {"name": "Once"}, follow=False)
         # First visit shows the token
         response = self.client.get("/accounts/tokens/")
         self.assertContains(response, "spd_")
@@ -739,6 +752,7 @@ class JWTAuthTests(TestCase):
         self.user = User.objects.create_user(
             email="jwt@example.com", password="jwtpass123"
         )
+        _verified_email(self.user)
 
     def test_obtain_token_pair(self):
         response = self.client.post(

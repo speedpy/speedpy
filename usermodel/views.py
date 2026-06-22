@@ -7,12 +7,13 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import FormView, ListView, UpdateView, View
 
 from usermodel.forms import PersonalAccessTokenForm, UserProfileForm
 from usermodel.models import PersonalAccessToken
+from usermodel.tokens import email_verified
 
 logger = structlog.get_logger(__name__)
 
@@ -75,15 +76,30 @@ class PersonalAccessTokenCreateView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy("account_pat_list")
 
     def form_valid(self, form):
+        user = self.request.user
+
+        # Gate: verified email.
+        if not email_verified(user):
+            messages.error(self.request, "You must verify your email address before creating API tokens.")
+            return redirect("account_email")
+
+        # Gate: recent reauthentication.
+        if getattr(settings, "SPEEDPY_PAT_REQUIRE_RECENT_REAUTH", True):
+            from allauth.account.internal.flows.reauthentication import did_recently_authenticate
+
+            if not did_recently_authenticate(self.request):
+                next_url = reverse("account_pat_create")
+                return redirect(f"{reverse('account_reauthenticate')}?next={next_url}")
+
         pat, raw_token = PersonalAccessToken.create_token(
-            user=self.request.user,
+            user=user,
             name=form.cleaned_data["name"],
             scopes=form.cleaned_data.get("scopes", []),
             expires_at=form.cleaned_data.get("expires_at"),
         )
         logger.info(
             "pat_created",
-            user_id=str(self.request.user.id),
+            user_id=str(user.id),
             token_id=str(pat.id),
             token_name=pat.name,
         )

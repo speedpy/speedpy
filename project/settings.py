@@ -432,6 +432,11 @@ DEMO_MODE = env.bool("DEMO_MODE", default=False)  # fills login and password on 
 SPEEDPY_TEAMS_ENABLED = env.bool("SPEEDPY_TEAMS_ENABLED", default=True)  # enable/disable teams functionality
 SPEEDPY_MFA_BACKEND = env.str("SPEEDPY_MFA_BACKEND", default="allauth_mfa")  # "django_otp" or "allauth_mfa"
 
+# Token issuance gates — all on by default (conservative).
+SPEEDPY_API_TOKEN_REQUIRE_VERIFIED_EMAIL = env.bool("SPEEDPY_API_TOKEN_REQUIRE_VERIFIED_EMAIL", default=True)
+SPEEDPY_JWT_REQUIRE_MFA = env.bool("SPEEDPY_JWT_REQUIRE_MFA", default=True)
+SPEEDPY_PAT_REQUIRE_RECENT_REAUTH = env.bool("SPEEDPY_PAT_REQUIRE_RECENT_REAUTH", default=True)
+
 if SPEEDPY_MFA_BACKEND == "django_otp":
     INSTALLED_APPS += [
         "django_otp",
