@@ -8,7 +8,7 @@ import structlog
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import serializers, status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -16,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from mainapp.models import Team, TeamInvitation, TeamMembership
+from speedpycom.api.idempotency import idempotent
 from speedpycom.api.permissions import HasScope
 
 logger = structlog.get_logger(__name__)
@@ -185,16 +186,27 @@ class TeamInvitationCreateAPIView(APIView):
     @extend_schema(
         tags=["teams"],
         request=CreateInvitationSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="Idempotency-Key",
+                type=str,
+                location=OpenApiParameter.HEADER,
+                required=False,
+                description="Optional idempotency key (1-128 chars). Same key + same body replays the stored response.",
+            ),
+        ],
         responses={
             201: InvitationResponseSerializer,
             400: OpenApiResponse(description="Validation error."),
             401: OpenApiResponse(description="Authentication required."),
             403: OpenApiResponse(description="Insufficient role (owner/admin required)."),
             404: OpenApiResponse(description="Team not found or no access."),
+            409: OpenApiResponse(description="Idempotency-Key reused with a different request body."),
         },
         operation_id="createTeamInvitation",
         summary="Invite a user to a team",
     )
+    @idempotent
     def post(self, request, team_id):
         _check_teams_enabled()
         membership = _get_membership(request.user, team_id)
