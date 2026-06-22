@@ -3,6 +3,7 @@ from pathlib import Path
 import environ
 import os
 import structlog
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
 
 env = environ.Env(
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "oauth2_provider",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -59,6 +61,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -311,6 +314,18 @@ OAUTH2_PROVIDER = {
 }
 
 DCR_ENABLED = env.bool("DCR_ENABLED", default=DEBUG)
+
+# --- CORS ---
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=DEBUG)
+CORS_ALLOW_CREDENTIALS = env.bool("CORS_ALLOW_CREDENTIALS", default=False)
+CORS_URLS_REGEX = r"^/api/"
+
+if CORS_ALLOW_ALL_ORIGINS and not DEBUG:
+    raise ImproperlyConfigured(
+        "CORS_ALLOW_ALL_ORIGINS=True is not allowed when DEBUG=False. "
+        "Set explicit CORS_ALLOWED_ORIGINS instead."
+    )
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "SpeedPy API",

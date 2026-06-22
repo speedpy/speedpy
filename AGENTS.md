@@ -63,8 +63,7 @@ DRF (`rest_framework`) and `drf-spectacular` are installed for versioned integra
 endpoints under `/api/v1/`. New JSON integration endpoints follow the HTTP API guide
 below; do not add DRF to server-rendered HTML views. The primary UI remains
 Django templates + crispy forms + Alpine.js. Ad-hoc `JsonResponse`s in
-`mainapp/views/` are only for tiny UI helpers (tours, toggles). Require explicit user
-approval before adding JWT, OAuth2, or CORS.
+`mainapp/views/` are only for tiny UI helpers (tours, toggles).
 
 ### Where new code goes — quick reference
 
@@ -753,9 +752,41 @@ Session-authenticated users have implicit full access.
    can select them when creating a token.
 3. Set `required_scopes` on the view with `HasScope` permission class.
 
+### CORS policy
+
+CORS is configured via `django-cors-headers` and scoped to `/api/` URLs only
+(`CORS_URLS_REGEX = r"^/api/"`). Non-API routes (`/accounts/`, `/demo/`, `/o/`,
+etc.) are unaffected.
+
+**When CORS is needed:**
+
+- Browser-based SPA clients calling the API cross-origin.
+- OAuth2 interactive flows where the browser calls `/api/` endpoints directly.
+
+**When CORS is NOT needed:**
+
+- Server-to-server integrations using PAT or JWT (`Authorization: Bearer …`
+  from a backend or script) — browser CORS policy does not apply.
+- CLI tools, MCP servers, CI/CD pipelines — these are not browsers.
+
+**Environment variables:**
+
+| Variable | Default | Description |
+|---|---|---|
+| `CORS_ALLOWED_ORIGINS` | `[]` | Comma-separated list of allowed origins (e.g. `https://app.example.com`) |
+| `CORS_ALLOW_ALL_ORIGINS` | `True` in DEBUG, `False` otherwise | Allow any origin. A startup guard raises `ImproperlyConfigured` if `True` with `DEBUG=False`. |
+| `CORS_ALLOW_CREDENTIALS` | `False` | Whether to allow credentials (cookies/auth headers). Most token clients do not need this. |
+
+Session-based CSRF is unchanged — `CsrfViewMiddleware` still enforces same-origin
+write protection for session-authenticated requests.
+
+**Note:** The OAuth2 endpoints live under `/o/`, outside the `/api/` CORS scope.
+If a browser SPA needs to call `/o/token/` directly, extend `CORS_URLS_REGEX` or
+add a separate configuration.
+
 ### Explicit non-goals (ask user first)
 
-- CORS, custom error envelopes.
+- Custom error envelopes.
 - New top-level Django apps for API code.
 - Exposing `is_staff`, `is_superuser`, passwords, or raw storage paths.
 - Unscoped querysets on `TeamModel` subclasses.
