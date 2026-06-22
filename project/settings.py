@@ -310,6 +310,8 @@ OAUTH2_PROVIDER = {
     "OAUTH2_VALIDATOR_CLASS": "oauth2_provider.oauth2_validators.OAuth2Validator",
 }
 
+DCR_ENABLED = env.bool("DCR_ENABLED", default=DEBUG)
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "SpeedPy API",
     "DESCRIPTION": "HTTP API for SpeedPy.",

@@ -11,6 +11,7 @@ from drf_spectacular.views import (
 )
 from mainapp import views
 import speedpycom.views
+from speedpycom.api.dcr import DynamicClientRegistrationView
 from usermodel.views import (
     PersonalAccessTokenCreateView,
     PersonalAccessTokenListView,
@@ -50,6 +51,7 @@ urlpatterns = [
     path("accounts/tokens/create/", PersonalAccessTokenCreateView.as_view(), name="account_pat_create"),
     path("accounts/tokens/<uuid:pk>/revoke/", PersonalAccessTokenRevokeView.as_view(), name="account_pat_revoke"),
     path("og-image.png", speedpycom.views.default_og_image, name="default-og-image"),
+    path("o/register/", DynamicClientRegistrationView.as_view(), name="dcr-register"),
     path("o/", include("oauth2_provider.urls", namespace="oauth2_provider")),
     path("__debug__/", include("debug_toolbar.urls")),
     path("api/schema/", api_docs_view(SpectacularAPIView), name="api_schema"),

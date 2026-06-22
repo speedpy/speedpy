@@ -834,3 +834,69 @@ When adding a new business API endpoint, also add:
 2. An `@mcp.tool()` function in `examples/mcp_server/speedpy_mcp.py` using `_api_get()`.
 
 Examples must stay generic — avoid project-specific business assumptions.
+
+### Integration auth recommendations
+
+Use this table to choose the right auth method for each integration scenario.
+Both PAT and OAuth2 are needed — OAuth2 is the primary path for interactive
+integrations; PATs are the automation shortcut.
+
+| Use case | Auth method | Why |
+|---|---|---|
+| Remote MCP server (Claude, Cursor, etc.) | OAuth2 Device Code | MCP spec mandates OAuth 2.1 for remote servers. PATs are "generally unsuitable" per the spec. |
+| ChatGPT / GPT Actions | OAuth2 Authorization Code + PKCE | Per-user access with consent screen. |
+| First-party CLI | OAuth2 Device Code (primary), PAT (fallback) | Device flow gives scoped, refreshable tokens. PAT for quick scripting. |
+| CI/CD pipelines | PAT | Non-interactive, no browser. Use short-lived scoped tokens. |
+| Shell scripts / cron jobs | PAT | Static bearer token via env var. |
+| n8n / Make.com / Zapier | OAuth2 Authorization Code + PKCE | These platforms support OAuth natively. PAT fallback for n8n "Header Auth". |
+| Local/stdio MCP server (dev) | PAT via env var | Token configured out-of-band in MCP client config. Outside MCP auth spec scope. |
+| Server-to-server | PAT | Client Credentials grant can be added later if needed. |
+
+**Quick start — connect an MCP server:**
+
+1. `python manage.py create_oauth2_app "My MCP Server"` → note the `client_id`
+2. Configure the MCP server with `client_id` and your instance URL
+3. On first use, the MCP client triggers device flow → user approves in browser → done
+
+**Quick start — CLI or script:**
+
+1. Go to `/accounts/tokens/` → create a PAT with desired scopes
+2. `export SPEEDPY_API_TOKEN=spd_...`
+3. Use `Authorization: Bearer spd_...` in requests
+
+### Dynamic Client Registration (RFC 7591)
+
+The MCP spec recommends Dynamic Client Registration so MCP clients can
+self-register without manual admin setup. SpeedPy provides an optional
+registration endpoint at `POST /o/register/`.
+
+**Request** (unauthenticated):
+
+```json
+{
+  "client_name": "My MCP Client",
+  "grant_types": ["urn:ietf:params:oauth:grant-type:device_code"],
+  "scope": "read:profile read:teams",
+  "token_endpoint_auth_method": "none"
+}
+```
+
+**Response** (`201 Created`):
+
+```json
+{
+  "client_id": "abc123...",
+  "client_name": "My MCP Client",
+  "grant_types": ["urn:ietf:params:oauth:grant-type:device_code"],
+  "scope": "read:profile read:teams",
+  "token_endpoint_auth_method": "none",
+  "client_id_issued_at": 1750000000
+}
+```
+
+Confidential clients (Authorization Code grant) also receive a `client_secret`.
+
+To restrict open registration, set `DCR_ENABLED = False` in settings (default:
+`True` in development, `False` in production). When disabled, applications
+must be registered via Django admin or the `create_oauth2_app` management
+command.
