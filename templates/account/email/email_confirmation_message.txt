@@ -1,6 +1,14 @@
 {% extends "account/email/base_message.txt" %}
 {% load account %}
 {% load i18n %}
+{% comment %}
+SECURITY: Do not add {{ user }}, {{ user.first_name }}, {{ user.last_name }},
+or any other user-name personalization to this template.  User-supplied names
+are untrusted and may contain URLs or other content that could turn this
+confirmation email into a phishing vector.  The adapter (CustomAccountAdapter)
+deliberately strips the user object from the template context as a second line
+of defense; see usermodel/adapters.py for details.
+{% endcomment %}
 
 {% block content %}{% autoescape off %}{% blocktranslate with site_domain=current_site.domain %}You're receiving this email because your email address was used to register an account on {{ site_domain }}.{% endblocktranslate %}
 

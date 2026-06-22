@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from usermodel.adapters import CustomSocialAccountAdapter
+from usermodel.adapters import CustomAccountAdapter, CustomSocialAccountAdapter
 from usermodel.forms import (
     UsermodelLoginForm,
     UsermodelResetPasswordForm,
@@ -96,6 +96,78 @@ class EmailConfirmationMessageTests(TestCase):
         )
         self.assertIn("your email address was used to register", rendered)
         self.assertIn("https://speedpy.test/confirm/abc", rendered)
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        ACCOUNT_EMAIL_VERIFICATION="mandatory",
+    )
+    def test_adapter_confirmation_mail_has_no_name(self):
+        """Adapter-level: signup confirmation must not leak the user's name."""
+        from allauth.account.models import EmailConfirmation
+        from allauth.core.context import request_context
+        from django.core import mail
+        from django.test import RequestFactory
+
+        user = User.objects.create_user(
+            email="nametest@example.com",
+            password="testpass123",
+            first_name="Alice",
+            last_name="http://evil.com",
+        )
+        email_address = EmailAddress.objects.create(
+            user=user, email=user.email, primary=True, verified=False
+        )
+        confirmation = EmailConfirmation.create(email_address)
+        confirmation.save()
+
+        request = RequestFactory().get("/")
+        adapter = CustomAccountAdapter()
+        with request_context(request):
+            adapter.send_confirmation_mail(request, confirmation, signup=True)
+
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertNotIn("Alice", body)
+        self.assertNotIn("http://evil.com", body)
+        self.assertNotIn("Alice", mail.outbox[0].subject)
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        ACCOUNT_EMAIL_VERIFICATION="mandatory",
+    )
+    def test_adapter_add_email_confirmation_mail_has_no_name(self):
+        """Adapter-level: add-email confirmation (signup=False) must not leak the user's name."""
+        from allauth.account.models import EmailConfirmation
+        from allauth.core.context import request_context
+        from django.core import mail
+        from django.test import RequestFactory
+
+        user = User.objects.create_user(
+            email="addmail@example.com",
+            password="testpass123",
+            first_name="Bob",
+            last_name="https://phish.io",
+        )
+        email_address = EmailAddress.objects.create(
+            user=user, email=user.email, primary=True, verified=False
+        )
+        confirmation = EmailConfirmation.create(email_address)
+        confirmation.save()
+
+        # Simulate an authenticated request (add-email flow) so that
+        # Django's auth context processor would inject request.user if
+        # the adapter failed to shadow it.
+        request = RequestFactory().get("/")
+        request.user = user
+        adapter = CustomAccountAdapter()
+        with request_context(request):
+            adapter.send_confirmation_mail(request, confirmation, signup=False)
+
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertNotIn("Bob", body)
+        self.assertNotIn("https://phish.io", body)
+        self.assertNotIn("Bob", mail.outbox[0].subject)
 
 
 AUTH_FORMS = [
