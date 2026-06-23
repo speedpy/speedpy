@@ -1,10 +1,13 @@
+from unittest.mock import MagicMock, patch
+
 from django.contrib.admin.sites import AdminSite
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from mainapp.admin.webhooks import WebhookDeliveryAdmin, WebhookEndpointAdmin
 from mainapp.models import Team, WebhookDelivery, WebhookEndpoint
 from mainapp.webhooks.events import WebhookEvent
+from mainapp.webhooks.signing import sign, verify
 from usermodel.models import User
 
 
@@ -257,6 +260,209 @@ class WebhookTenantIsolationTests(TestCase):
         )
         self.assertEqual(team_a_deliveries.count(), 1)
         self.assertEqual(team_a_deliveries.first().event_id, "evt_1")
+
+
+class WebhookSigningTests(TestCase):
+    def test_sign_deterministic(self):
+        sig = sign("secret123", "1700000000", b'{"event":"test"}')
+        self.assertEqual(len(sig), 64)  # SHA-256 hex digest
+        # Same inputs produce same output.
+        self.assertEqual(sig, sign("secret123", "1700000000", b'{"event":"test"}'))
+
+    def test_sign_differs_with_different_secret(self):
+        sig_a = sign("secret_a", "1700000000", b"body")
+        sig_b = sign("secret_b", "1700000000", b"body")
+        self.assertNotEqual(sig_a, sig_b)
+
+    def test_verify_valid(self):
+        sig = sign("mysecret", "12345", b"payload")
+        self.assertTrue(verify("mysecret", "12345", b"payload", sig))
+
+    def test_verify_invalid(self):
+        self.assertFalse(verify("mysecret", "12345", b"payload", "bad_signature"))
+
+    def test_verify_wrong_timestamp(self):
+        sig = sign("mysecret", "12345", b"payload")
+        self.assertFalse(verify("mysecret", "99999", b"payload", sig))
+
+
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True)
+class WebhookDeliverTaskTests(TestCase):
+    def setUp(self):
+        self.team = Team.objects.create(name="Acme", slug="acme")
+        self.endpoint = WebhookEndpoint.objects.create(
+            team=self.team,
+            url="https://example.com/hook",
+            events=["*"],
+        )
+
+    def _create_delivery(self, **kwargs):
+        defaults = {
+            "endpoint": self.endpoint,
+            "event_id": "evt_test1",
+            "event_type": "team.member.added",
+            "payload": {"event_id": "evt_test1", "type": "team.member.added", "data": {}},
+        }
+        defaults.update(kwargs)
+        return WebhookDelivery.objects.create(**defaults)
+
+    @patch("mainapp.tasks.webhooks.httpx.Client")
+    def test_successful_delivery(self, mock_client_cls):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = "OK"
+        mock_client_cls.return_value.__enter__ = MagicMock(return_value=MagicMock(post=MagicMock(return_value=mock_response)))
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        delivery = self._create_delivery()
+
+        from mainapp.tasks.webhooks import deliver_webhook
+        deliver_webhook(delivery.pk)
+
+        delivery.refresh_from_db()
+        self.assertEqual(delivery.status, WebhookDelivery.Status.SUCCESS)
+        self.assertEqual(delivery.http_status_code, 200)
+        self.assertIsNotNone(delivery.delivered_at)
+        self.assertEqual(delivery.attempts, 1)
+
+    @patch("mainapp.tasks.webhooks.httpx.Client")
+    def test_permanent_failure_4xx(self, mock_client_cls):
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.text = "Bad Request"
+        mock_client_cls.return_value.__enter__ = MagicMock(return_value=MagicMock(post=MagicMock(return_value=mock_response)))
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        delivery = self._create_delivery()
+
+        from mainapp.tasks.webhooks import deliver_webhook
+        deliver_webhook(delivery.pk)
+
+        delivery.refresh_from_db()
+        self.assertEqual(delivery.status, WebhookDelivery.Status.FAILED)
+        self.assertEqual(delivery.http_status_code, 400)
+        self.assertIn("400", delivery.error_message)
+
+    @patch("mainapp.tasks.webhooks.httpx.Client")
+    def test_retryable_failure_500(self, mock_client_cls):
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.text = "Internal Server Error"
+        mock_client_cls.return_value.__enter__ = MagicMock(return_value=MagicMock(post=MagicMock(return_value=mock_response)))
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        delivery = self._create_delivery()
+
+        from mainapp.tasks.webhooks import deliver_webhook
+
+        # bind=True tasks get self as first arg; in eager mode, retry raises Retry.
+        # We catch that to verify retry was attempted.
+        from celery.exceptions import Retry
+        with self.assertRaises(Retry):
+            deliver_webhook(delivery.pk)
+
+        delivery.refresh_from_db()
+        self.assertEqual(delivery.status, WebhookDelivery.Status.PENDING)
+        self.assertEqual(delivery.attempts, 1)
+
+    @patch("mainapp.tasks.webhooks.httpx.Client")
+    def test_timeout_triggers_retry(self, mock_client_cls):
+        import httpx
+        mock_client_cls.return_value.__enter__ = MagicMock(
+            return_value=MagicMock(post=MagicMock(side_effect=httpx.ReadTimeout("timed out")))
+        )
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        delivery = self._create_delivery()
+
+        from mainapp.tasks.webhooks import deliver_webhook
+        from celery.exceptions import Retry
+        with self.assertRaises(Retry):
+            deliver_webhook(delivery.pk)
+
+        delivery.refresh_from_db()
+        self.assertEqual(delivery.status, WebhookDelivery.Status.PENDING)
+        self.assertIn("Timeout", delivery.error_message)
+
+    def test_inactive_endpoint_marked_disabled(self):
+        self.endpoint.is_active = False
+        self.endpoint.save()
+
+        delivery = self._create_delivery()
+
+        from mainapp.tasks.webhooks import deliver_webhook
+        deliver_webhook(delivery.pk)
+
+        delivery.refresh_from_db()
+        self.assertEqual(delivery.status, WebhookDelivery.Status.DISABLED)
+
+    @patch("mainapp.tasks.webhooks.httpx.Client")
+    def test_redirect_not_followed(self, mock_client_cls):
+        mock_response = MagicMock()
+        mock_response.status_code = 301
+        mock_response.text = ""
+        mock_client_cls.return_value.__enter__ = MagicMock(return_value=MagicMock(post=MagicMock(return_value=mock_response)))
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        delivery = self._create_delivery()
+
+        from mainapp.tasks.webhooks import deliver_webhook
+        deliver_webhook(delivery.pk)
+
+        delivery.refresh_from_db()
+        self.assertEqual(delivery.status, WebhookDelivery.Status.FAILED)
+        self.assertEqual(delivery.http_status_code, 301)
+
+    def test_nonexistent_delivery_does_not_crash(self):
+        from mainapp.tasks.webhooks import deliver_webhook
+        deliver_webhook(999999)  # should log warning and return
+
+
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True)
+class WebhookDispatchTests(TestCase):
+    def setUp(self):
+        self.team = Team.objects.create(name="Acme", slug="acme")
+        self.endpoint = WebhookEndpoint.objects.create(
+            team=self.team,
+            url="https://example.com/hook",
+            events=["team.member.added"],
+        )
+
+    @patch("mainapp.tasks.webhooks.deliver_webhook.delay")
+    def test_dispatch_creates_deliveries_for_matching_endpoints(self, mock_delay):
+        from mainapp.webhooks.dispatch import dispatch_event
+
+        with self.captureOnCommitCallbacks(execute=True):
+            ids = dispatch_event(self.team, "team.member.added", {"user_id": "123"})
+
+        self.assertEqual(len(ids), 1)
+        delivery = WebhookDelivery.objects.get(pk=ids[0])
+        self.assertEqual(delivery.event_type, "team.member.added")
+        self.assertEqual(delivery.payload["data"]["user_id"], "123")
+        mock_delay.assert_called_once_with(delivery.pk)
+
+    @patch("mainapp.tasks.webhooks.deliver_webhook.delay")
+    def test_dispatch_skips_non_matching_events(self, mock_delay):
+        from mainapp.webhooks.dispatch import dispatch_event
+
+        with self.captureOnCommitCallbacks(execute=True):
+            ids = dispatch_event(self.team, "user.profile.updated", {"user_id": "123"})
+
+        self.assertEqual(len(ids), 0)
+        mock_delay.assert_not_called()
+
+    @patch("mainapp.tasks.webhooks.deliver_webhook.delay")
+    def test_dispatch_skips_inactive_endpoints(self, mock_delay):
+        self.endpoint.is_active = False
+        self.endpoint.save()
+
+        from mainapp.webhooks.dispatch import dispatch_event
+
+        with self.captureOnCommitCallbacks(execute=True):
+            ids = dispatch_event(self.team, "team.member.added", {"user_id": "123"})
+
+        self.assertEqual(len(ids), 0)
+        mock_delay.assert_not_called()
 
 
 class WebhookAdminSmokeTests(TestCase):
