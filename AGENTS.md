@@ -931,3 +931,172 @@ To restrict open registration, set `DCR_ENABLED = False` in settings (default:
 `True` in development, `False` in production). When disabled, applications
 must be registered via Django admin or the `create_oauth2_app` management
 command.
+
+## Webhook Extension Guide
+
+This section explains how to add a new webhook event type to SpeedPy. The
+delivery infrastructure (endpoint model, dispatch function, Celery task, HMAC
+signing) is already built — you only need to register the event, call
+`dispatch_event()` from business logic, add a test, and update docs.
+
+### Architecture overview
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| Event registry | `mainapp/webhooks/events.py` | `WebhookEvent` class with constants, `ALL` frozenset, `CHOICES` tuple |
+| Dispatch | `mainapp/webhooks/dispatch.py` | `dispatch_event(team, event_type, data)` — creates delivery rows and enqueues Celery tasks via `transaction.on_commit` |
+| Delivery task | `mainapp/tasks/webhooks.py` | HMAC-signed POST with exponential-backoff retries (up to 8) |
+| Signing | `mainapp/webhooks/signing.py` | `sign()` / `verify()` HMAC-SHA256 helpers |
+| Endpoint model | `mainapp/models/webhooks.py` | `WebhookEndpoint` (subscription) and `WebhookDelivery` (delivery log) |
+| Tests | `mainapp/tests/test_webhooks.py` | Model, dispatch, signing, and admin tests |
+
+### Naming convention
+
+Event names are lowercase and dot-separated, following the pattern
+`resource.action` or `resource.sub_resource.action` when a sub-resource
+is involved.
+
+Examples: `order.created`, `team.member.added`, `team.invitation.created`,
+`user.profile.updated`, `invoice.payment.failed`.
+
+### Step-by-step: adding a new event (e.g. `order.created`)
+
+#### Step 1 — Register the event constant
+
+Add the constant to `WebhookEvent` in `mainapp/webhooks/events.py` and include
+it in the `ALL` frozenset:
+
+```diff
+--- a/mainapp/webhooks/events.py
++++ b/mainapp/webhooks/events.py
+@@ -7,6 +7,9 @@
+     # -- User events ----------------------------------------------------------
+     USER_PROFILE_UPDATED = "user.profile.updated"
+
++    # -- Order events ---------------------------------------------------------
++    ORDER_CREATED = "order.created"
++
+     # -- Convenience collections ----------------------------------------------
+     ALL: frozenset[str] = frozenset(
+         {
+             TEAM_MEMBER_ADDED,
+             TEAM_INVITATION_CREATED,
+             USER_PROFILE_UPDATED,
++            ORDER_CREATED,
+         }
+     )
+```
+
+#### Step 2 — Call `dispatch_event()` from business logic
+
+Import the dispatch function and call it after the relevant database write
+succeeds. The `data` dict is the event-specific payload — include only stable
+IDs and timestamps, not localized display strings or cross-tenant data.
+
+```python
+from mainapp.webhooks.dispatch import dispatch_event
+from mainapp.webhooks.events import WebhookEvent
+
+# Inside a view, signal handler, model method, or Celery task —
+# after the DB write that creates the order:
+dispatch_event(
+    team=order.team,
+    event_type=WebhookEvent.ORDER_CREATED,
+    data={
+        "order_id": str(order.id),
+        "total": str(order.total),
+        "currency": order.currency,
+        "created_at": order.created_at.isoformat(),
+    },
+)
+```
+
+**Placement rules:**
+
+- Call `dispatch_event()` **after** the DB write that triggers the event.
+- `dispatch_event()` uses `transaction.on_commit` internally, so delivery rows
+  are enqueued only after the current transaction commits. If your code is
+  already inside `transaction.atomic()`, the dispatch is safe as-is.
+- For user-scoped events (like `user.profile.updated`), dispatch once per team
+  the user belongs to — iterate over memberships.
+
+**Payload `data` dict guidelines:**
+
+- Use stable identifiers (UUIDs, not sequential IDs that differ across environments).
+- Include UTC ISO-8601 timestamps.
+- Never include secrets, passwords, or raw file paths.
+- Never leak cross-tenant data — the payload should only contain information
+  the subscribing team is authorized to see.
+- Envelope fields (`event_id`, `event_type`, `timestamp`, `api_version`) are
+  added automatically by `dispatch_event()` — only provide the `data` dict.
+
+#### Step 3 — Add a test
+
+Add a test in `mainapp/tests/test_webhooks.py` that triggers the event and
+asserts a `WebhookDelivery` row is created with the correct `event_type` and
+payload shape:
+
+```python
+class OrderWebhookDispatchTests(TestCase):
+    def setUp(self):
+        self.team = Team.objects.create(name="Acme", slug="acme")
+        self.endpoint = WebhookEndpoint.objects.create(
+            team=self.team,
+            url="https://example.com/hook",
+            events=["order.created"],
+        )
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    @patch("mainapp.tasks.webhooks.deliver_webhook.delay")
+    def test_order_created_dispatch(self, mock_deliver):
+        from mainapp.webhooks.dispatch import dispatch_event
+
+        ids = dispatch_event(
+            team=self.team,
+            event_type=WebhookEvent.ORDER_CREATED,
+            data={"order_id": "abc-123", "total": "99.00", "currency": "USD"},
+        )
+        self.assertEqual(len(ids), 1)
+        delivery = WebhookDelivery.objects.get(pk=ids[0])
+        self.assertEqual(delivery.event_type, "order.created")
+        self.assertIn("order_id", delivery.payload["data"])
+        self.assertIn("event_id", delivery.payload)
+        self.assertIn("timestamp", delivery.payload)
+```
+
+**Test coverage checklist:**
+
+- Delivery row is created with the correct `event_type`.
+- `payload["data"]` has the expected keys.
+- Envelope fields (`event_id`, `event_type`, `timestamp`, `api_version`) are present.
+- Endpoints not subscribed to this event do **not** receive a delivery.
+- Wildcard (`["*"]`) endpoints **do** receive the new event.
+
+#### Step 4 — Update the docs
+
+Add the new event to the taxonomy table in `speedpy-docs/docs/webhooks.md`
+under the **v1 Events** section:
+
+```markdown
+| `order.created` | A new order is placed |
+```
+
+### Self-review checklist
+
+Use this checklist before marking the work done:
+
+- [ ] Constant added to `WebhookEvent` in `mainapp/webhooks/events.py` and
+      included in `ALL`
+- [ ] `dispatch_event()` called from the right place in business logic
+- [ ] Payload `data` dict contains only tenant-safe, stable fields
+- [ ] Test asserts delivery row creation and payload shape
+- [ ] Event added to `speedpy-docs/docs/webhooks.md` taxonomy table
+
+### Current status of v1 events
+
+The three v1 events (`team.member.added`, `team.invitation.created`,
+`user.profile.updated`) are defined in the event registry but are **not yet
+dispatched from production code paths** (views, signals). They are exercised
+in tests and the manual "test event" API endpoint. Wiring these events into
+production business logic is tracked separately and is not part of this
+extension guide.
