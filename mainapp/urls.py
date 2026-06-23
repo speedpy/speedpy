@@ -2,6 +2,7 @@ from django.conf import settings
 from django.urls import path
 from mainapp import views
 from mainapp.views import team_members
+from mainapp.views import webhooks as webhook_views
 
 urlpatterns = []
 
@@ -41,4 +42,12 @@ if getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
         path('teams/invitations/<str:token>/accept/', team_members.AcceptInvitationView.as_view(), name='accept_invitation'),
         path('teams/invitations/<str:token>/decline/', team_members.DeclineInvitationView.as_view(), name='decline_invitation'),
         path('teams/<uuid:team_id>/invitations/<uuid:invitation_id>/revoke/', team_members.RevokeInvitationView.as_view(), name='revoke_invitation'),
+
+        # Team webhook management
+        path('teams/<uuid:team_id>/webhooks/', webhook_views.TeamWebhookListView.as_view(), name='team_webhooks'),
+        path('teams/<uuid:team_id>/webhooks/create/', webhook_views.TeamWebhookCreateView.as_view(), name='team_webhook_create'),
+        path('teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/', webhook_views.TeamWebhookDetailView.as_view(), name='team_webhook_detail'),
+        path('teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/revoke/', webhook_views.TeamWebhookRevokeView.as_view(), name='team_webhook_revoke'),
+        path('teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/test/', webhook_views.TeamWebhookTestView.as_view(), name='team_webhook_test'),
+        path('teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/rotate-secret/', webhook_views.TeamWebhookRotateSecretView.as_view(), name='team_webhook_rotate_secret'),
     ]

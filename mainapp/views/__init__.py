@@ -8,6 +8,7 @@ from .tour_views import mark_tour_complete
 from .teams import TeamViewMixin, TeamCreateView, TeamAdminRequiredMixin, TeamSettingsView
 from .teams_dashboard import TeamDashboardView
 from . import team_members
+from . import webhooks
 
 __all__ = [
     "WelcomeToSpeedPyView",
@@ -23,6 +24,7 @@ __all__ = [
     "TeamCreateView",
     "TeamSettingsView",
     "team_members",
+    "webhooks",
 ]
 
 if getattr(django_settings, "SPEEDPY_MFA_BACKEND", "django_otp") == "django_otp":

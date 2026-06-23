@@ -1,0 +1,170 @@
+{% extends "mainapp/layouts/sidebar_layout.html" %}
+{% load i18n %}
+
+{% block head_title %}{{ team.name }} - {{ endpoint.name|default:endpoint.url|truncatechars:30 }}{% endblock %}
+
+{% block main_content %}
+<div class="section">
+    <div class="page-container">
+        <div class="section-header">
+            <p class="eyebrow">
+                <a href="{% url 'team_webhooks' team_id=team.id %}" class="text-primary hover:underline">{% trans "Webhooks" %}</a>
+            </p>
+            <h1 class="h1">{{ endpoint.name|default:"Webhook endpoint" }}</h1>
+        </div>
+
+        {% if new_secret %}
+            <div class="alert alert-success mb-6">
+                <div class="mb-2">
+                    <strong>{% trans "New signing secret generated." %}</strong>
+                    {% trans "Copy it now — it won't be shown again." %}
+                </div>
+                <div class="flex items-center gap-2">
+                    <code id="rotated-secret-value"
+                          class="block w-full break-all rounded bg-background p-3 font-mono text-sm text-fg">{{ new_secret }}</code>
+                    <button type="button"
+                            class="btn btn-outlined btn-secondary btn-sm flex-shrink-0"
+                            onclick="navigator.clipboard.writeText(document.getElementById('rotated-secret-value').textContent)">
+                        {% trans "Copy" %}
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Endpoint Info -->
+        <div class="card mb-6">
+            <div class="card-header">
+                <div class="flex items-center justify-between">
+                    <h2 class="h3 mb-0">{% trans "Configuration" %}</h2>
+                    {% if endpoint.is_active %}
+                        <span class="badge badge-success">{% trans "Active" %}</span>
+                    {% else %}
+                        <span class="badge badge-error">{% trans "Revoked" %}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-sm font-medium text-fg-secondary">{% trans "URL" %}</dt>
+                        <dd class="mt-1 font-mono text-sm break-all">{{ endpoint.url }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-fg-secondary">{% trans "Name" %}</dt>
+                        <dd class="mt-1 text-sm">{{ endpoint.name|default:"—" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-fg-secondary">{% trans "Events" %}</dt>
+                        <dd class="mt-1">
+                            {% if endpoint.events %}
+                                {% for evt in endpoint.events %}
+                                    <span class="chip chip-sm chip-secondary">{{ evt }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-fg-secondary text-sm">{% trans "None" %}</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-fg-secondary">{% trans "Created" %}</dt>
+                        <dd class="mt-1 text-sm">{{ endpoint.created_at|date:"M d, Y H:i" }}</dd>
+                    </div>
+                </dl>
+            </div>
+            {% if can_manage and endpoint.is_active %}
+                <div class="card-footer flex flex-wrap gap-3">
+                    <form method="post" action="{% url 'team_webhook_test' team_id=team.id webhook_id=endpoint.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outlined btn-primary btn-sm">
+                            {% trans "Send test delivery" %}
+                        </button>
+                    </form>
+                    <form method="post"
+                          action="{% url 'team_webhook_rotate_secret' team_id=team.id webhook_id=endpoint.id %}"
+                          onsubmit="return confirm('{% trans "Rotate the signing secret? The old secret will stop working immediately." %}')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outlined btn-secondary btn-sm">
+                            {% trans "Rotate secret" %}
+                        </button>
+                    </form>
+                    <form method="post"
+                          action="{% url 'team_webhook_revoke' team_id=team.id webhook_id=endpoint.id %}"
+                          onsubmit="return confirm('{% trans "Revoke this webhook? This cannot be undone." %}')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outlined btn-error btn-sm">
+                            {% trans "Revoke" %}
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Deliveries -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="h3 mb-0">{% trans "Recent Deliveries" %}</h2>
+            </div>
+            <div class="card-body">
+                {% if deliveries %}
+                    <div class="overflow-x-auto">
+                        <table class="table table-hover table-sm w-full">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Event" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th class="hidden sm:table-cell">{% trans "HTTP" %}</th>
+                                    <th class="hidden md:table-cell">{% trans "Attempts" %}</th>
+                                    <th class="hidden sm:table-cell">{% trans "Delivered" %}</th>
+                                    <th>{% trans "Created" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in deliveries %}
+                                    <tr>
+                                        <td>
+                                            <span class="chip chip-sm chip-secondary">{{ d.event_type }}</span>
+                                        </td>
+                                        <td>
+                                            {% if d.status == "success" %}
+                                                <span class="badge badge-success">{% trans "Success" %}</span>
+                                            {% elif d.status == "failed" %}
+                                                <span class="badge badge-error">{% trans "Failed" %}</span>
+                                            {% elif d.status == "pending" %}
+                                                <span class="badge badge-warning">{% trans "Pending" %}</span>
+                                            {% elif d.status == "in_flight" %}
+                                                <span class="badge badge-info">{% trans "In flight" %}</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">{{ d.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="hidden sm:table-cell text-sm text-fg-secondary">
+                                            {{ d.http_status_code|default:"—" }}
+                                        </td>
+                                        <td class="hidden md:table-cell text-sm text-fg-secondary">
+                                            {{ d.attempts }}
+                                        </td>
+                                        <td class="hidden sm:table-cell text-sm text-fg-secondary">
+                                            {% if d.delivered_at %}
+                                                {{ d.delivered_at|date:"M d H:i:s" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-sm text-fg-secondary">
+                                            {{ d.created_at|date:"M d H:i:s" }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="py-8 text-center text-fg-secondary">
+                        <p>{% trans "No deliveries yet." %}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

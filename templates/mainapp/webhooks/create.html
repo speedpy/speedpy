@@ -1,0 +1,34 @@
+{% extends "mainapp/layouts/sidebar_layout.html" %}
+{% load i18n crispy_forms_tags %}
+
+{% block head_title %}{{ team.name }} - Create Webhook{% endblock %}
+
+{% block main_content %}
+<div class="section">
+    <div class="page-container">
+        <div class="max-w-2xl">
+            <div class="section-header">
+                <p class="eyebrow">{{ team.name }}</p>
+                <h1 class="h1">{% trans "Create Webhook" %}</h1>
+                <p class="lead">{% trans "Set up an endpoint to receive event notifications." %}</p>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% crispy form %}
+
+                        <div class="flex items-center gap-3 pt-6 border-t border-divider mt-6">
+                            <a href="{% url 'team_webhooks' team_id=team.id %}"
+                               class="btn btn-text btn-secondary">
+                                {% trans "Cancel" %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

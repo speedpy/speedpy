@@ -1,0 +1,122 @@
+{% extends "mainapp/layouts/sidebar_layout.html" %}
+{% load i18n %}
+
+{% block head_title %}{{ team.name }} - Webhooks{% endblock %}
+
+{% block main_content %}
+<div class="section">
+    <div class="page-container">
+        <div class="page-header-actions">
+            <div class="page-header-main">
+                <p class="eyebrow">{{ team.name }}</p>
+                <h1 class="h1">{% trans "Webhooks" %}</h1>
+                <p class="lead">{% trans "Manage webhook endpoints for your team." %}</p>
+            </div>
+            {% if can_manage %}
+            <div class="page-header-buttons">
+                <a href="{% url 'team_webhook_create' team_id=team.id %}" class="btn btn-contained btn-primary">
+                    {% trans "Create webhook" %}
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if new_secret %}
+            <div class="alert alert-success mb-6">
+                <div class="mb-2">
+                    <strong>{% blocktrans with name=new_webhook_name %}Webhook "{{ name }}" created.{% endblocktrans %}</strong>
+                    {% trans "Copy the signing secret now — it won't be shown again." %}
+                </div>
+                <div class="flex items-center gap-2">
+                    <code id="new-secret-value"
+                          class="block w-full break-all rounded bg-background p-3 font-mono text-sm text-fg">{{ new_secret }}</code>
+                    <button type="button"
+                            class="btn btn-outlined btn-secondary btn-sm flex-shrink-0"
+                            onclick="navigator.clipboard.writeText(document.getElementById('new-secret-value').textContent)">
+                        {% trans "Copy" %}
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body">
+                {% if endpoints %}
+                    <div class="overflow-x-auto">
+                        <table class="table table-hover table-sm w-full">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Name" %}</th>
+                                    <th class="hidden sm:table-cell">{% trans "URL" %}</th>
+                                    <th class="hidden md:table-cell">{% trans "Events" %}</th>
+                                    <th class="hidden md:table-cell">{% trans "Created" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ep in endpoints %}
+                                    <tr>
+                                        <td class="font-medium">
+                                            <a href="{% url 'team_webhook_detail' team_id=team.id webhook_id=ep.id %}"
+                                               class="text-primary hover:underline">
+                                                {{ ep.name|default:ep.url|truncatechars:30 }}
+                                            </a>
+                                        </td>
+                                        <td class="hidden sm:table-cell text-fg-secondary text-sm font-mono">
+                                            {{ ep.url|truncatechars:40 }}
+                                        </td>
+                                        <td class="hidden md:table-cell">
+                                            {% if ep.events %}
+                                                {% for evt in ep.events|slice:":3" %}
+                                                    <span class="chip chip-sm chip-secondary">{{ evt }}</span>
+                                                {% endfor %}
+                                                {% if ep.events|length > 3 %}
+                                                    <span class="text-fg-secondary text-xs">+{{ ep.events|length|add:"-3" }}</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-fg-secondary text-sm">{% trans "None" %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="hidden md:table-cell text-fg-secondary text-sm">
+                                            {{ ep.created_at|date:"M d, Y" }}
+                                        </td>
+                                        <td>
+                                            {% if ep.is_active %}
+                                                <span class="badge badge-success">{% trans "Active" %}</span>
+                                            {% else %}
+                                                <span class="badge badge-error">{% trans "Revoked" %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right">
+                                            {% if ep.is_active and can_manage %}
+                                                <form method="post"
+                                                      action="{% url 'team_webhook_revoke' team_id=team.id webhook_id=ep.id %}"
+                                                      onsubmit="return confirm('{% trans "Revoke this webhook? This cannot be undone." %}')">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-text btn-error btn-sm">
+                                                        {% trans "Revoke" %}
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="py-8 text-center text-fg-secondary">
+                        <p class="mb-4">{% trans "No webhook endpoints yet." %}</p>
+                        {% if can_manage %}
+                            <a href="{% url 'team_webhook_create' team_id=team.id %}" class="btn btn-contained btn-primary">
+                                {% trans "Create your first webhook" %}
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
