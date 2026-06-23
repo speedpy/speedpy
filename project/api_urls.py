@@ -7,6 +7,16 @@ from mainapp.api.teams import (
     TeamListAPIView,
     TeamMembersAPIView,
 )
+from mainapp.api.webhooks import (
+    TeamWebhookDeliveryDetailView,
+    TeamWebhookDeliveryListView,
+    TeamWebhookDeliveryRetryView,
+    TeamWebhookEndpointDetailView,
+    TeamWebhookEndpointListCreateView,
+    TeamWebhookEndpointRotateSecretView,
+    TeamWebhookEndpointTestView,
+    UserWebhookEndpointListView,
+)
 from usermodel.api import (
     CurrentUserAPIView,
     JWTLogoutView,
@@ -27,4 +37,14 @@ urlpatterns = [
     path("v1/teams/<uuid:team_id>/", TeamDetailAPIView.as_view(), name="team_detail"),
     path("v1/teams/<uuid:team_id>/members/", TeamMembersAPIView.as_view(), name="team_members"),
     path("v1/teams/<uuid:team_id>/invitations/", TeamInvitationCreateAPIView.as_view(), name="team_invitation_create"),
+    # Webhooks — user-scoped
+    path("v1/webhooks/", UserWebhookEndpointListView.as_view(), name="webhook_list_user"),
+    # Webhooks — team-scoped
+    path("v1/teams/<uuid:team_id>/webhooks/", TeamWebhookEndpointListCreateView.as_view(), name="webhook_list"),
+    path("v1/teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/", TeamWebhookEndpointDetailView.as_view(), name="webhook_detail"),
+    path("v1/teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/rotate-secret/", TeamWebhookEndpointRotateSecretView.as_view(), name="webhook_rotate_secret"),
+    path("v1/teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/test/", TeamWebhookEndpointTestView.as_view(), name="webhook_test"),
+    path("v1/teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/deliveries/", TeamWebhookDeliveryListView.as_view(), name="webhook_delivery_list"),
+    path("v1/teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/deliveries/<int:delivery_id>/", TeamWebhookDeliveryDetailView.as_view(), name="webhook_delivery_detail"),
+    path("v1/teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/deliveries/<int:delivery_id>/retry/", TeamWebhookDeliveryRetryView.as_view(), name="webhook_delivery_retry"),
 ]

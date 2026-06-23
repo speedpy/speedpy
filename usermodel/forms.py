@@ -217,6 +217,8 @@ SCOPE_CHOICES = [
     ("read:teams", "Read teams"),
     ("write:teams", "Write teams"),
     ("read:products", "Read products"),
+    ("read:webhooks", "Read webhooks"),
+    ("write:webhooks", "Manage webhooks"),
 ]
 
 
