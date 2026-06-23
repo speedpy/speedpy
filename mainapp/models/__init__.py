@@ -2,6 +2,7 @@ from .contact import ContactSubmission
 from .otp_profile import UserOTPProfile
 from .teams import Team, TeamMembership, TeamInvitation
 from .tours import UserTourCompletion
+from .webhooks import WebhookEndpoint, WebhookDelivery
 
 __all__ = [
     'ContactSubmission',
@@ -10,4 +11,6 @@ __all__ = [
     'TeamMembership',
     'TeamInvitation',
     'UserTourCompletion',
+    'WebhookEndpoint',
+    'WebhookDelivery',
 ]
