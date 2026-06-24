@@ -1,4 +1,4 @@
-from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_field, extend_schema_view
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema, extend_schema_field, extend_schema_view
 from rest_framework import serializers, status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
@@ -89,6 +89,28 @@ class CurrentUserAPIView(APIView):
         },
         operation_id="getCurrentUser",
         summary="Get the authenticated user",
+        description=(
+            "Return the profile of the currently authenticated user. "
+            "Requires the `read:profile` scope."
+        ),
+        examples=[
+            OpenApiExample(
+                "Current user",
+                value={
+                    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "email": "jane@example.com",
+                    "first_name": "Jane",
+                    "last_name": "Doe",
+                    "full_name": "Jane Doe",
+                    "is_email_confirmed": True,
+                    "profile_picture_url": "https://app.example.com/media/profile/jane.jpg",
+                    "profile_picture_thumbnail_url": "https://app.example.com/media/profile/jane_thumb.jpg",
+                    "date_joined": "2025-01-15T09:30:00Z",
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
     )
     def get(self, request):
         serializer = CurrentUserSerializer(
@@ -107,6 +129,17 @@ class CurrentUserAPIView(APIView):
         },
         operation_id="updateCurrentUser",
         summary="Update the authenticated user's profile",
+        description=(
+            "Partially update the authenticated user's profile fields. "
+            "Only supplied fields are changed. Requires the `write:profile` scope."
+        ),
+        examples=[
+            OpenApiExample(
+                "Update name",
+                value={"first_name": "Jane", "last_name": "Smith"},
+                request_only=True,
+            ),
+        ],
     )
     def patch(self, request):
         serializer = UpdateProfileSerializer(data=request.data)
@@ -130,11 +163,22 @@ class JWTLogoutView(APIView):
         tags=["auth"],
         request=RefreshTokenSerializer,
         responses={
-            205: OpenApiResponse(description="Token revoked."),
+            205: OpenApiResponse(description="Token revoked. No response body."),
             400: OpenApiResponse(description="Invalid or already revoked token."),
         },
         operation_id="revokeToken",
         summary="Revoke a JWT refresh token",
+        description=(
+            "Blacklist a refresh token so it can no longer be used to obtain new access tokens. "
+            "No authentication required — the token itself is the credential being revoked."
+        ),
+        examples=[
+            OpenApiExample(
+                "Revoke token",
+                value={"refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."},
+                request_only=True,
+            ),
+        ],
     )
     def post(self, request):
         serializer = RefreshTokenSerializer(data=request.data)
@@ -148,6 +192,11 @@ class JWTLogoutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(status=status.HTTP_205_RESET_CONTENT)
+
+
+class TokenPairResponseSerializer(serializers.Serializer):
+    access = serializers.CharField()
+    refresh = serializers.CharField()
 
 
 class GatedTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -186,6 +235,33 @@ class GatedTokenObtainPairSerializer(TokenObtainPairSerializer):
         tags=["auth"],
         operation_id="createToken",
         summary="Obtain JWT access and refresh tokens",
+        description=(
+            "Authenticate with email and password to receive a JWT access/refresh token pair. "
+            "If MFA is enabled for the account, a valid `mfa_code` (TOTP) must also be provided. "
+            "The email address must be verified before tokens can be issued."
+        ),
+        responses={200: TokenPairResponseSerializer},
+        examples=[
+            OpenApiExample(
+                "Login",
+                value={"email": "jane@example.com", "password": "s3cret"},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Login with MFA",
+                value={"email": "jane@example.com", "password": "s3cret", "mfa_code": "123456"},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Token pair",
+                value={
+                    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
     )
 )
 class TokenObtainView(TokenObtainPairView):
@@ -199,6 +275,23 @@ class TokenObtainView(TokenObtainPairView):
         tags=["auth"],
         operation_id="refreshToken",
         summary="Refresh JWT access token",
+        description=(
+            "Exchange a valid refresh token for a new access token. "
+            "The refresh token itself is not rotated."
+        ),
+        examples=[
+            OpenApiExample(
+                "Refresh",
+                value={"refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "New access token",
+                value={"access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."},
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
     )
 )
 class TokenRefreshSchemaView(TokenRefreshView):

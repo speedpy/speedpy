@@ -8,7 +8,7 @@ import structlog
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import serializers, status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -113,11 +113,34 @@ class TeamListAPIView(ListAPIView):
         tags=["teams"],
         operation_id="listTeams",
         summary="List teams for the authenticated user",
+        description=(
+            "Return all active teams the authenticated user is a member of. "
+            "Expired memberships are excluded. Requires the `read:teams` scope. "
+            "Returns 404 if the teams feature is disabled."
+        ),
         responses={
             200: TeamSerializer(many=True),
             401: OpenApiResponse(description="Authentication required."),
             404: OpenApiResponse(description="Teams feature is disabled."),
         },
+        examples=[
+            OpenApiExample(
+                "Team list",
+                value=[
+                    {
+                        "id": "c1d2e3f4-a5b6-7890-cdef-123456789abc",
+                        "name": "Acme Corp",
+                        "slug": "acme-corp",
+                        "plan": "pro",
+                        "is_active": True,
+                        "created_at": "2025-03-01T10:00:00Z",
+                        "updated_at": "2025-06-15T14:30:00Z",
+                    }
+                ],
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
@@ -139,11 +162,32 @@ class TeamDetailAPIView(RetrieveAPIView):
         tags=["teams"],
         operation_id="getTeam",
         summary="Get a team",
+        description=(
+            "Return details of a single team including its member count. "
+            "The caller must be an active member of the team. Requires the `read:teams` scope."
+        ),
         responses={
             200: TeamDetailSerializer,
             401: OpenApiResponse(description="Authentication required."),
             404: OpenApiResponse(description="Team not found or no access."),
         },
+        examples=[
+            OpenApiExample(
+                "Team detail",
+                value={
+                    "id": "c1d2e3f4-a5b6-7890-cdef-123456789abc",
+                    "name": "Acme Corp",
+                    "slug": "acme-corp",
+                    "plan": "pro",
+                    "is_active": True,
+                    "created_at": "2025-03-01T10:00:00Z",
+                    "updated_at": "2025-06-15T14:30:00Z",
+                    "member_count": 5,
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
@@ -167,11 +211,32 @@ class TeamMembersAPIView(ListAPIView):
         tags=["teams"],
         operation_id="listTeamMembers",
         summary="List team members",
+        description=(
+            "Return all members of the specified team, ordered by role then join date. "
+            "The caller must be an active member. Requires the `read:teams` scope."
+        ),
         responses={
             200: TeamMemberSerializer(many=True),
             401: OpenApiResponse(description="Authentication required."),
             404: OpenApiResponse(description="Team not found or no access."),
         },
+        examples=[
+            OpenApiExample(
+                "Member list",
+                value=[
+                    {
+                        "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                        "email": "jane@example.com",
+                        "first_name": "Jane",
+                        "last_name": "Doe",
+                        "role": "owner",
+                        "created_at": "2025-03-01T10:00:00Z",
+                    }
+                ],
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
@@ -205,6 +270,32 @@ class TeamInvitationCreateAPIView(APIView):
         },
         operation_id="createTeamInvitation",
         summary="Invite a user to a team",
+        description=(
+            "Send an invitation email to a user. Only owners and admins can create invitations, "
+            "and the caller's role must be sufficient to assign the requested target role. "
+            "Supports idempotent creation via the `Idempotency-Key` header. "
+            "Requires the `write:teams` scope."
+        ),
+        examples=[
+            OpenApiExample(
+                "Invite a member",
+                value={"email": "bob@example.com", "role": "member", "message": "Welcome to the team!"},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invitation created",
+                value={
+                    "id": "d4e5f6a7-b8c9-0123-def4-567890abcdef",
+                    "email": "bob@example.com",
+                    "role": "member",
+                    "status": "pending",
+                    "created_at": "2025-06-20T12:00:00Z",
+                    "expires_at": "2025-07-04T12:00:00Z",
+                },
+                response_only=True,
+                status_codes=["201"],
+            ),
+        ],
     )
     @idempotent
     def post(self, request, team_id):

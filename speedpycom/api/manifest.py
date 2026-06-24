@@ -9,7 +9,7 @@ Served at both ``/.well-known/speedpy.json`` and ``/api/v1/health/manifest/``.
 """
 
 from django.conf import settings
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework.permissions import AllowAny
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -125,9 +125,44 @@ class IntegrationManifestView(APIView):
         description=(
             "Returns public metadata about this SpeedPy installation: "
             "API schema URL, auth methods, scopes, endpoints, and capabilities. "
-            "No authentication required."
+            "No authentication required. Agents, CLIs, and MCP servers should use "
+            "this endpoint to discover available features and URLs."
         ),
         responses={200: dict},
+        examples=[
+            OpenApiExample(
+                "Manifest",
+                value={
+                    "manifest_version": "1.0",
+                    "service": {
+                        "name": "SpeedPy",
+                        "title": "SpeedPy",
+                        "tagline": "",
+                        "api_version": "1.0.0",
+                        "base_url": "https://app.example.com",
+                    },
+                    "links": {
+                        "openapi_schema": "https://app.example.com/api/schema/",
+                        "swagger_ui": "https://app.example.com/api/docs/",
+                        "redoc": "https://app.example.com/api/redoc/",
+                        "agents_md": "AGENTS.md",
+                    },
+                    "auth": {
+                        "session": {"type": "cookie", "cookie_name": "sessionid"},
+                        "personal_access_token": {"type": "bearer", "prefix": "spd_"},
+                        "jwt": {"type": "bearer", "obtain_url": "https://app.example.com/api/auth/token/"},
+                        "oauth2": {"type": "oauth2", "authorization_url": "https://app.example.com/o/authorize/"},
+                    },
+                    "capabilities": {
+                        "teams_enabled": True,
+                        "webhooks_enabled": True,
+                        "webhook_events": ["team.invitation.created", "team.member.added", "user.profile.updated"],
+                    },
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
     )
     def get(self, request):
         return Response(_build_manifest(request))

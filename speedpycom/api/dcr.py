@@ -2,7 +2,7 @@ import time
 
 import structlog
 from django.conf import settings
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiExample, extend_schema, inline_serializer
 from oauth2_provider.models import get_application_model
 from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny
@@ -30,6 +30,58 @@ class DynamicClientRegistrationView(APIView):
         tags=["oauth2"],
         operation_id="dcr_register",
         summary="Register an OAuth2 client (RFC 7591)",
+        description=(
+            "Create a new OAuth2 application via RFC 7591 Dynamic Client Registration. "
+            "No authentication is required. Supported grant types: `authorization_code` and "
+            "`urn:ietf:params:oauth:grant-type:device_code`. "
+            "Set `token_endpoint_auth_method` to `none` for public clients (no secret issued). "
+            "Returns 404 when DCR is disabled."
+        ),
+        examples=[
+            OpenApiExample(
+                "Register a confidential client",
+                value={
+                    "client_name": "My CLI Tool",
+                    "grant_types": ["authorization_code"],
+                    "scope": "read:profile read:teams",
+                    "redirect_uris": ["https://cli.example.com/callback"],
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Register a public device-flow client",
+                value={
+                    "client_name": "My Device",
+                    "grant_types": ["urn:ietf:params:oauth:grant-type:device_code"],
+                    "scope": "read:profile",
+                    "token_endpoint_auth_method": "none",
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Client registered",
+                value={
+                    "client_id": "xK9mPqR2sT4uV6wX",
+                    "client_secret": "A1b2C3d4E5f6G7h8I9j0...",
+                    "client_name": "My CLI Tool",
+                    "grant_types": ["authorization_code"],
+                    "scope": "read:profile read:teams",
+                    "token_endpoint_auth_method": "client_secret_basic",
+                    "client_id_issued_at": 1750780800,
+                },
+                response_only=True,
+                status_codes=["201"],
+            ),
+            OpenApiExample(
+                "Invalid metadata",
+                value={
+                    "error": "invalid_client_metadata",
+                    "error_description": "Unsupported grant type: implicit",
+                },
+                response_only=True,
+                status_codes=["400"],
+            ),
+        ],
         request=inline_serializer(
             name="DCRRequest",
             fields={

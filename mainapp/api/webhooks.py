@@ -11,7 +11,7 @@ import uuid
 import structlog
 from django.db import transaction
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import serializers, status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import ListAPIView
@@ -152,11 +152,38 @@ class TeamWebhookEndpointListCreateView(APIView):
         tags=["webhooks"],
         operation_id="listTeamWebhookEndpoints",
         summary="List webhook endpoints for a team",
+        description=(
+            "Return a paginated list of webhook endpoints belonging to the team. "
+            "Requires team membership and the `read:webhooks` scope."
+        ),
         responses={
             200: WebhookEndpointListSerializer(many=True),
             401: OpenApiResponse(description="Authentication required."),
             404: OpenApiResponse(description="Team not found or no access."),
         },
+        examples=[
+            OpenApiExample(
+                "Webhook endpoint list",
+                value={
+                    "count": 1,
+                    "next": None,
+                    "previous": None,
+                    "results": [
+                        {
+                            "id": "f1e2d3c4-b5a6-7890-fedc-ba0987654321",
+                            "name": "Production",
+                            "url": "https://hooks.example.com/speedpy",
+                            "events": ["*"],
+                            "is_active": True,
+                            "created_at": "2025-05-01T08:00:00Z",
+                            "updated_at": "2025-06-10T12:30:00Z",
+                        }
+                    ],
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
     )
     def get(self, request, team_id):
         membership = _get_membership(request.user, team_id)
@@ -170,6 +197,13 @@ class TeamWebhookEndpointListCreateView(APIView):
         tags=["webhooks"],
         operation_id="createTeamWebhookEndpoint",
         summary="Create a webhook endpoint",
+        description=(
+            "Register a new webhook endpoint for the team. The URL must use HTTPS. "
+            "Pass `[\"*\"]` as events to subscribe to all event types, or list specific types "
+            "(e.g. `[\"team.member.added\", \"user.profile.updated\"]`). "
+            "The response includes a one-time `signing_secret` used to verify delivery signatures. "
+            "Requires an owner, admin, or member role and the `write:webhooks` scope."
+        ),
         request=WebhookEndpointCreateSerializer,
         responses={
             201: WebhookEndpointCreateResponseSerializer,
@@ -178,6 +212,32 @@ class TeamWebhookEndpointListCreateView(APIView):
             403: OpenApiResponse(description="Insufficient role."),
             404: OpenApiResponse(description="Team not found or no access."),
         },
+        examples=[
+            OpenApiExample(
+                "Create endpoint",
+                value={
+                    "name": "Production",
+                    "url": "https://hooks.example.com/speedpy",
+                    "events": ["*"],
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Endpoint created",
+                value={
+                    "id": "f1e2d3c4-b5a6-7890-fedc-ba0987654321",
+                    "name": "Production",
+                    "url": "https://hooks.example.com/speedpy",
+                    "events": ["*"],
+                    "is_active": True,
+                    "created_at": "2025-05-01T08:00:00Z",
+                    "updated_at": "2025-05-01T08:00:00Z",
+                    "signing_secret": "whsec_abc123def456...",
+                },
+                response_only=True,
+                status_codes=["201"],
+            ),
+        ],
     )
     def post(self, request, team_id):
         self.required_scopes = ["write:webhooks"]
@@ -232,6 +292,7 @@ class TeamWebhookEndpointDetailView(APIView):
         tags=["webhooks"],
         operation_id="getTeamWebhookEndpoint",
         summary="Get a webhook endpoint",
+        description="Return a single webhook endpoint by ID. Requires team membership and the `read:webhooks` scope.",
         responses={
             200: WebhookEndpointListSerializer,
             404: OpenApiResponse(description="Not found."),
@@ -246,6 +307,7 @@ class TeamWebhookEndpointDetailView(APIView):
         tags=["webhooks"],
         operation_id="updateTeamWebhookEndpoint",
         summary="Update a webhook endpoint",
+        description="Replace all mutable fields of a webhook endpoint. Requires the `write:webhooks` scope.",
         request=WebhookEndpointUpdateSerializer,
         responses={
             200: WebhookEndpointListSerializer,
@@ -261,6 +323,7 @@ class TeamWebhookEndpointDetailView(APIView):
         tags=["webhooks"],
         operation_id="patchTeamWebhookEndpoint",
         summary="Partially update a webhook endpoint",
+        description="Update one or more fields of a webhook endpoint. Requires the `write:webhooks` scope.",
         request=WebhookEndpointUpdateSerializer,
         responses={
             200: WebhookEndpointListSerializer,
@@ -297,6 +360,10 @@ class TeamWebhookEndpointDetailView(APIView):
         tags=["webhooks"],
         operation_id="deleteTeamWebhookEndpoint",
         summary="Soft-delete a webhook endpoint",
+        description=(
+            "Deactivate a webhook endpoint and clear its event subscriptions. "
+            "The endpoint record is kept for audit purposes. Requires the `write:webhooks` scope."
+        ),
         responses={
             204: OpenApiResponse(description="Endpoint deactivated."),
             403: OpenApiResponse(description="Insufficient role."),
@@ -332,6 +399,11 @@ class TeamWebhookEndpointRotateSecretView(APIView):
         tags=["webhooks"],
         operation_id="rotateTeamWebhookEndpointSecret",
         summary="Rotate a webhook endpoint's signing secret",
+        description=(
+            "Generate a new signing secret for the endpoint. The previous secret is immediately "
+            "invalidated. The new secret is returned once in the response. "
+            "Requires the `write:webhooks` scope."
+        ),
         request=None,
         responses={
             200: WebhookEndpointCreateResponseSerializer,
@@ -371,6 +443,12 @@ class TeamWebhookEndpointTestView(APIView):
         tags=["webhooks"],
         operation_id="testTeamWebhookEndpoint",
         summary="Send a test delivery to a webhook endpoint",
+        description=(
+            "Dispatch a synthetic test event to the endpoint's URL. "
+            "If `event_type` is omitted, the first subscribed event type is used "
+            "(or `team.member.added` when subscribed to `*`). "
+            "The endpoint must be active. Requires the `write:webhooks` scope."
+        ),
         request=WebhookTestDeliverySerializer,
         responses={
             201: WebhookDeliveryDetailSerializer,
@@ -378,6 +456,13 @@ class TeamWebhookEndpointTestView(APIView):
             403: OpenApiResponse(description="Insufficient role."),
             404: OpenApiResponse(description="Not found."),
         },
+        examples=[
+            OpenApiExample(
+                "Test delivery request",
+                value={"event_type": "team.member.added"},
+                request_only=True,
+            ),
+        ],
     )
     def post(self, request, team_id, webhook_id):
         membership = _get_membership(request.user, team_id)
@@ -467,6 +552,10 @@ class TeamWebhookDeliveryListView(ListAPIView):
         tags=["webhooks"],
         operation_id="listTeamWebhookDeliveries",
         summary="List deliveries for a webhook endpoint",
+        description=(
+            "Return a paginated list of delivery attempts for the specified webhook endpoint, "
+            "ordered by most recent first. Requires the `read:webhooks` scope."
+        ),
         responses={
             200: WebhookDeliveryListSerializer(many=True),
             404: OpenApiResponse(description="Not found."),
@@ -486,6 +575,10 @@ class TeamWebhookDeliveryDetailView(APIView):
         tags=["webhooks"],
         operation_id="getTeamWebhookDelivery",
         summary="Get a webhook delivery",
+        description=(
+            "Return full details of a delivery attempt, including the request payload "
+            "and response body. Requires the `read:webhooks` scope."
+        ),
         responses={
             200: WebhookDeliveryDetailSerializer,
             404: OpenApiResponse(description="Not found."),
@@ -511,6 +604,11 @@ class TeamWebhookDeliveryRetryView(APIView):
         tags=["webhooks"],
         operation_id="retryTeamWebhookDelivery",
         summary="Retry a failed webhook delivery",
+        description=(
+            "Reset a failed delivery to PENDING and re-dispatch it. "
+            "Only deliveries with status `FAILED` can be retried. "
+            "Requires the `write:webhooks` scope."
+        ),
         request=None,
         responses={
             200: WebhookDeliveryDetailSerializer,
@@ -580,6 +678,10 @@ class UserWebhookEndpointListView(ListAPIView):
         tags=["webhooks"],
         operation_id="listUserWebhookEndpoints",
         summary="List webhook endpoints across all user's teams",
+        description=(
+            "Return a combined list of webhook endpoints from every active team the "
+            "authenticated user belongs to. Read-only. Requires the `read:webhooks` scope."
+        ),
         responses={
             200: WebhookEndpointListSerializer(many=True),
             401: OpenApiResponse(description="Authentication required."),
