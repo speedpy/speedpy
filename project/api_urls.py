@@ -17,6 +17,7 @@ from mainapp.api.webhooks import (
     TeamWebhookEndpointTestView,
     UserWebhookEndpointListView,
 )
+from speedpycom.api.manifest import IntegrationManifestView
 from usermodel.api import (
     CurrentUserAPIView,
     JWTLogoutView,
@@ -27,6 +28,7 @@ from usermodel.api import (
 app_name = "api"
 
 urlpatterns = [
+    path("v1/health/manifest/", IntegrationManifestView.as_view(), name="integration_manifest"),
     path("auth/token/", TokenObtainView.as_view(), name="token_obtain"),
     path("auth/token/refresh/", TokenRefreshSchemaView.as_view(), name="token_refresh"),
     path("auth/token/revoke/", JWTLogoutView.as_view(), name="token_revoke"),

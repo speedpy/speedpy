@@ -254,6 +254,9 @@ drf-spectacular.
 - **OpenAPI schema:** `/api/schema/`
 - **Swagger UI:** `/api/docs/`
 - **ReDoc:** `/api/redoc/`
+- **Integration manifest:** `/.well-known/speedpy.json` or `/api/v1/health/manifest/` —
+  machine-readable JSON describing API schema URLs, auth methods, scopes,
+  endpoints, and capabilities. No authentication required.
 
 By default, API docs are public when `DEBUG=True` and staff-only in production.
 Set `API_DOCS_PUBLIC=True` to make docs public in all environments.

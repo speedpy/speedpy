@@ -344,6 +344,7 @@ SPECTACULAR_SETTINGS = {
         {"name": "teams", "description": "Team-scoped endpoints"},
         {"name": "products", "description": "Product endpoints (demo)"},
         {"name": "webhooks", "description": "Webhook endpoint management"},
+        {"name": "integration", "description": "Integration discovery"},
     ],
     "SECURITY": [
         {"sessionAuth": []},
