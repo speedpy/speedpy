@@ -708,17 +708,17 @@ Agents should read the reference implementation before adding a new resource.
 
 ### Agent workflow
 
-When adding a new API resource:
+For the full step-by-step recipe (model, serializer, views, scopes, URLs, tests, schema, webhooks, CLI/MCP examples), use the **`/add-integration-api`** skill. Quick summary:
 
-1. Locate the model in `mainapp/models/<group>.py`.
-2. Add serializer + views in `mainapp/api/<group>.py`.
+1. Model in `mainapp/models/<domain>.py` (`BaseModel` or `TeamModel`).
+2. Serializer + views in `mainapp/api/<domain>.py`.
 3. Re-export views from `mainapp/api/__init__.py`.
-4. Register the URL under `/api/v1/` in `project/api_urls.py`.
-5. Add team-scoped permissions if the model inherits `TeamModel`.
-6. Define `read:<domain>` / `write:<domain>` scopes and set
-   `required_scopes` on the view with `HasScope` permission.
-7. Add tests (happy path + tenant isolation + role boundaries).
-8. Run schema validation and update `SPECTACULAR_SETTINGS["TAGS"]` if needed.
+4. Register URLs in `project/api_urls.py`.
+5. Define `read:<domain>` / `write:<domain>` scopes (settings, forms, schema components), add tag to `SPECTACULAR_SETTINGS["TAGS"]`, and set `required_scopes` on views with `HasScope`.
+6. Tests: anonymous rejection, happy path, field contract, tenant isolation, role boundaries, schema validation.
+7. Run `python manage.py spectacular --validate --fail-on-warn`.
+8. (Optional) Register webhook events in `mainapp/webhooks/events.py`.
+9. Add CLI subcommand + MCP tool in `examples/`.
 
 ### Personal access tokens (PATs)
 
