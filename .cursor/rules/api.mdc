@@ -1,0 +1,52 @@
+---
+description: Rules for working on HTTP API endpoints under /api/v1/
+globs:
+  - mainapp/api/**
+  - speedpycom/api/**
+  - usermodel/api.py
+  - project/api_urls.py
+  - mainapp/tests/test_api_*.py
+  - mainapp/webhooks/**
+  - mainapp/tasks/webhooks.py
+---
+
+# HTTP API work
+
+Read **`AGENTS.md` sections "HTTP API" and "Webhook Extension Guide"** before
+making changes — they are the source of truth for file layout, URL conventions,
+serializer patterns, scopes, tenant isolation, testing requirements, and webhook
+events.
+
+## Quick rules
+
+- Run all Django commands from this directory (`speedpy/`).
+- API code lives in the **owning app**, not a separate `api` Django app.
+- Business resources: `mainapp/api/<domain>.py` + route in `project/api_urls.py`.
+- User/profile API: `usermodel/api.py` (single-file; do not package-split).
+- Shared permissions/mixins: `speedpycom/api/`.
+- Every endpoint needs `@extend_schema` with `tags`, `operation_id`, `summary`,
+  and request/response serializers.
+- Use `HasScope` from `speedpycom.api.permissions` with `required_scopes` on views.
+- Team-scoped endpoints: resolve `team_id` from URL, verify membership, filter
+  querysets through `TeamMembership`. Never trust `team_id` from request body.
+- New scopes: add to `OAUTH2_PROVIDER["SCOPES"]`, `SCOPE_CHOICES` in
+  `usermodel/forms.py`, and `SPECTACULAR_SETTINGS["APPEND_COMPONENTS"]`.
+- Tests in `mainapp/tests/test_api_<domain>.py`: anonymous rejection, happy path,
+  field contract, tenant isolation, role boundaries, schema validation.
+- Validate after changes: run `spectacular --validate --fail-on-warn` using the
+  wrapper from `AGENTS-local.md`.
+
+## Webhooks (optional)
+
+When a webhook event is needed for a new API resource, follow the
+**Webhook Extension Guide** in `AGENTS.md`. Quick checklist:
+
+1. Add constant to `mainapp/webhooks/events.py` (`WebhookEvent` class + `ALL` set).
+2. Call `dispatch_event(team, event_type, data)` after the DB write.
+3. Add test in `mainapp/tests/test_webhooks.py`.
+4. Document event in `speedpy-docs/docs/webhooks.md`.
+
+## Full recipe
+
+For the complete step-by-step (model, serializer, views, scopes, URLs, tests,
+schema, webhooks, CLI/MCP examples), use the `/add-integration-api` skill.
