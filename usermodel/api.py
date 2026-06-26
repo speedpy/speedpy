@@ -144,10 +144,34 @@ class CurrentUserAPIView(APIView):
     def patch(self, request):
         serializer = UpdateProfileSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        changed_fields = self._get_changed_fields(request.user, serializer.validated_data)
         user = serializer.update(request.user, serializer.validated_data)
+
+        if changed_fields:
+            from mainapp.webhooks.business_events import on_user_profile_updated
+
+            on_user_profile_updated(user, changed_fields)
+
         return Response(
             CurrentUserSerializer(user, context={"request": request}).data
         )
+
+    @staticmethod
+    def _get_changed_fields(user, validated_data):
+        """Return field names from validated_data whose values differ from the current user."""
+        changed = []
+        for field, new_value in validated_data.items():
+            current_value = getattr(user, field, None)
+            if field == "profile_picture":
+                # Only count as changed if the value actually differs
+                has_current = bool(current_value)
+                has_new = bool(new_value)
+                if has_current != has_new or (has_current and has_new):
+                    changed.append(field)
+            elif current_value != new_value:
+                changed.append(field)
+        return changed
 
 
 class RefreshTokenSerializer(serializers.Serializer):

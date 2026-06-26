@@ -47,7 +47,14 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         messages.success(self.request, 'Your profile has been updated.')
-        return super().form_valid(form)
+        response = super().form_valid(form)
+
+        if form.changed_data:
+            from mainapp.webhooks.business_events import on_user_profile_updated
+
+            on_user_profile_updated(self.request.user, form.changed_data)
+
+        return response
 
 
 class PersonalAccessTokenListView(LoginRequiredMixin, ListView):
