@@ -432,6 +432,50 @@ class WebhookRotateSecretTests(WebhookAPITestBase):
         self.endpoint.refresh_from_db()
         self.assertEqual(self.endpoint.secret, response.data["signing_secret"])
 
+    def test_rotate_secret_returns_rotation_metadata(self):
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.post(self._endpoint_url(suffix="rotate-secret/"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("secret_rotated_at", response.data)
+        self.assertIn("previous_secret_expires_at", response.data)
+        self.assertIn("rotation_overlap_seconds", response.data)
+        self.assertEqual(response.data["rotation_overlap_seconds"], 86400)
+
+    def test_rotate_secret_stores_previous_secret(self):
+        self.client.force_authenticate(user=self.owner)
+        old_secret = self.endpoint.secret
+
+        self.client.post(self._endpoint_url(suffix="rotate-secret/"))
+
+        self.endpoint.refresh_from_db()
+        self.assertEqual(self.endpoint.previous_secret, old_secret)
+        self.assertIsNotNone(self.endpoint.secret_rotated_at)
+        self.assertIsNotNone(self.endpoint.previous_secret_expires_at)
+
+    def test_rotate_secret_repeated_replaces_previous(self):
+        self.client.force_authenticate(user=self.owner)
+        original_secret = self.endpoint.secret
+
+        self.client.post(self._endpoint_url(suffix="rotate-secret/"))
+        self.endpoint.refresh_from_db()
+        second_secret = self.endpoint.secret
+
+        self.client.post(self._endpoint_url(suffix="rotate-secret/"))
+        self.endpoint.refresh_from_db()
+        # previous_secret should be second_secret, not original
+        self.assertEqual(self.endpoint.previous_secret, second_secret)
+        self.assertNotEqual(self.endpoint.previous_secret, original_secret)
+
+    def test_rotate_secret_response_field_contract(self):
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.post(self._endpoint_url(suffix="rotate-secret/"))
+        expected = {
+            "id", "name", "url", "events", "is_active", "created_at", "updated_at",
+            "signing_secret", "secret_rotated_at", "previous_secret_expires_at",
+            "rotation_overlap_seconds",
+        }
+        self.assertEqual(set(response.data.keys()), expected)
+
 
 # ---------------------------------------------------------------------------
 # Test delivery

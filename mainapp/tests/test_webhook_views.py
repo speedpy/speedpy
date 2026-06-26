@@ -230,6 +230,36 @@ class TestWebhookRotateSecretView(WebhookViewTestBase):
         self.assertNotEqual(ep.secret, old_secret)
         self.assertContains(resp, "Copy")
 
+    def test_rotate_secret_stores_previous(self):
+        ep = self._create_endpoint()
+        old_secret = ep.secret
+        url = reverse("team_webhook_rotate_secret", kwargs={
+            "team_id": self.team.pk, "webhook_id": ep.pk
+        })
+        self.client.post(url)
+        ep.refresh_from_db()
+        self.assertEqual(ep.previous_secret, old_secret)
+        self.assertIsNotNone(ep.secret_rotated_at)
+        self.assertIsNotNone(ep.previous_secret_expires_at)
+
+    def test_rotate_secret_shows_overlap_message(self):
+        ep = self._create_endpoint()
+        url = reverse("team_webhook_rotate_secret", kwargs={
+            "team_id": self.team.pk, "webhook_id": ep.pk
+        })
+        resp = self.client.post(url, follow=True)
+        self.assertContains(resp, "overlap window")
+
+    def test_detail_shows_rotation_status(self):
+        ep = self._create_endpoint()
+        ep.rotate_secret()
+        url = reverse("team_webhook_detail", kwargs={
+            "team_id": self.team.pk, "webhook_id": ep.pk
+        })
+        resp = self.client.get(url)
+        self.assertContains(resp, "Secret rotated")
+        self.assertContains(resp, "Accepted until")
+
 
 class TestCrossTeamIsolation(WebhookViewTestBase):
     def test_cannot_access_other_team_webhooks(self):

@@ -1,4 +1,3 @@
-import secrets
 import time
 import uuid
 
@@ -9,6 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import Http404
+from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
@@ -115,6 +115,7 @@ class TeamWebhookDetailView(TeamViewMixin, DetailView):
         context["can_manage"] = self.team_membership.role in ("owner", "admin", "member")
         encrypted_secret = self.request.session.pop("rotated_webhook_encrypted_secret", None)
         context["new_secret"] = _decrypt_token(encrypted_secret) if encrypted_secret else None
+        context["now"] = timezone.now()
         return context
 
 
@@ -210,8 +211,7 @@ class TeamWebhookRotateSecretView(WebhookWriteMixin, View):
             id=self.kwargs["webhook_id"],
             team=self.team,
         )
-        endpoint.secret = secrets.token_urlsafe(32)
-        endpoint.save(update_fields=["secret", "updated_at"])
+        endpoint.rotate_secret()
 
         self.request.session["rotated_webhook_encrypted_secret"] = _encrypt_token(endpoint.secret)
 
@@ -221,7 +221,11 @@ class TeamWebhookRotateSecretView(WebhookWriteMixin, View):
             team_id=str(self.team.id),
             endpoint_id=str(endpoint.id),
         )
-        messages.success(request, "Signing secret rotated. Copy it now \u2014 it won't be shown again.")
+        messages.success(
+            request,
+            "Signing secret rotated. Copy the new secret now \u2014 it won\u2019t be shown again. "
+            "The previous secret remains valid during the overlap window.",
+        )
         return redirect(
             reverse("team_webhook_detail", kwargs={
                 "team_id": self.team.pk,

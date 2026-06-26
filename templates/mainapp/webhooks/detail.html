@@ -69,6 +69,22 @@
                         <dt class="text-sm font-medium text-fg-secondary">{% trans "Created" %}</dt>
                         <dd class="mt-1 text-sm">{{ endpoint.created_at|date:"M d, Y H:i" }}</dd>
                     </div>
+                    {% if endpoint.secret_rotated_at %}
+                    <div>
+                        <dt class="text-sm font-medium text-fg-secondary">{% trans "Secret rotated" %}</dt>
+                        <dd class="mt-1 text-sm">{{ endpoint.secret_rotated_at|date:"M d, Y H:i" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-fg-secondary">{% trans "Previous secret" %}</dt>
+                        <dd class="mt-1 text-sm">
+                            {% if endpoint.previous_secret_expires_at > now %}
+                                <span class="badge badge-warning">{% trans "Accepted until" %} {{ endpoint.previous_secret_expires_at|date:"M d, Y H:i" }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{% trans "Overlap ended" %} {{ endpoint.previous_secret_expires_at|date:"M d, Y H:i" }}</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    {% endif %}
                 </dl>
             </div>
             {% if can_manage and endpoint.is_active %}
@@ -81,7 +97,7 @@
                     </form>
                     <form method="post"
                           action="{% url 'team_webhook_rotate_secret' team_id=team.id webhook_id=endpoint.id %}"
-                          onsubmit="return confirm('{% trans "Rotate the signing secret? The old secret will stop working immediately." %}')">
+                          onsubmit="return confirm('{% trans "Rotate the signing secret? The previous secret will remain valid during the overlap window." %}')">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-outlined btn-secondary btn-sm">
                             {% trans "Rotate secret" %}

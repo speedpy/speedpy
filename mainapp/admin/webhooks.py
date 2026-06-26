@@ -9,7 +9,7 @@ class WebhookEndpointAdmin(admin.ModelAdmin):
     list_filter = ("is_active", "team")
     search_fields = ("url", "name", "team__name")
     raw_id_fields = ("team",)
-    readonly_fields = ("secret", "created_at", "updated_at")
+    readonly_fields = ("secret", "previous_secret", "secret_rotated_at", "previous_secret_expires_at", "created_at", "updated_at")
 
 
 @admin.register(WebhookDelivery)

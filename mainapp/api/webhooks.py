@@ -117,6 +117,13 @@ class WebhookEndpointCreateResponseSerializer(WebhookEndpointListSerializer):
     signing_secret = serializers.CharField(read_only=True)
 
 
+class WebhookEndpointRotateResponseSerializer(WebhookEndpointListSerializer):
+    signing_secret = serializers.CharField(read_only=True)
+    secret_rotated_at = serializers.DateTimeField(read_only=True)
+    previous_secret_expires_at = serializers.DateTimeField(read_only=True)
+    rotation_overlap_seconds = serializers.IntegerField(read_only=True)
+
+
 class WebhookDeliveryListSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     event_id = serializers.CharField(read_only=True)
@@ -400,13 +407,14 @@ class TeamWebhookEndpointRotateSecretView(APIView):
         operation_id="rotateTeamWebhookEndpointSecret",
         summary="Rotate a webhook endpoint's signing secret",
         description=(
-            "Generate a new signing secret for the endpoint. The previous secret is immediately "
-            "invalidated. The new secret is returned once in the response. "
+            "Generate a new signing secret for the endpoint. The previous secret remains "
+            "accepted by verifiers during a configurable overlap window (default 24 hours). "
+            "The new secret is returned once in the response. "
             "Requires the `write:webhooks` scope."
         ),
         request=None,
         responses={
-            200: WebhookEndpointCreateResponseSerializer,
+            200: WebhookEndpointRotateResponseSerializer,
             403: OpenApiResponse(description="Insufficient role."),
             404: OpenApiResponse(description="Not found."),
         },
@@ -416,12 +424,13 @@ class TeamWebhookEndpointRotateSecretView(APIView):
         _require_write_role(membership)
         endpoint = _get_endpoint(membership.team, webhook_id)
 
-        import secrets
-        endpoint.secret = secrets.token_urlsafe(32)
-        endpoint.save(update_fields=["secret", "updated_at"])
+        endpoint.rotate_secret()
 
         response_data = WebhookEndpointListSerializer(endpoint).data
         response_data["signing_secret"] = endpoint.secret
+        response_data["secret_rotated_at"] = endpoint.secret_rotated_at.isoformat()
+        response_data["previous_secret_expires_at"] = endpoint.previous_secret_expires_at.isoformat()
+        response_data["rotation_overlap_seconds"] = endpoint.get_rotation_overlap_seconds()
 
         logger.info(
             "api_webhook_endpoint_secret_rotated",

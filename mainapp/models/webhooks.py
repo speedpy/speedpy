@@ -1,13 +1,17 @@
 import secrets
 
+from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from encrypted_fields.fields import EncryptedCharField
 
 from mainapp.webhooks.events import WebhookEvent
 from .teams import TeamModel
+
+DEFAULT_ROTATION_OVERLAP_SECONDS = 86400  # 24 hours
 
 
 def _validate_https_url(value):
@@ -68,6 +72,25 @@ class WebhookEndpoint(TeamModel):
         blank=True,
         help_text=_("Signing secret, encrypted at rest. Auto-generated on creation."),
     )
+
+    previous_secret = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        default=None,
+        help_text=_("Previous signing secret kept during rotation overlap window."),
+    )
+    secret_rotated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("When the signing secret was last rotated."),
+    )
+    previous_secret_expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("When the previous secret stops being accepted by verifiers."),
+    )
+
     is_active = models.BooleanField(
         default=True,
         db_index=True,
@@ -92,6 +115,38 @@ class WebhookEndpoint(TeamModel):
         if not self.secret:
             self.secret = _generate_secret()
         super().save(*args, **kwargs)
+
+    @staticmethod
+    def get_rotation_overlap_seconds():
+        return getattr(
+            django_settings,
+            "SPEEDPY_WEBHOOK_SECRET_ROTATION_OVERLAP_SECONDS",
+            DEFAULT_ROTATION_OVERLAP_SECONDS,
+        )
+
+    def rotate_secret(self, overlap_seconds=None):
+        """Rotate the signing secret, keeping the old one during the overlap window.
+
+        Moves the current ``secret`` into ``previous_secret``, generates a
+        new active secret, and sets rotation/expiry timestamps.  Only one
+        previous secret is supported — a second rotation during an active
+        overlap replaces the stored previous secret.
+        """
+        if overlap_seconds is None:
+            overlap_seconds = self.get_rotation_overlap_seconds()
+
+        now = timezone.now()
+        self.previous_secret = self.secret
+        self.secret = _generate_secret()
+        self.secret_rotated_at = now
+        self.previous_secret_expires_at = now + timezone.timedelta(seconds=overlap_seconds)
+        self.save(update_fields=[
+            "secret",
+            "previous_secret",
+            "secret_rotated_at",
+            "previous_secret_expires_at",
+            "updated_at",
+        ])
 
     def subscribes_to(self, event_type: str) -> bool:
         """Return True if this endpoint should receive the given event."""

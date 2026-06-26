@@ -1,8 +1,10 @@
+from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
 from django.contrib.admin.sites import AdminSite
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from mainapp.admin.webhooks import WebhookDeliveryAdmin, WebhookEndpointAdmin
 from mainapp.models import Team, WebhookDelivery, WebhookEndpoint
@@ -78,6 +80,115 @@ class WebhookEndpointModelTests(TestCase):
             team=self.team,
         )
         self.assertIn("https://example.com/hook", str(ep))
+
+
+class WebhookSecretRotationModelTests(TestCase):
+    def setUp(self):
+        self.team = Team.objects.create(name="Acme", slug="acme")
+        self.endpoint = WebhookEndpoint.objects.create(
+            team=self.team,
+            url="https://example.com/hook",
+            events=["*"],
+        )
+
+    def test_rotate_secret_generates_new_secret(self):
+        old_secret = self.endpoint.secret
+        self.endpoint.rotate_secret()
+        self.assertNotEqual(self.endpoint.secret, old_secret)
+
+    def test_rotate_secret_stores_previous_secret(self):
+        old_secret = self.endpoint.secret
+        self.endpoint.rotate_secret()
+        self.assertEqual(self.endpoint.previous_secret, old_secret)
+
+    def test_rotate_secret_sets_rotated_at(self):
+        self.assertIsNone(self.endpoint.secret_rotated_at)
+        self.endpoint.rotate_secret()
+        self.assertIsNotNone(self.endpoint.secret_rotated_at)
+
+    def test_rotate_secret_sets_expiry(self):
+        self.endpoint.rotate_secret()
+        self.assertIsNotNone(self.endpoint.previous_secret_expires_at)
+        # Default overlap is 24 hours
+        expected = self.endpoint.secret_rotated_at + timedelta(seconds=86400)
+        self.assertAlmostEqual(
+            self.endpoint.previous_secret_expires_at.timestamp(),
+            expected.timestamp(),
+            delta=2,
+        )
+
+    @override_settings(SPEEDPY_WEBHOOK_SECRET_ROTATION_OVERLAP_SECONDS=3600)
+    def test_rotate_secret_custom_overlap_from_settings(self):
+        self.endpoint.rotate_secret()
+        expected = self.endpoint.secret_rotated_at + timedelta(seconds=3600)
+        self.assertAlmostEqual(
+            self.endpoint.previous_secret_expires_at.timestamp(),
+            expected.timestamp(),
+            delta=2,
+        )
+
+    def test_rotate_secret_explicit_overlap(self):
+        self.endpoint.rotate_secret(overlap_seconds=7200)
+        expected = self.endpoint.secret_rotated_at + timedelta(seconds=7200)
+        self.assertAlmostEqual(
+            self.endpoint.previous_secret_expires_at.timestamp(),
+            expected.timestamp(),
+            delta=2,
+        )
+
+    def test_no_previous_secret_before_rotation(self):
+        self.assertIsNone(self.endpoint.previous_secret)
+        self.assertIsNone(self.endpoint.secret_rotated_at)
+        self.assertIsNone(self.endpoint.previous_secret_expires_at)
+
+    def test_rotate_secret_persists_to_db(self):
+        self.endpoint.rotate_secret()
+        self.endpoint.refresh_from_db()
+        self.assertTrue(self.endpoint.previous_secret)
+        self.assertIsNotNone(self.endpoint.secret_rotated_at)
+        self.assertIsNotNone(self.endpoint.previous_secret_expires_at)
+
+    def test_second_rotation_replaces_previous_secret(self):
+        """Re-rotating during overlap discards older previous secret."""
+        self.endpoint.rotate_secret()
+        first_new_secret = self.endpoint.secret
+        first_previous = self.endpoint.previous_secret
+
+        self.endpoint.rotate_secret()
+        # previous_secret is now the first_new_secret, not the original
+        self.assertEqual(self.endpoint.previous_secret, first_new_secret)
+        self.assertNotEqual(self.endpoint.previous_secret, first_previous)
+
+    def test_rotate_does_not_change_endpoint_identity(self):
+        """Rotation must not delete endpoint, clear subscriptions, or deactivate."""
+        original_id = self.endpoint.id
+        original_events = list(self.endpoint.events)
+        self.endpoint.rotate_secret()
+        self.endpoint.refresh_from_db()
+        self.assertEqual(self.endpoint.id, original_id)
+        self.assertEqual(self.endpoint.events, original_events)
+        self.assertTrue(self.endpoint.is_active)
+
+
+class WebhookSigningRotationTests(TestCase):
+    """Verify that both old and new secrets work during the overlap window."""
+
+    def test_verify_with_previous_secret_during_overlap(self):
+        old_secret = "old_secret_value"
+        new_secret = "new_secret_value"
+        timestamp = "1700000000"
+        body = b'{"event":"test"}'
+
+        sig_old = sign(old_secret, timestamp, body)
+        sig_new = sign(new_secret, timestamp, body)
+
+        # Old secret verifies against old signature
+        self.assertTrue(verify(old_secret, timestamp, body, sig_old))
+        # New secret verifies against new signature
+        self.assertTrue(verify(new_secret, timestamp, body, sig_new))
+        # Cross-verify fails (expected)
+        self.assertFalse(verify(new_secret, timestamp, body, sig_old))
+        self.assertFalse(verify(old_secret, timestamp, body, sig_new))
 
 
 class WebhookEndpointURLValidationTests(TestCase):
