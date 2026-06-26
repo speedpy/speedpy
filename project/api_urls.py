@@ -17,6 +17,7 @@ from mainapp.api.webhooks import (
     TeamWebhookEndpointTestView,
     UserWebhookEndpointListView,
 )
+from speedpycom.api.health import HealthCheckView
 from speedpycom.api.manifest import IntegrationManifestView
 from usermodel.api import (
     CurrentUserAPIView,
@@ -28,6 +29,7 @@ from usermodel.api import (
 app_name = "api"
 
 urlpatterns = [
+    path("v1/health/", HealthCheckView.as_view(), name="health_check"),
     path("v1/health/manifest/", IntegrationManifestView.as_view(), name="integration_manifest"),
     path("auth/token/", TokenObtainView.as_view(), name="token_obtain"),
     path("auth/token/refresh/", TokenRefreshSchemaView.as_view(), name="token_refresh"),
