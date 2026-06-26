@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     "speedpycom",
     "mainapp.apps.MainappConfig",
     "django_recaptcha",
-    "demoapp",
+    "demoapp",  # SPEEDPY_DEMO: demo Product CRUD app — remove before production
     "rest_framework",
     "drf_spectacular",
     "rest_framework_simplejwt",
@@ -91,7 +91,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "project.context_processors.demo_mode",
+                "project.context_processors.demo_mode",  # SPEEDPY_DEMO
                 "project.context_processors.site_url",
                 "project.context_processors.og_tags",
                 "project.context_processors.teams_enabled",
@@ -303,7 +303,7 @@ OAUTH2_PROVIDER = {
         "write:profile": "Update your profile",
         "read:teams": "Read your teams and members",
         "write:teams": "Create invitations and manage teams",
-        "read:products": "Read products",
+        "read:products": "Read products",  # SPEEDPY_DEMO: demo scope — remove with Product API
         "read:webhooks": "List and inspect webhook endpoints and deliveries",
         "write:webhooks": "Create, update, and delete webhook endpoints",
         "read:jobs": "Poll job status",
@@ -345,7 +345,7 @@ SPECTACULAR_SETTINGS = {
         {"name": "auth", "description": "JWT token lifecycle — obtain, refresh, and revoke access tokens."},
         {"name": "user", "description": "Authenticated user profile — read and update the current user."},
         {"name": "teams", "description": "Team management — list teams, members, and create invitations."},
-        {"name": "products", "description": "Product catalog (demo) — read-only product listing."},
+        {"name": "products", "description": "Product catalog (demo) — read-only product listing."},  # SPEEDPY_DEMO
         {"name": "webhooks", "description": "Webhook management — CRUD endpoints, deliveries, rotate secrets, test and retry."},
         {"name": "jobs", "description": "Async jobs — start background tasks and poll for status (202 + status URL pattern)."},
         {"name": "integration", "description": "Integration discovery — machine-readable manifest for agents and automation clients."},
@@ -386,7 +386,7 @@ SPECTACULAR_SETTINGS = {
                             "write:profile": "Update your profile",
                             "read:teams": "Read your teams and members",
                             "write:teams": "Create invitations and manage teams",
-                            "read:products": "Read products",
+                            "read:products": "Read products",  # SPEEDPY_DEMO
                             "read:webhooks": "List and inspect webhook endpoints and deliveries",
                             "write:webhooks": "Create, update, and delete webhook endpoints",
                             "read:jobs": "Poll job status",
@@ -443,7 +443,7 @@ AWS_SES_SECRET_ACCESS_KEY = env("AWS_SES_SECRET_ACCESS_KEY", default="change_me"
 AWS_SES_AUTO_THROTTLE = 0.5
 
 DEFAULT_ADMIN_PASSWORD = env("DEFAULT_ADMIN_PASSWORD", default=None)
-DEMO_MODE = env.bool("DEMO_MODE", default=False)  # fills login and password on login form for demo purposes
+DEMO_MODE = env.bool("DEMO_MODE", default=False)  # SPEEDPY_DEMO: fills login credentials on login form for demo purposes
 SPEEDPY_TEAMS_ENABLED = env.bool("SPEEDPY_TEAMS_ENABLED", default=True)  # enable/disable teams functionality
 SPEEDPY_MFA_BACKEND = env.str("SPEEDPY_MFA_BACKEND", default="allauth_mfa")  # "django_otp" or "allauth_mfa"
 

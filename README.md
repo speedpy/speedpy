@@ -328,6 +328,16 @@ Templates for the app go into the root `templates` directory under `mainapp` sub
 
 The root `templates` directory is great because you can override templates from other apps.
 
+## Production Readiness
+
+SpeedPy ships demo content (Product CRUD, demo API endpoints, placeholder pages) as teaching examples. Before going to production, strip these from your fork:
+
+- **`PRODUCTION_READY.md`** — step-by-step checklist
+- **`demo-content.json`** — machine-readable manifest of demo artifacts
+- **`/strip-demo`** — agent skill for automated, audit-first removal
+
+Quick audit: `rg SPEEDPY_DEMO` to find all marked demo artifacts.
+
 ## Deploy with Appliku
 
 Already includes `appliku.yml` file which will automatically configure your application within Appliku.

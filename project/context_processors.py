@@ -1,7 +1,7 @@
 from django.conf import settings
 
 
-def demo_mode(request):
+def demo_mode(request):  # SPEEDPY_DEMO: remove before production
     return {"DEMO_MODE": getattr(settings, "DEMO_MODE", False)}
 
 

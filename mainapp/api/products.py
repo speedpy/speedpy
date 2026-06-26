@@ -1,7 +1,8 @@
 """
-Read-only Product API — canonical example for business resource endpoints.
+SPEEDPY_DEMO: Read-only Product API — canonical example for business resource endpoints.
 
 Copy this pattern when adding list/detail endpoints for new models.
+Remove this file before production (see demo-content.json and PRODUCTION_READY.md).
 """
 
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema

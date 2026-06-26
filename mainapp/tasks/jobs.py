@@ -8,6 +8,7 @@ from mainapp.models.jobs import AsyncJob
 
 logger = structlog.get_logger(__name__)
 
+# SPEEDPY_DEMO: demo task — remove before production (see demo-content.json)
 DEMO_STEPS = 5
 DEMO_STEP_DELAY = 2  # seconds
 

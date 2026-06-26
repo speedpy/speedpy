@@ -1102,6 +1102,38 @@ in tests and the manual "test event" API endpoint. Wiring these events into
 production business logic is tracked separately and is not part of this
 extension guide.
 
+## Production Readiness / Strip Demo Content
+
+SpeedPy ships demo and placeholder content as teaching examples: `demoapp/`
+(Product CRUD), demo API endpoints (`/api/v1/products/`, `/api/v1/jobs/demo/`),
+a demo Celery task (`run_demo_job`), placeholder pages (welcome, pricing), and
+`DEMO_MODE` login credentials. Fork owners should remove these before
+production.
+
+**Resources:**
+
+- **`PRODUCTION_READY.md`** — step-by-step human checklist for stripping demo
+  content. Covers fresh forks and existing databases.
+- **`demo-content.json`** — machine-readable manifest of every demo artifact
+  with category, paths, removal action, and verification terms.
+- **`/strip-demo` skill** (`.claude/skills/strip-demo/SKILL.md`) — audit-first
+  agent workflow. Reads the manifest, scans for `SPEEDPY_DEMO` markers,
+  presents a removal plan, and waits for confirmation before editing anything.
+
+**Quick audit:** `rg SPEEDPY_DEMO` finds all marked demo artifacts. Every
+marker corresponds to an entry in `demo-content.json`.
+
+**Key decisions for fork owners:**
+
+- `AsyncJob` model and `JobStatusView` are **reusable infrastructure** — keep
+  them if your app needs async job status polling. Only remove the demo entry
+  point (`DemoJobCreateView`, `run_demo_job`).
+- Placeholder pages (welcome, pricing) should be **replaced**, not deleted —
+  the root URL must resolve.
+- Tests in `test_api_pagination.py`, `test_api_throttle.py`, and
+  `test_api_request_id.py` use `/api/v1/products/` as a convenience endpoint.
+  Migrate them to your domain endpoint before removing the Product API.
+
 ## Realtime / Server Push
 
 SpeedPy does not ship realtime infrastructure by default. For guidance on

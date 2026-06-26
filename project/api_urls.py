@@ -1,5 +1,6 @@
 from django.urls import path
 
+# SPEEDPY_DEMO: demo job and product API imports — remove before production
 from mainapp.api.jobs import DemoJobCreateView, JobStatusView
 from mainapp.api.products import ProductDetailAPIView, ProductListAPIView
 from mainapp.api.teams import (
@@ -36,6 +37,7 @@ urlpatterns = [
     path("auth/token/refresh/", TokenRefreshSchemaView.as_view(), name="token_refresh"),
     path("auth/token/revoke/", JWTLogoutView.as_view(), name="token_revoke"),
     path("v1/me/", CurrentUserAPIView.as_view(), name="current_user"),
+    # SPEEDPY_DEMO: demo Product API routes — remove before production
     path("v1/products/", ProductListAPIView.as_view(), name="product_list"),
     path("v1/products/<uuid:pk>/", ProductDetailAPIView.as_view(), name="product_detail"),
     path("v1/teams/", TeamListAPIView.as_view(), name="team_list"),
@@ -43,7 +45,7 @@ urlpatterns = [
     path("v1/teams/<uuid:team_id>/members/", TeamMembersAPIView.as_view(), name="team_members"),
     path("v1/teams/<uuid:team_id>/invitations/", TeamInvitationCreateAPIView.as_view(), name="team_invitation_create"),
     # Jobs
-    path("v1/jobs/demo/", DemoJobCreateView.as_view(), name="demo_job_create"),
+    path("v1/jobs/demo/", DemoJobCreateView.as_view(), name="demo_job_create"),  # SPEEDPY_DEMO: demo job endpoint
     path("v1/jobs/<uuid:job_id>/", JobStatusView.as_view(), name="job_status"),
     # Webhooks — user-scoped
     path("v1/webhooks/", UserWebhookEndpointListView.as_view(), name="webhook_list_user"),

@@ -1,3 +1,5 @@
+"""SPEEDPY_DEMO: entire demoapp is demo content — remove before production."""
+
 from django.apps import AppConfig
 
 

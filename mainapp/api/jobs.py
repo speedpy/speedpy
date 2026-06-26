@@ -2,8 +2,8 @@
 Async job API — start a demo job (202 Accepted) and poll for status.
 
 Endpoints:
-    POST /api/v1/jobs/demo/   — enqueue a demo job, return 202 + status URL
-    GET  /api/v1/jobs/{id}/   — poll job status
+    POST /api/v1/jobs/demo/   — SPEEDPY_DEMO: enqueue a demo job, return 202 + status URL
+    GET  /api/v1/jobs/{id}/   — reusable job status polling (keep for production use)
 """
 
 import structlog
