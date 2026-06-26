@@ -29,8 +29,9 @@ events.
 - Use `HasScope` from `speedpycom.api.permissions` with `required_scopes` on views.
 - Team-scoped endpoints: resolve `team_id` from URL, verify membership, filter
   querysets through `TeamMembership`. Never trust `team_id` from request body.
-- New scopes: add to `OAUTH2_PROVIDER["SCOPES"]`, `SCOPE_CHOICES` in
-  `usermodel/forms.py`, and `SPECTACULAR_SETTINGS["APPEND_COMPONENTS"]`.
+- New scopes: add to `OAUTH2_PROVIDER["SCOPES"]` in `project/settings.py`
+  and `SPECTACULAR_SETTINGS["APPEND_COMPONENTS"]`. The PAT form picks them up
+  automatically via the scope registry in `speedpycom.api.scopes`.
 - Tests in `mainapp/tests/test_api_<domain>.py`: anonymous rejection, happy path,
   field contract, tenant isolation, role boundaries, schema validation.
 - Validate after changes: run `spectacular --validate --fail-on-warn` using the

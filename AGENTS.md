@@ -747,10 +747,11 @@ Session-authenticated users have implicit full access.
 
 **Adding custom scopes for PATs:** When you add a new business API resource:
 
-1. Define `read:<domain>` / `write:<domain>` scopes.
-2. Add the scope choices to `SCOPE_CHOICES` in `usermodel/forms.py` so users
-   can select them when creating a token.
-3. Set `required_scopes` on the view with `HasScope` permission class.
+1. Add `read:<domain>` / `write:<domain>` scopes to `OAUTH2_PROVIDER["SCOPES"]`
+   in `project/settings.py`. The PAT form picks them up automatically via the
+   scope registry in `speedpycom.api.scopes`.
+2. Set `required_scopes` on the view with `HasScope` permission class.
+3. Update `SPECTACULAR_SETTINGS["APPEND_COMPONENTS"]` OAuth2 flows to match.
 
 ### CORS policy
 
@@ -831,9 +832,9 @@ Four authentication methods are supported (tried in order):
 When adding a business API with new scopes:
 
 1. Add the scope to `OAUTH2_PROVIDER["SCOPES"]` in `project/settings.py`.
-2. Add it to `SCOPE_CHOICES` in `usermodel/forms.py` (for PAT UI).
-3. Add it to the `SPECTACULAR_SETTINGS["APPEND_COMPONENTS"]` OAuth2 flows.
-4. Set `required_scopes` on the view with `HasScope`.
+   The PAT form picks it up automatically via `speedpycom.api.scopes`.
+2. Add it to the `SPECTACULAR_SETTINGS["APPEND_COMPONENTS"]` OAuth2 flows.
+3. Set `required_scopes` on the view with `HasScope`.
 
 ### CLI/MCP device flow
 

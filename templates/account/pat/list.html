@@ -52,10 +52,10 @@
                                 <td class="hidden sm:table-cell">
                                     {% if token.scopes %}
                                         {% for scope in token.scopes %}
-                                            <span class="chip chip-sm chip-secondary">{{ scope }}</span>
+                                            <span class="chip chip-sm chip-secondary" title="{{ scope }}">{{ scope }}</span>
                                         {% endfor %}
                                     {% else %}
-                                        <span class="text-fg-secondary text-sm">{% trans "Full access" %}</span>
+                                        <span class="text-fg-secondary text-sm">{% trans "No scopes (legacy)" %}</span>
                                     {% endif %}
                                 </td>
                                 <td class="hidden md:table-cell text-fg-secondary text-sm">

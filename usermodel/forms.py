@@ -211,17 +211,6 @@ class UserProfileForm(forms.ModelForm):
         )
 
 
-SCOPE_CHOICES = [
-    ("read:profile", "Read profile"),
-    ("write:profile", "Write profile"),
-    ("read:teams", "Read teams"),
-    ("write:teams", "Write teams"),
-    ("read:products", "Read products"),
-    ("read:webhooks", "Read webhooks"),
-    ("write:webhooks", "Manage webhooks"),
-]
-
-
 class PersonalAccessTokenForm(forms.Form):
     """Form for creating a personal access token."""
 
@@ -230,10 +219,10 @@ class PersonalAccessTokenForm(forms.Form):
         help_text=_("A descriptive name for this token, e.g. 'n8n integration'."),
     )
     scopes = forms.MultipleChoiceField(
-        choices=SCOPE_CHOICES,
-        required=False,
+        choices=(),  # populated dynamically from scope registry
+        required=True,
         widget=forms.CheckboxSelectMultiple(attrs={"class": "checkbox"}),
-        help_text=_("Select which API scopes this token can access. Leave empty for full access."),
+        help_text=_("Select at least one API scope for this token."),
     )
     expires_at = forms.DateTimeField(
         required=False,
@@ -243,6 +232,11 @@ class PersonalAccessTokenForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        from speedpycom.api.scopes import get_scope_choices
+
+        self.fields["scopes"].choices = get_scope_choices()
+
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -258,3 +252,15 @@ class PersonalAccessTokenForm(forms.Form):
                 css_class="btn btn-contained btn-primary",
             ),
         )
+
+    def clean_scopes(self):
+        from speedpycom.api.scopes import validate_scopes
+
+        scopes = self.cleaned_data.get("scopes", [])
+        unknown = validate_scopes(scopes)
+        if unknown:
+            raise forms.ValidationError(
+                _("Unknown scope(s): %(scopes)s"),
+                params={"scopes": ", ".join(unknown)},
+            )
+        return scopes

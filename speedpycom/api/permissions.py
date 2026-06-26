@@ -10,10 +10,13 @@ Scope taxonomy:
 
 Session-authenticated users have implicit full access (no scope restriction).
 PAT and OAuth2 tokens are checked against the token's granted scopes.
-An empty scopes list on a PAT means full access (no restriction).
+
+New tokens require at least one explicit scope. Legacy tokens with empty
+scopes are still granted full access for backward compatibility.
 
 Custom scopes follow the pattern: read:<domain>, write:<domain>
-(e.g. read:products, write:products).
+(e.g. read:products, write:products). Register them in
+``settings.OAUTH2_PROVIDER["SCOPES"]``.
 """
 
 from rest_framework.permissions import IsAuthenticated
@@ -30,7 +33,7 @@ class HasScope(IsAuthenticated):
             required_scopes = ["read:products"]
 
     - Session auth / JWT: implicit full access (no scope check).
-    - PAT with empty scopes: full access.
+    - PAT with empty scopes: full access (legacy tokens only).
     - PAT with scopes: allowed only if token scopes include all required.
     - OAuth2 token: allowed only if token scopes include all required.
     """

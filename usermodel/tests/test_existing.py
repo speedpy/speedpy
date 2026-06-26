@@ -775,7 +775,7 @@ class PersonalAccessTokenUITests(TestCase):
         with patch(self._reauth_patch, return_value=True):
             response = self.client.post(
                 "/accounts/tokens/create/",
-                {"name": "My CI Token"},
+                {"name": "My CI Token", "scopes": ["read:profile"]},
                 follow=True,
             )
         self.assertEqual(response.status_code, 200)
@@ -785,7 +785,7 @@ class PersonalAccessTokenUITests(TestCase):
     def test_one_time_reveal(self):
         with patch(self._reauth_patch, return_value=True):
             # Create a token
-            self.client.post("/accounts/tokens/create/", {"name": "Once"}, follow=False)
+            self.client.post("/accounts/tokens/create/", {"name": "Once", "scopes": ["read:profile"]}, follow=False)
         # First visit shows the token
         response = self.client.get("/accounts/tokens/")
         self.assertContains(response, "spd_")
@@ -816,6 +816,109 @@ class PersonalAccessTokenUITests(TestCase):
         response = self.client.get("/accounts/tokens/")
         self.assertContains(response, "Active")
         self.assertContains(response, "Revoked")
+
+
+class ScopeRegistryTests(TestCase):
+    """Tests for the scope registry and PAT scope validation."""
+
+    def test_get_scope_choices_matches_settings(self):
+        from speedpycom.api.scopes import get_scope_choices, get_scope_registry
+
+        registry = get_scope_registry()
+        choices = get_scope_choices()
+        self.assertEqual(len(choices), len(registry))
+        for name, label in choices:
+            self.assertIn(name, registry)
+            self.assertIn(registry[name], label)
+
+    def test_validate_scopes_rejects_unknown(self):
+        from speedpycom.api.scopes import validate_scopes
+
+        unknown = validate_scopes(["read:profile", "read:nonexistent"])
+        self.assertEqual(unknown, ["read:nonexistent"])
+
+    def test_validate_scopes_accepts_all_builtin(self):
+        from speedpycom.api.scopes import get_scope_registry, validate_scopes
+
+        all_scopes = list(get_scope_registry().keys())
+        self.assertEqual(validate_scopes(all_scopes), [])
+
+    @override_settings(
+        OAUTH2_PROVIDER={
+            "SCOPES": {
+                "read:profile": "Read your profile",
+                "custom:stuff": "Custom scope for testing",
+            },
+            "DEFAULT_SCOPES": ["read:profile"],
+        }
+    )
+    def test_custom_scope_via_settings_override(self):
+        from speedpycom.api.scopes import get_scope_registry, validate_scopes
+
+        registry = get_scope_registry()
+        self.assertIn("custom:stuff", registry)
+        self.assertEqual(validate_scopes(["custom:stuff"]), [])
+
+
+class PersonalAccessTokenFormScopeTests(TestCase):
+    """Tests for PAT form scope choices and validation."""
+
+    _reauth_patch = "allauth.account.internal.flows.reauthentication.did_recently_authenticate"
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="scopeform@example.com", password="testpass123"
+        )
+        _verified_email(self.user)
+        self.client.login(email="scopeform@example.com", password="testpass123")
+
+    def test_form_renders_all_registered_scopes(self):
+        from speedpycom.api.scopes import get_scope_registry
+
+        response = self.client.get("/accounts/tokens/create/")
+        registry = get_scope_registry()
+        for scope_name in registry:
+            self.assertContains(response, scope_name)
+
+    def test_form_shows_scope_descriptions(self):
+        from speedpycom.api.scopes import get_scope_registry
+
+        response = self.client.get("/accounts/tokens/create/")
+        registry = get_scope_registry()
+        for description in registry.values():
+            self.assertContains(response, description)
+
+    def test_create_token_requires_scopes(self):
+        """Empty scopes should be rejected — explicit scope selection required."""
+        with patch(self._reauth_patch, return_value=True):
+            response = self.client.post(
+                "/accounts/tokens/create/",
+                {"name": "No scopes token"},
+            )
+        # Form should not redirect (validation error)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This field is required")
+        self.assertEqual(PersonalAccessToken.objects.filter(user=self.user).count(), 0)
+
+    def test_create_token_rejects_unknown_scope(self):
+        with patch(self._reauth_patch, return_value=True):
+            response = self.client.post(
+                "/accounts/tokens/create/",
+                {"name": "Bad scope token", "scopes": ["read:nonexistent"]},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PersonalAccessToken.objects.filter(user=self.user).count(), 0)
+
+    def test_create_token_with_valid_scopes_succeeds(self):
+        with patch(self._reauth_patch, return_value=True):
+            response = self.client.post(
+                "/accounts/tokens/create/",
+                {"name": "Scoped token", "scopes": ["read:profile", "read:teams"]},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        pat = PersonalAccessToken.objects.get(user=self.user)
+        self.assertEqual(sorted(pat.scopes), ["read:profile", "read:teams"])
 
 
 class JWTAuthTests(TestCase):

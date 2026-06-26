@@ -178,7 +178,7 @@ class PATEmailGateTests(TestCase):
     def test_pat_ui_blocked_when_email_unverified(self):
         response = self.client.post(
             "/accounts/tokens/create/",
-            {"name": "test-token", "scopes": []},
+            {"name": "test-token", "scopes": ["read:profile"]},
         )
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/email/", response.url)
@@ -195,7 +195,7 @@ class PATReauthGateTests(TestCase):
         ):
             response = self.client.post(
                 "/accounts/tokens/create/",
-                {"name": "test-token", "scopes": []},
+                {"name": "test-token", "scopes": ["read:profile"]},
             )
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/reauthenticate/", response.url)
@@ -206,7 +206,7 @@ class PATReauthGateTests(TestCase):
         ):
             response = self.client.post(
                 "/accounts/tokens/create/",
-                {"name": "test-token"},
+                {"name": "test-token", "scopes": ["read:profile"]},
             )
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/tokens/", response.url)
@@ -220,7 +220,7 @@ class PATReauthGateTests(TestCase):
     def test_pat_reauth_gate_disabled(self):
         response = self.client.post(
             "/accounts/tokens/create/",
-            {"name": "no-reauth-token"},
+            {"name": "no-reauth-token", "scopes": ["read:profile"]},
         )
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/tokens/", response.url)
