@@ -68,10 +68,73 @@ python speedpy_cli.py teams
 
 ### Available commands
 
-| Command | Endpoint           | Description              |
-|---------|--------------------|--------------------------|
-| `me`    | `GET /api/v1/me/`  | Show your user profile   |
-| `teams` | `GET /api/v1/teams/` | List your teams        |
+| Command | Endpoint           | Description                                    |
+|---------|--------------------|------------------------------------------------|
+| `login` | (device flow)      | Authenticate and save credentials to config    |
+| `me`    | `GET /api/v1/me/`  | Show your user profile                         |
+| `teams` | `GET /api/v1/teams/` | List your teams                              |
+
+### Config file
+
+The CLI stores configuration in `~/.config/speedpy/config.json` (or
+`$XDG_CONFIG_HOME/speedpy/config.json` if `XDG_CONFIG_HOME` is set).
+
+The config file holds `base_url`, `client_id`, and `token`. After running
+`login`, subsequent commands use the stored credentials automatically.
+
+**Precedence** (highest to lowest):
+
+1. CLI flags (`--base-url`, `--token`, `--client-id`)
+2. Environment variables (`SPEEDPY_BASE_URL`, `SPEEDPY_TOKEN`, `SPEEDPY_CLIENT_ID`)
+3. Config file (`~/.config/speedpy/config.json`)
+4. Built-in defaults
+
+### `login` command
+
+Run `login` once to authenticate via device flow and persist your
+credentials:
+
+```bash
+python speedpy_cli.py --client-id <CLIENT_ID> login
+# or with a non-default server:
+python speedpy_cli.py --base-url https://app.example.com --client-id <CLIENT_ID> login
+```
+
+The command opens a browser for approval, then stores the token, base URL,
+and client ID in the config file. After that, `python speedpy_cli.py me`
+works without any flags.
+
+For CI, keep using `SPEEDPY_TOKEN` (a PAT) as an environment variable --
+no login step needed.
+
+### `--json` flag
+
+Pass `--json` to any command to get machine-readable JSON output on
+stdout:
+
+```bash
+python speedpy_cli.py --json me
+python speedpy_cli.py --json teams
+```
+
+When `--json` is set, errors are also emitted as JSON:
+
+```json
+{"error": "Authentication failed. Check your token or run 'login'.", "exit_code": 3}
+```
+
+### Exit codes
+
+| Code | Meaning                                  |
+|------|------------------------------------------|
+| 0    | Success                                  |
+| 1    | General / unknown error                  |
+| 2    | Config / usage error                     |
+| 3    | Auth error (invalid/expired token)       |
+| 4    | Forbidden (insufficient scopes)          |
+| 5    | Not found                                |
+| 6    | Validation / server error                |
+| 7    | Network error (server unreachable)       |
 
 ## MCP server example
 
