@@ -239,3 +239,61 @@ class PersonalAccessToken(models.Model):
         if not self.expires_at:
             return False
         return self.expires_at <= timezone.now()
+
+
+def _truncate_ip(ip_string):
+    """Truncate an IP address for privacy: zero last octet (IPv4 /24) or mask to /48 (IPv6)."""
+    import ipaddress
+
+    if not ip_string:
+        return ""
+    try:
+        addr = ipaddress.ip_address(ip_string)
+    except ValueError:
+        return ""
+    if isinstance(addr, ipaddress.IPv4Address):
+        network = ipaddress.IPv4Network(f"{addr}/24", strict=False)
+        return str(network.network_address)
+    # IPv6 — mask to /48
+    network = ipaddress.IPv6Network(f"{addr}/48", strict=False)
+    return str(network.network_address)
+
+
+class ApiAccessLog(models.Model):
+    """Per-request audit trail for API access, gated by SPEEDPY_API_ACCESS_LOG_ENABLED."""
+
+    id = models.BigAutoField(primary_key=True)
+    timestamp = models.DateTimeField(_("Timestamp"), default=timezone.now, db_index=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="api_access_logs",
+    )
+    token_type = models.CharField(
+        _("Token type"), max_length=16, blank=True,
+        help_text=_("e.g. 'pat', 'oauth2', 'jwt', 'session'"),
+    )
+    token_id = models.CharField(
+        _("Token ID"), max_length=64, blank=True,
+        help_text=_("PAT UUID or OAuth2 token PK — never the raw secret."),
+    )
+    scopes = models.JSONField(_("Scopes"), default=list, blank=True)
+    method = models.CharField(_("HTTP method"), max_length=10)
+    path = models.CharField(_("Request path"), max_length=2048)
+    status_code = models.PositiveSmallIntegerField(_("Status code"), null=True, blank=True)
+    ip_truncated = models.CharField(_("IP (truncated)"), max_length=45, blank=True)
+    request_id = models.CharField(_("Request ID"), max_length=128, blank=True, db_index=True)
+    user_agent = models.CharField(_("User-Agent"), max_length=512, blank=True)
+
+    class Meta:
+        ordering = ("-timestamp",)
+        verbose_name = _("API access log")
+        verbose_name_plural = _("API access logs")
+        indexes = [
+            models.Index(fields=["user", "-timestamp"], name="accesslog_user_ts"),
+        ]
+
+    def __str__(self):
+        return f"{self.method} {self.path} [{self.status_code}]"

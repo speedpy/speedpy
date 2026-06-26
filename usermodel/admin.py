@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-from usermodel.models import PersonalAccessToken, User
+from usermodel.models import ApiAccessLog, PersonalAccessToken, User
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 
 
@@ -68,3 +68,23 @@ class PersonalAccessTokenAdmin(admin.ModelAdmin):
     search_fields = ('name', 'user__email')
     raw_id_fields = ('user',)
     readonly_fields = ('token_hash', 'created_at', 'last_used_at')
+
+
+@admin.register(ApiAccessLog)
+class ApiAccessLogAdmin(admin.ModelAdmin):
+    list_display = ('timestamp', 'user', 'method', 'path', 'status_code', 'token_type', 'ip_truncated')
+    list_filter = ('method', 'token_type', 'status_code', 'user')
+    search_fields = ('user__email', 'path', 'token_id', 'request_id', 'ip_truncated')
+    raw_id_fields = ('user',)
+    readonly_fields = (
+        'timestamp', 'user', 'token_type', 'token_id', 'scopes',
+        'method', 'path', 'status_code', 'ip_truncated', 'request_id', 'user_agent',
+    )
+    date_hierarchy = 'timestamp'
+    list_per_page = 100
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

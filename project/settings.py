@@ -72,6 +72,7 @@ MIDDLEWARE = [
     "django_structlog.middlewares.RequestMiddleware",
     "speedpycom.api.middleware.RequestIDMiddleware",
     "speedpycom.api.middleware.RateLimitHeadersMiddleware",
+    "speedpycom.api.middleware.ApiAccessLogMiddleware",
 ]
 DJANGO_STRUCTLOG_CELERY_ENABLED = True
 DJANGO_STRUCTLOG_COMMAND_LOGGING_ENABLED = True
@@ -445,6 +446,9 @@ SPEEDPY_MFA_BACKEND = env.str("SPEEDPY_MFA_BACKEND", default="allauth_mfa")  # "
 SPEEDPY_API_TOKEN_REQUIRE_VERIFIED_EMAIL = env.bool("SPEEDPY_API_TOKEN_REQUIRE_VERIFIED_EMAIL", default=True)
 SPEEDPY_JWT_REQUIRE_MFA = env.bool("SPEEDPY_JWT_REQUIRE_MFA", default=True)
 SPEEDPY_PAT_REQUIRE_RECENT_REAUTH = env.bool("SPEEDPY_PAT_REQUIRE_RECENT_REAUTH", default=True)
+
+# API access audit log — off by default; enable for full per-request audit trail.
+SPEEDPY_API_ACCESS_LOG_ENABLED = env.bool("SPEEDPY_API_ACCESS_LOG_ENABLED", default=False)
 
 if SPEEDPY_MFA_BACKEND == "django_otp":
     INSTALLED_APPS += [
