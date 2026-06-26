@@ -4,8 +4,13 @@ Team-scoped API — canonical reference for tenant-isolated endpoints.
 Copy this pattern when adding API endpoints for team-owned resources.
 """
 
+from functools import partial
+
 import structlog
+from celery import current_app
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, OpenApiResponse, extend_schema
@@ -18,6 +23,8 @@ from rest_framework.views import APIView
 from mainapp.models import Team, TeamInvitation, TeamMembership
 from speedpycom.api.idempotency import idempotent
 from speedpycom.api.permissions import HasScope
+
+User = get_user_model()
 
 logger = structlog.get_logger(__name__)
 
@@ -314,12 +321,23 @@ class TeamInvitationCreateAPIView(APIView):
                 f"Your role ({membership.role}) cannot invite {target_role}s."
             )
 
+        email = serializer.validated_data["email"]
+        user = User.objects.filter(email=email).first()
+
         invitation = TeamInvitation.objects.create(
             team=membership.team,
             invited_by=request.user,
-            email=serializer.validated_data["email"],
+            email=email,
+            user=user,
             role=target_role,
             message=serializer.validated_data.get("message", ""),
+        )
+        transaction.on_commit(
+            partial(
+                current_app.send_task,
+                "send_team_invitation_email",
+                kwargs={"invitation_id": invitation.pk},
+            )
         )
 
         logger.info(

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
@@ -202,6 +204,95 @@ class TeamInvitationAPITests(TeamAPITestBase):
         )
         expected = {"id", "email", "role", "status", "created_at", "expires_at"}
         self.assertEqual(set(response.data.keys()), expected)
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    def test_invitation_schedules_email_task(self, mock_send_task):
+        self.client.force_authenticate(user=self.owner)
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                f"/api/v1/teams/{self.team_a.id}/invitations/",
+                {"email": "email-test@example.com", "role": "member"},
+                format="json",
+            )
+        self.assertEqual(response.status_code, 201)
+        invitation = TeamInvitation.objects.get(email="email-test@example.com")
+        mock_send_task.assert_called_once_with(
+            "send_team_invitation_email",
+            kwargs={"invitation_id": invitation.pk},
+        )
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    def test_invitation_sets_user_for_existing_user(self, mock_send_task):
+        existing = User.objects.create_user(
+            email="existing@example.com", password="pass123"
+        )
+        self.client.force_authenticate(user=self.owner)
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                f"/api/v1/teams/{self.team_a.id}/invitations/",
+                {"email": "existing@example.com", "role": "member"},
+                format="json",
+            )
+        self.assertEqual(response.status_code, 201)
+        invitation = TeamInvitation.objects.get(email="existing@example.com")
+        self.assertEqual(invitation.user, existing)
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    def test_invitation_user_null_for_unknown_email(self, mock_send_task):
+        self.client.force_authenticate(user=self.owner)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(
+                f"/api/v1/teams/{self.team_a.id}/invitations/",
+                {"email": "unknown@example.com", "role": "member"},
+                format="json",
+            )
+        invitation = TeamInvitation.objects.get(email="unknown@example.com")
+        self.assertIsNone(invitation.user)
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    def test_member_invite_rejected_no_email(self, mock_send_task):
+        self.client.force_authenticate(user=self.member)
+        response = self.client.post(
+            f"/api/v1/teams/{self.team_a.id}/invitations/",
+            {"email": "nope@example.com", "role": "member"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+        mock_send_task.assert_not_called()
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    def test_invalid_role_rejected_no_email(self, mock_send_task):
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.post(
+            f"/api/v1/teams/{self.team_a.id}/invitations/",
+            {"email": "bad@example.com", "role": "owner"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        mock_send_task.assert_not_called()
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    def test_outsider_invite_rejected_no_email(self, mock_send_task):
+        self.client.force_authenticate(user=self.outsider)
+        response = self.client.post(
+            f"/api/v1/teams/{self.team_a.id}/invitations/",
+            {"email": "nope@example.com", "role": "member"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 404)
+        mock_send_task.assert_not_called()
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    @override_settings(SPEEDPY_TEAMS_ENABLED=False)
+    def test_teams_disabled_no_email(self, mock_send_task):
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.post(
+            f"/api/v1/teams/{self.team_a.id}/invitations/",
+            {"email": "nope@example.com", "role": "member"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 404)
+        mock_send_task.assert_not_called()
 
 
 @override_settings(API_DOCS_PUBLIC=True)

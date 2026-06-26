@@ -3,6 +3,7 @@ Tests for the Idempotency-Key contract on team invitation creation.
 """
 
 import uuid
+from unittest.mock import patch
 
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -79,3 +80,44 @@ class IdempotencyKeyTests(TestCase):
     def test_invalid_key_returns_400(self):
         response = self._post(key="invalid key with spaces!")
         self.assertEqual(response.status_code, 400)
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    def test_first_request_queues_email_task(self, mock_send_task):
+        key = str(uuid.uuid4())
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self._post(key=key)
+        self.assertEqual(response.status_code, 201)
+        invitation = TeamInvitation.objects.get(team=self.team)
+        mock_send_task.assert_called_once_with(
+            "send_team_invitation_email",
+            kwargs={"invitation_id": invitation.pk},
+        )
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    def test_replay_does_not_queue_duplicate_email(self, mock_send_task):
+        key = str(uuid.uuid4())
+        with self.captureOnCommitCallbacks(execute=True):
+            self._post(key=key)
+        mock_send_task.assert_called_once()
+        mock_send_task.reset_mock()
+        with self.captureOnCommitCallbacks(execute=True):
+            r2 = self._post(key=key)
+        self.assertEqual(r2.status_code, 201)
+        self.assertEqual(r2["Idempotency-Replay"], "true")
+        mock_send_task.assert_not_called()
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    def test_conflict_does_not_queue_email(self, mock_send_task):
+        key = str(uuid.uuid4())
+        with self.captureOnCommitCallbacks(execute=True):
+            self._post(key=key)
+        mock_send_task.reset_mock()
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self._post(key=key, email="other@example.com")
+        self.assertEqual(response.status_code, 409)
+        mock_send_task.assert_not_called()
+
+    @patch("mainapp.api.teams.current_app.send_task")
+    def test_invalid_key_does_not_queue_email(self, mock_send_task):
+        self._post(key="invalid key with spaces!")
+        mock_send_task.assert_not_called()
