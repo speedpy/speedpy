@@ -1,5 +1,6 @@
 from django.urls import path
 
+from mainapp.api.jobs import DemoJobCreateView, JobStatusView
 from mainapp.api.products import ProductDetailAPIView, ProductListAPIView
 from mainapp.api.teams import (
     TeamDetailAPIView,
@@ -41,6 +42,9 @@ urlpatterns = [
     path("v1/teams/<uuid:team_id>/", TeamDetailAPIView.as_view(), name="team_detail"),
     path("v1/teams/<uuid:team_id>/members/", TeamMembersAPIView.as_view(), name="team_members"),
     path("v1/teams/<uuid:team_id>/invitations/", TeamInvitationCreateAPIView.as_view(), name="team_invitation_create"),
+    # Jobs
+    path("v1/jobs/demo/", DemoJobCreateView.as_view(), name="demo_job_create"),
+    path("v1/jobs/<uuid:job_id>/", JobStatusView.as_view(), name="job_status"),
     # Webhooks — user-scoped
     path("v1/webhooks/", UserWebhookEndpointListView.as_view(), name="webhook_list_user"),
     # Webhooks — team-scoped
