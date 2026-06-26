@@ -5,18 +5,18 @@ SpeedPy MCP Server — minimal Model Context Protocol server example.
 Exposes SpeedPy API endpoints as MCP tools that AI assistants can call.
 
 Tools provided:
-  - get_profile: Read the authenticated user's profile (/api/v1/me/)
-  - list_teams:  List the user's teams (/api/v1/teams/)
-  - get_team:    Get details for a specific team (/api/v1/teams/{id}/)
+  - get_current_user: Read the authenticated user's profile (/api/v1/me/)
+  - list_teams:       List the user's teams (/api/v1/teams/)
+  - list_team_members: List members of a specific team (/api/v1/teams/{id}/members/)
 
 Auth:
   Supports PAT (personal access token) or OAuth2 device flow.
   Set environment variables before starting:
 
-    export SPEEDPY_BASE_URL=http://localhost:8000
-    export SPEEDPY_TOKEN=spd_<hex>          # PAT auth
+    export SPEEDPY_API_URL=http://localhost:8000   # or SPEEDPY_BASE_URL
+    export SPEEDPY_TOKEN=spd_<hex>                 # PAT auth
     # — OR —
-    export SPEEDPY_CLIENT_ID=<client_id>    # device flow (interactive)
+    export SPEEDPY_CLIENT_ID=<client_id>           # device flow (interactive)
 
 Setup:
     pip install mcp httpx
@@ -45,15 +45,21 @@ from mcp.server.fastmcp import FastMCP
 # Configuration
 # ---------------------------------------------------------------------------
 
-BASE_URL = os.environ.get("SPEEDPY_BASE_URL", "http://localhost:8000")
+BASE_URL = (
+    os.environ.get("SPEEDPY_API_URL")
+    or os.environ.get("SPEEDPY_BASE_URL")
+    or "http://localhost:8000"
+).rstrip("/")
+
 TOKEN = os.environ.get("SPEEDPY_TOKEN", "")
 CLIENT_ID = os.environ.get("SPEEDPY_CLIENT_ID", "")
 
 mcp = FastMCP(
     "SpeedPy",
     instructions=(
-        "SpeedPy API server. Use get_profile to read the current user, "
-        "list_teams to see available teams, and get_team for team details."
+        "SpeedPy API server. Use get_current_user to read the current user, "
+        "list_teams to see available teams, and list_team_members for team "
+        "member details."
     ),
 )
 
@@ -131,28 +137,77 @@ def _get_token() -> str:
         _cached_token = _device_flow(CLIENT_ID)
         return _cached_token
 
-    raise RuntimeError(
-        "Set SPEEDPY_TOKEN (PAT) or SPEEDPY_CLIENT_ID (device flow) "
-        "before starting the MCP server."
-    )
+    return ""
 
 
 def _api_get(path: str) -> dict:
-    """Authenticated GET against the SpeedPy API."""
+    """Authenticated GET against the SpeedPy API.
+
+    Returns the JSON response on success, or a structured error dict on
+    failure (missing config, auth errors, network issues, non-JSON bodies).
+    """
     token = _get_token()
-    resp = httpx.get(
-        f"{BASE_URL}{path}",
-        headers={"Authorization": f"Bearer {token}"},
-    )
+    if not token:
+        return {
+            "error": "missing_credentials",
+            "message": (
+                "Set SPEEDPY_TOKEN (PAT) or SPEEDPY_CLIENT_ID (device flow) "
+                "before starting the MCP server."
+            ),
+        }
+
+    url = f"{BASE_URL}{path}"
+    try:
+        resp = httpx.get(
+            url,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    except httpx.ConnectError:
+        return {
+            "error": "connection_error",
+            "message": f"Could not connect to {BASE_URL}. Is the server running?",
+        }
+    except httpx.HTTPError as exc:
+        return {
+            "error": "network_error",
+            "message": str(exc),
+        }
+
     if resp.status_code == 401:
         global _cached_token
         _cached_token = ""
-        return {"error": "Authentication failed. Token may be expired or revoked."}
+        return {
+            "error": "authentication_failed",
+            "message": "Token may be expired or revoked.",
+            "status": 401,
+        }
     if resp.status_code == 403:
-        return {"error": "Forbidden. Token may lack required scopes."}
+        return {
+            "error": "forbidden",
+            "message": "Token may lack required scopes.",
+            "status": 403,
+        }
     if resp.status_code == 404:
-        return {"error": f"Not found: {path}"}
-    resp.raise_for_status()
+        return {
+            "error": "not_found",
+            "message": f"Not found: {path}",
+            "status": 404,
+        }
+
+    if resp.status_code >= 400:
+        return {
+            "error": "api_error",
+            "message": f"HTTP {resp.status_code}",
+            "status": resp.status_code,
+        }
+
+    content_type = resp.headers.get("content-type", "")
+    if "json" not in content_type:
+        return {
+            "error": "unexpected_content_type",
+            "message": f"Expected JSON, got {content_type}",
+        }
+
     return resp.json()
 
 
@@ -160,26 +215,56 @@ def _api_get(path: str) -> dict:
 # MCP Tools
 # ---------------------------------------------------------------------------
 
+
 @mcp.tool()
-def get_profile() -> dict:
-    """Get the authenticated user's profile (email, name, teams)."""
+def get_current_user() -> dict:
+    """Get the authenticated user's profile (email, name, teams).
+
+    Requires scope: read:profile
+    Endpoint: GET /api/v1/me/
+    """
     return _api_get("/api/v1/me/")
 
 
 @mcp.tool()
-def list_teams() -> dict:
-    """List all teams the authenticated user belongs to."""
-    return _api_get("/api/v1/teams/")
+def list_teams(page: int | None = None) -> dict:
+    """List all teams the authenticated user belongs to.
+
+    Returns a paginated response with ``count``, ``next``, ``previous``,
+    and ``results`` fields when DRF pagination is enabled, or a plain
+    list otherwise.
+
+    Args:
+        page: Page number for paginated results (optional).
+
+    Requires scope: read:teams
+    Endpoint: GET /api/v1/teams/
+    """
+    path = "/api/v1/teams/"
+    if page is not None:
+        path = f"{path}?page={page}"
+    return _api_get(path)
 
 
 @mcp.tool()
-def get_team(team_id: str) -> dict:
-    """Get details and members for a specific team.
+def list_team_members(team_id: str, page: int | None = None) -> dict:
+    """List members of a specific team.
 
     Args:
-        team_id: UUID of the team to retrieve.
+        team_id: UUID of the team whose members to list.
+        page: Page number for paginated results (optional).
+
+    Returns a paginated response with ``count``, ``next``, ``previous``,
+    and ``results`` fields when DRF pagination is enabled, or a plain
+    list otherwise.
+
+    Requires scope: read:teams
+    Endpoint: GET /api/v1/teams/{team_id}/members/
     """
-    return _api_get(f"/api/v1/teams/{team_id}/")
+    path = f"/api/v1/teams/{team_id}/members/"
+    if page is not None:
+        path = f"{path}?page={page}"
+    return _api_get(path)
 
 
 # ---------------------------------------------------------------------------

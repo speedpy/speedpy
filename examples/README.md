@@ -26,7 +26,7 @@ Both examples support two auth methods:
 4. Copy the token (shown once) and export it:
 
 ```bash
-export SPEEDPY_BASE_URL=http://localhost:8000
+export SPEEDPY_API_URL=http://localhost:8000   # or SPEEDPY_BASE_URL
 export SPEEDPY_TOKEN=spd_abc123...
 ```
 
@@ -41,7 +41,7 @@ python manage.py create_oauth2_app "My CLI" --grant-type device-code
 2. Note the **Client ID** from the output and export it:
 
 ```bash
-export SPEEDPY_BASE_URL=http://localhost:8000
+export SPEEDPY_API_URL=http://localhost:8000   # or SPEEDPY_BASE_URL
 export SPEEDPY_CLIENT_ID=<client_id>
 ```
 
@@ -95,11 +95,11 @@ mcp dev speedpy_mcp.py
 
 ### Available tools
 
-| Tool          | Endpoint                      | Description                |
-|---------------|-------------------------------|----------------------------|
-| `get_profile` | `GET /api/v1/me/`             | Read current user profile  |
-| `list_teams`  | `GET /api/v1/teams/`          | List user's teams          |
-| `get_team`    | `GET /api/v1/teams/{id}/`     | Get a specific team        |
+| Tool                 | Endpoint                             | Scope          | Description                |
+|----------------------|--------------------------------------|----------------|----------------------------|
+| `get_current_user`   | `GET /api/v1/me/`                    | `read:profile` | Read current user profile  |
+| `list_teams`         | `GET /api/v1/teams/`                 | `read:teams`   | List user's teams          |
+| `list_team_members`  | `GET /api/v1/teams/{id}/members/`    | `read:teams`   | List members of a team     |
 
 ### Claude Desktop configuration
 
@@ -112,7 +112,7 @@ Add to your Claude Desktop `claude_desktop_config.json`:
       "command": "python",
       "args": ["/path/to/examples/mcp_server/speedpy_mcp.py"],
       "env": {
-        "SPEEDPY_BASE_URL": "http://localhost:8000",
+        "SPEEDPY_API_URL": "http://localhost:8000",
         "SPEEDPY_TOKEN": "spd_your_token_here"
       }
     }
@@ -126,7 +126,7 @@ For production deployments, replace `http://localhost:8000` with your
 production URL:
 
 ```bash
-export SPEEDPY_BASE_URL=https://app.example.com
+export SPEEDPY_API_URL=https://app.example.com
 ```
 
 All auth flows work the same way — the device flow verification URL will
@@ -249,6 +249,69 @@ url "https://github.com/speedpycom/speedpy/releases/download/cli-v0.1.0/speedpy_
 
 The rest of the formula stays the same.
 
+## Generating MCP tools from OpenAPI
+
+Instead of hand-maintaining MCP tool wrappers, you can generate them from
+the OpenAPI schema:
+
+```bash
+# 1. Generate the schema
+cd speedpy
+uv run python manage.py spectacular --file /tmp/speedpy-openapi.yaml --validate
+
+# 2. Generate MCP tools (writes examples/mcp_server/generated_tools.py)
+uv run python examples/mcp_server/generate_mcp_tools.py /tmp/speedpy-openapi.yaml \
+    -o examples/mcp_server/generated_tools.py
+```
+
+The generated file is checked in so the starter example works without
+running the generator first.
+
+### Filtering
+
+```bash
+# Only specific tags:
+uv run python examples/mcp_server/generate_mcp_tools.py schema.yaml --tags teams,products
+
+# Only specific operations:
+uv run python examples/mcp_server/generate_mcp_tools.py schema.yaml \
+    --operations listTeams,getTeam,listTeamMembers
+
+# Show skipped write operations:
+uv run python examples/mcp_server/generate_mcp_tools.py schema.yaml --unsafe
+```
+
+Only `GET` endpoints are generated. Write operations (POST, PUT, PATCH,
+DELETE) require manual implementation; use `--unsafe` to see which ones
+were skipped.
+
+### CI freshness check
+
+Add a step to your CI pipeline to verify the generated tools match the
+current schema:
+
+```bash
+uv run python manage.py spectacular --file /tmp/schema.yaml --validate
+uv run python examples/mcp_server/generate_mcp_tools.py /tmp/schema.yaml \
+    -o examples/mcp_server/generated_tools.py --check
+```
+
+This exits with code 1 if the checked-in file is stale.
+
+### Using generated tools
+
+Import the generated module alongside the main MCP server to register
+the tools automatically:
+
+```python
+# In your MCP server entry point
+from speedpy_mcp import mcp
+import generated_tools  # noqa: F401 — registers tools on import
+
+if __name__ == "__main__":
+    mcp.run()
+```
+
 ## Extending
 
 These examples are intentionally minimal. To add your own commands/tools:
@@ -256,7 +319,8 @@ These examples are intentionally minimal. To add your own commands/tools:
 1. Add API endpoints in `mainapp/api/<group>.py` following the conventions
    in `AGENTS.md`.
 2. Add a new CLI subcommand in `speedpy_cli.py` using `api_get()`.
-3. Add a new `@mcp.tool()` function in `speedpy_mcp.py` using `_api_get()`.
+3. Add a new `@mcp.tool()` function in `speedpy_mcp.py` using `_api_get()`,
+   or regenerate tools from the OpenAPI schema (see `mcp_server/generate_mcp_tools.py`).
 
 The generated OpenAPI schema at `/api/schema/` is the source of truth for
 all available endpoints, request/response shapes, and auth requirements.
