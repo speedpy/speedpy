@@ -1101,3 +1101,15 @@ dispatched from production code paths** (views, signals). They are exercised
 in tests and the manual "test event" API endpoint. Wiring these events into
 production business logic is tracked separately and is not part of this
 extension guide.
+
+## Realtime / Server Push
+
+SpeedPy does not ship realtime infrastructure by default. For guidance on
+choosing between long polling, SSE, WebSockets (Django Channels), and external
+event buses, see the **Realtime Strategy** decision doc in
+`speedpy-docs/docs/realtime.md`.
+
+**Short version:** start with interval polling (`202 Accepted` + status URL) for
+job/task progress — it works with the existing WSGI + Celery stack and requires
+zero new dependencies. Graduate to SSE for streaming or lower latency. Adopt
+WebSockets only when you have a concrete bidirectional use case.
