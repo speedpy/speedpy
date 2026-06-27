@@ -379,13 +379,79 @@ Profile editing lives at `/accounts/profile/` (`ProfileEditView` +
 because `UserProfileForm` exposes `profile_picture`. Dev media is served via the
 `if settings.DEBUG: urlpatterns += static(...)` block at the bottom of `project/urls.py`.
 
+### Sidebar navigation
+
+The authenticated app shell is `templates/mainapp/layouts/sidebar_layout.html`. It renders
+the left sidebar through its `sidebar_menu` block, which by default includes
+`templates/components/sidebar_layout/sidebar_menu.html`. Any page that extends the layout
+gets the sidebar for free.
+
+**Where to add your app's nav links.** Put them in
+`templates/components/sidebar_layout/crud_navigation.html`. It ships empty and is included
+inside the General `<ul class="sidebar-nav">`, right after the Dashboard link — it is the
+designated insertion point so you never have to touch `sidebar_menu.html` itself. Add `<li>`
+items using the shared classes:
+
+```django
+<li>
+    <a href="{% url 'your_view' %}"
+       class="sidebar-link {% if request.resolver_match.url_name == 'your_view' %}sidebar-link-active{% endif %}">
+        <svg class="sidebar-link-icon" …></svg>
+        <span>Your Page</span>
+    </a>
+</li>
+```
+
+Drive the active state off `request.resolver_match.url_name` (not a hardcoded class) because
+the same sidebar renders on every page.
+
+**Team-scoped links (read this before adding any link).** Whether a link should be
+team-scoped depends on `SPEEDPY_TEAMS_ENABLED`:
+
+- The personal dashboard route is `name="dashboard"` (`/dashboard/`, `DashboardView`). When
+  teams are **enabled** it is **not a page** — it redirects to the user's first team
+  dashboard (`team_dashboard`), or to `team_create` if they have no team. It only renders
+  `templates/mainapp/dashboard/main.html` when teams are **disabled**. So **never link
+  directly to `{% url 'dashboard' %}` for navigation when teams may be enabled** — link to
+  the team-scoped view instead.
+- `get_default_team_for_user(user)` (in `mainapp.models`) is the single source of truth for
+  "the user's default team" — the first active team with non-expired access. Both the
+  `dashboard` redirect and the sidebar use it; reuse it, never reimplement the lookup.
+- `SIDEBAR_TEAM` is injected into **every** template by the
+  `project.context_processors.sidebar_team` context processor (it is `None` when teams are
+  disabled or the user has none). Use it to build team-scoped sidebar links without a view
+  change. On a team page the view also puts the current `team` in context — prefer `team`
+  when present, fall back to `SIDEBAR_TEAM`:
+
+```django
+{% if SPEEDPY_TEAMS_ENABLED %}
+    {% if team %}
+        {% url "your_team_view" team_id=team.id as href %}
+    {% elif SIDEBAR_TEAM %}
+        {% url "your_team_view" team_id=SIDEBAR_TEAM.id as href %}
+    {% else %}
+        {% url "team_create" as href %}
+    {% endif %}
+{% else %}
+    {% url "your_non_team_view" as href %}
+{% endif %}
+<a href="{{ href }}" class="sidebar-link …">…</a>
+```
+
+The Dashboard link in both `sidebar_menu.html` and `base_manage.html` already follows this
+pattern — copy it. Team routes (`team_dashboard`, `team_create`, …) are only registered when
+`SPEEDPY_TEAMS_ENABLED`, so always guard their `{% url %}` calls behind the
+`{% if SPEEDPY_TEAMS_ENABLED %}` branch to avoid `NoReverseMatch`.
+
 ### Account / settings pages
 
 Account pages (change password, email addresses, OTP settings, profile edit) extend
-`templates/account/base_manage.html`, which renders a sidebar layout with a left nav of
-account links. New account pages should reuse this base and follow the header style from
-`templates/account/password_change.html` (`<h2>` with the shared classes) so the pages
-line up visually.
+`templates/account/base_manage.html`, which reuses the sidebar layout above and overrides
+the `sidebar_menu` block with the account-settings nav (Your Profile, Change Password, …).
+New account pages should reuse this base, render their body in the `settings_content` block,
+and follow the header style from `templates/account/password_change.html` (`<h2>` with the
+shared classes) so the pages line up visually. To add an account link, edit the nav list in
+`base_manage.html`; its Dashboard link follows the same teams behaviour described above.
 
 ### Tours (Driver.js)
 
