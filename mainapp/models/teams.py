@@ -70,6 +70,29 @@ class Team(BaseModel):
     # create can_* for every check of quota/usage
 
 
+def get_default_team_for_user(user):
+    """
+    Return the first team a user has valid access to, or None.
+
+    "Valid" mirrors the checks in TeamViewMixin: the team must be active and
+    the membership must not have expired. Ordering follows TeamMembership.Meta
+    (role, then created_at), so the choice is stable — "the first one we find".
+    Used to redirect the personal dashboard and to build the sidebar link.
+    """
+    if not user.is_authenticated:
+        return None
+    membership = (
+        TeamMembership.objects.filter(user=user, team__is_active=True)
+        .filter(
+            Q(access_expires_at__isnull=True)
+            | Q(access_expires_at__gt=timezone.now())
+        )
+        .select_related("team")
+        .first()
+    )
+    return membership.team if membership else None
+
+
 class TeamModel(BaseModel):
     """
     This is a mixin for multi-tenancy enabled models.

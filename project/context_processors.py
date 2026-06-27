@@ -22,6 +22,22 @@ def teams_enabled(request):
     return {"SPEEDPY_TEAMS_ENABLED": getattr(settings, "SPEEDPY_TEAMS_ENABLED", True)}
 
 
+def sidebar_team(request):
+    """
+    Expose the user's default team to every template so the sidebar can link
+    its "Dashboard" entry to a team dashboard. Mirrors the redirect target of
+    the personal dashboard, keeping the link and the redirect in agreement.
+    """
+    if not getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
+        return {}
+    user = getattr(request, "user", None)
+    if user is None or not user.is_authenticated:
+        return {}
+    from mainapp.models import get_default_team_for_user
+
+    return {"SIDEBAR_TEAM": get_default_team_for_user(user)}
+
+
 def tours_enabled(request):
     return {"SPEEDPY_TOURS_ENABLED": getattr(settings, "SPEEDPY_TOURS_ENABLED", True)}
 

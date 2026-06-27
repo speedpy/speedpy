@@ -95,6 +95,7 @@ TEMPLATES = [
                 "project.context_processors.site_url",
                 "project.context_processors.og_tags",
                 "project.context_processors.teams_enabled",
+                "project.context_processors.sidebar_team",
                 "project.context_processors.tours_enabled",
                 "project.context_processors.current_year",
                 "project.context_processors.mfa_backend",
