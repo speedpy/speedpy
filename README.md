@@ -1,357 +1,91 @@
-# SpeedPy Standard Project
+# SpeedPy
 
-This is a standard project to start your Django based webapps.
+**Django-based SaaS boilerplate for the modern AI era.**
 
-## Key features
+Instantly start your next SaaS project. Built on the rock-solid foundation of Django, supercharged with production-ready APIs, Webhooks, OAuth2, and Model Context Protocol (MCP) for AI agents.
 
-- Following 12 Factor app uses environment variables for configuration
-- Custom User model in a separate app `usermodel`
-- Single Django app project layout, except `usermodel`
-- Celery
-- Tailwind
+[Website](https://speedpy.com) | [Documentation](https://docs.speedpy.com) | [Discord](https://speedpy.com/discord)
 
-## Requirements
+## Features
 
-- Linux or Mac
-- Git installed and configured (`user.name` and `user.email`)
-- One of:
-  - **Docker mode:** Docker + Docker Compose
-  - **Local mode:** [`uv`](https://docs.astral.sh/uv/) and Node.js (LTS, e.g. via `nvm`)
+* **Rock-Solid Foundation:** Django's battle-tested ORM, server-rendered UI with HTMX, Alpine.js, and TailwindCSS.
+* **API-First & Integration Ready:** Comprehensive REST API built with Django Rest Framework (DRF) and documented via OpenAPI. Webhooks engine for real-time events.
+* **Enterprise-Grade Authentication:** OAuth2 Provider, Personal Access Tokens (PATs), granular scopes, and team-scoped resources.
+* **Built for the AI Era:** Out-of-the-box MCP server template, first-party CLI, and pre-written agent recipes to help AI coding assistants write integrations.
+* **Multi-Tenant SaaS:** Teams, roles, and invitations out of the box with smart role-based permissions.
+* **Background Tasks:** Celery integration for asynchronous processing.
+* **Security First:** Multi-factor authentication (OTP) and encrypted database fields.
+* **12 Factor App:** Uses environment variables for configuration.
 
-## How to use
+## Quick Start
 
-### If you have already cloned the repo
+### Requirements
 
-Pick a mode and run the matching init script in the project root:
+* Linux or macOS
+* Git installed and configured
+* One of the following environments:
+  * **Docker mode:** Docker and Docker Compose
+  * **Local mode:** [`uv`](https://docs.astral.sh/uv/) and Node.js (LTS)
+
+### Installation
+
+If you haven't cloned the repository, you can use the one-line download and start script:
 
 ```bash
-bash init-docker.sh   # Docker Compose: Postgres + Redis + Celery + nginx media
-bash init-local.sh    # uv + npm on the host: SQLite, no Redis, Celery in always-eager mode
-```
-
-### One line download and start
-
-Run this command if you haven't cloned the code:
-
-```
 wget -qO- https://speedpy.com/install | bash
 ```
 
-### Tailwind
-
-(This section needs rewrite when we update tailwind)
-
-There is Tailwind configuration file (`tailwind.config.js`) in the root of the project.
-
-To use Tailwind, you need to have Node installed in your computer first. Go to [Node.js](https://nodejs.org/en/) and download the installer for your operating system. Follow the instructions to install Node.js and npm.
-
-(Not sure if you have Node installed? Run `node -v` and `npm -v` in your terminal. If you get a version number in response, you have Node.js installed.)
-
-In addition to Tailwind, this project uses Alpine.js for small interactive behaviors such as menus, toggles, and dismissible panels.
-
-(Not sure why you have a reference to the Tailwind installation here, so maybe consider removing it?)
-See [Tailwind Installation](https://tailwindcss.com/docs/installation).
-
-#### Generating Tailwind Directories
-
-(This section needs rewrite when we update tailwind)
-
-In order for tailwind know where all Django apps' templates and static files are located you need to run:
-
-This will first activate the virtual environment:
-```bash
-source env/bin/activate
-```
-Then:
-```bash
-python manage.py generate_tailwind_directories
-```
-
-This will populate the `tailwind_directories.json` file which is used in the `tailwind.config.js` configuration file.
-
-#### Compiling Tailwind
-
-(This section needs rewrite when we update tailwind)
-
-In order to turn Tailwind CSS into regular CSS, you need to run the following command:
-
-To compile CSS once, run:
+If you have already cloned the repository, pick a mode and run the matching initialization script in the project root:
 
 ```bash
-npm run tailwind:build
+# Docker Compose: Postgres + Redis + Celery + nginx media
+bash init-docker.sh
+
+# uv + npm on the host: SQLite, no Redis, Celery in always-eager mode
+bash init-local.sh
 ```
 
-#### Watching Tailwind (for changes)
+### Running the Project
 
-To avoid having to run the above command every time you change templates, watch for changes and recompile automatically:
-
-```bash
-npm run tailwind:watch
-```
-
-
-### Running the project
-
-After running `init-local.sh` (uv mode), start the dev server in one terminal and Tailwind watch in another:
+**Local mode (uv):**
+Start the development server in one terminal and Tailwind watch in another:
 
 ```bash
 uv run bash dev.sh
 npm run tailwind:watch
 ```
 
-After running `init-docker.sh` (Docker mode), the `web` service runs `bash dev.sh` automatically — bring everything up with:
+**Docker mode:**
+The `web` service runs `bash dev.sh` automatically. Bring everything up with:
 
 ```bash
 docker compose up -d
 ```
 
+## Documentation
+
+Comprehensive documentation is available at [docs.speedpy.com](https://docs.speedpy.com). 
+
+Key documentation pages:
+* [Installation & Requirements](https://docs.speedpy.com/docs/installation)
+* [Project Layout](https://docs.speedpy.com/docs/project-layout)
+* [Authentication](https://docs.speedpy.com/docs/authentication)
+* [API Reference](https://docs.speedpy.com/docs/api)
+* [Webhooks](https://docs.speedpy.com/docs/webhooks)
+* [Integrations](https://docs.speedpy.com/docs/integrations)
+* [Teams](https://docs.speedpy.com/docs/teams)
+* [Deployment](https://docs.speedpy.com/docs/deployment)
 
 ## Project Structure
 
-(This section needs rewrite when we update tailwind)
+SpeedPy uses a single-app Django project layout. The majority of your code will live in the `mainapp` directory, which is structured as a series of Python packages instead of single files (e.g., `mainapp/models/`, `mainapp/views/`, `mainapp/forms/`).
 
-The project structure is based on the idea of a Single App Django Project
-Layout. [Watch the video](https://youtu.be/R7y1MkzOk7o?si=bzxWTvF7Wtyl2yW7) for the reasoning behind it and detailed explanation.
-
-Actually two apps are present: `mainapp` and `usermodel`. But the majority of changes you'll be making in the `mainapp`
-app.
-
-Here is the tree with key files and directories listed:
-
-```
-├── README.md
-├── mainapp
-│   ├── __init__.py
-│   ├── admin
-│   │   └── __init__.py
-│   ├── apps.py
-│   ├── forms
-│   │   └── __init__.py
-│   ├── migrations
-│   │   └── __init__.py
-│   ├── models
-│   │   └── __init__.py
-│   └── views
-│       ├── __init__.py
-│       └── welcome.py
-├── package.json
-├── project
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-├── requirements.txt
-├── static
-├── tailwind.config.js
-├── templates
-└── usermodel
-```
-
-### mainapp
-
-The main app is where you will be putting your code.
-
-Instead of typical files, like `views.py` or `models.py`, you'll find directories with similar names. These are Python
-packages. The reason for this is that it's easier to split your code into multiple files this way.
-
-Since we have only one app, we don't really need to create a separate `urls.py` file, so the whole URL configuration is
-in `project/urls.py`. If you choose to have it separate, you can create a `urls.py` file in the `mainapp` directory and
-import it in the `project/urls.py`
-file. [Including other URLconfs](https://docs.djangoproject.com/en/5.0/topics/http/urls/#including-other-urlconfs)
-
-For example this is where you would add a model, a view and a form:
-
-```
-├── mainapp
-│   ├── __init__.py
-│   ├── admin
-│   │   └── __init__.py
-│   ├── apps.py
-│   ├── forms
-│   │   ├── __init__.py  #  <-- needs change
-│   │   └── expenses.py  #  <-- new file, where you put form(s)
-│   ├── models
-│   │   ├── __init__.py  #  <-- needs change
-│   │   └── expenses.py  #  <-- new file, where you put your model(s)
-│   └── views
-│       ├── __init__.py  #  <-- needs change
-│       ├── expenses.py  #  <-- new file, where you put your view(s)
-│       └── welcome.py
-```
-
-The `__init__.py` file is used to mark a directory as a Python package, which means that it can be imported and treated as a module. The `__init__.py` file is executed when the package is imported, allowing you to perform any necessary initialization or configuration.
-
-In the `__all__` variable in the `__init__.py` file you can list modules or symbols should be imported when using the `from package import *` syntax. When you use the `from mainapp.forms import *` syntax, only the modules or symbols listed in the `__all__` variable will be imported.
-
-General advice is to group your models/views/forms in files named according to their area of responsibility.
-
-If you need to refer a model from another model in a `ForeignKey` to avoid circular dependency instead of importing it, use a string with dotted notation.
-
-E.g. if you have two models, a `Category` model and a `Book` model, and `Book` needs a `ForeignKey` to the `Category` model
-
-instead of:
-
-```python
-from .category import Category
-
-class Book(models.Model):
-    category = models.ForeignKey(Category)
-```
-
-Do this instead:
-
-```python
-# no import here
-class Book(models.Model):
-    category = models.ForeignKey('mainapp.Category')
-```
-
-### usermodel
-
-Structure of the app:
-
-```
-.
-├── __init__.py
-├── admin.py
-├── apps.py
-├── management
-│   ├── __init__.py
-│   └── commands
-│       ├── __init__.py
-│       └── makesuperuser.py
-├── managers.py
-├── migrations
-│   ├── 0001_initial.py
-│   └── __init__.py
-├── models.py
-├── tests.py
-└── views.py
-```
-
-This app holds the custom user model. It's a good idea to keep it separate from the main app, since it will be pretty
-static and you won't be changing it often.
-
-This `Custom User` model has email as a login field.
-
-The `email` field is case-insensitive. (This next sentences are not very clear to me): Also, the initial migration for this field is created with collation set to `db_collation=settings.CI_COLLATION` and `CI_COLLATION` is it `project/settings.py` depending on the database you are using.
-
-## HTTP API
-
-SpeedPy includes a versioned REST API built with Django REST Framework and
-drf-spectacular.
-
-### Endpoints
-
-- `GET /api/v1/me/` — authenticated user profile (session auth)
-- `PATCH /api/v1/me/` — update profile (first_name, last_name, profile_picture)
-- `GET /api/v1/products/` — list products (demo)
-- `GET /api/v1/products/<uuid>/` — product detail (demo)
-
-### Documentation
-
-- **OpenAPI schema:** `/api/schema/`
-- **Swagger UI:** `/api/docs/`
-- **ReDoc:** `/api/redoc/`
-- **Integration manifest:** `/.well-known/speedpy.json` or `/api/v1/health/manifest/` —
-  machine-readable JSON describing API schema URLs, auth methods, scopes,
-  endpoints, and capabilities. No authentication required.
-
-By default, API docs are public when `DEBUG=True` and staff-only in production.
-Set `API_DOCS_PUBLIC=True` to make docs public in all environments.
-
-### Authentication
-
-- **Session auth** (browser): works with the allauth login flow, CSRF enforced on writes.
-- **JWT** (first-party clients): `POST /api/auth/token/` to obtain access+refresh tokens.
-  Access tokens expire in 15 min, refresh tokens in 7 days with rotation and blacklisting.
-- **Personal access tokens** (automation): create at `/accounts/tokens/`, use as
-  `Authorization: Bearer spd_<hex>`. Tokens are hashed at rest and support optional
-  scopes and expiry.
-- **OAuth2** (third-party apps): Authorization Code + PKCE and Device Code grant.
-  Manage applications in Django admin. Consent screen at `/o/authorize/`.
-  See `AGENTS.md` for device flow documentation.
-
-### Extending the API
-
-See the `## HTTP API` section in `AGENTS.md` for conventions on adding new
-endpoints, scopes, and tenant-scoped resources.
-
-## Integration Readiness Checklist
-
-Use this checklist to verify your fork is ready to expose integrations. Each item links to the relevant documentation for details.
-
-| Area | Status | Details |
-|------|--------|---------|
-| **OpenAPI schema** | Ready | `/api/schema/` auto-generated by drf-spectacular ([API docs](https://docs.speedpy.com/docs/api)) |
-| **Swagger UI & ReDoc** | Ready | `/api/docs/` and `/api/redoc/` ([API docs](https://docs.speedpy.com/docs/api)) |
-| **Session auth** | Ready | Browser-based via django-allauth ([Authentication](https://docs.speedpy.com/docs/authentication)) |
-| **JWT auth** | Ready | `POST /api/auth/token/` with MFA gate ([API docs](https://docs.speedpy.com/docs/api#jwt-token-issuance-gates)) |
-| **Personal access tokens** | Ready | `spd_`-prefixed, hashed at rest, scoped ([Integrations](https://docs.speedpy.com/docs/integrations)) |
-| **OAuth2 (Authorization Code + PKCE)** | Ready | Third-party apps, ChatGPT Actions ([Integrations](https://docs.speedpy.com/docs/integrations)) |
-| **OAuth2 Device Code** | Ready | MCP servers, CLIs ([Integrations](https://docs.speedpy.com/docs/integrations)) |
-| **Dynamic Client Registration** | Ready | RFC 7591, optional ([Integrations](https://docs.speedpy.com/docs/integrations#dynamic-client-registration-rfc-7591)) |
-| **Scopes** | Ready | `read:profile`, `write:profile`, `read:teams`, `write:teams`, `read:products`, `read:webhooks`, `write:webhooks`, `read:jobs`, `write:jobs`, `admin` ([Integrations — scopes](https://docs.speedpy.com/docs/integrations#available-scopes)) |
-| **Custom scopes** | Ready | Fork owners add entries to `OAUTH2_PROVIDER["SCOPES"]` ([Integrations — custom scopes](https://docs.speedpy.com/docs/integrations#registering-custom-scopes)) |
-| **Teams / multi-tenancy** | Ready | Team model with roles, membership, invitations ([Teams](https://docs.speedpy.com/docs/teams)) |
-| **Rate limiting** | Ready | Per-user throttle, `X-RateLimit-*` headers, `429` + `Retry-After` ([API docs](https://docs.speedpy.com/docs/api#rate-limiting)) |
-| **Request correlation IDs** | Ready | `X-Request-ID` on every response ([API docs](https://docs.speedpy.com/docs/api#request-correlation-ids)) |
-| **Idempotency keys** | Ready | `Idempotency-Key` header on selected POST endpoints ([API docs](https://docs.speedpy.com/docs/api#idempotency-keys)) |
-| **Webhooks** | Ready | Team-scoped, HMAC-signed, at-least-once delivery, DLQ ([Webhooks](https://docs.speedpy.com/docs/webhooks)) |
-| **MCP server example** | Ready | `examples/mcp_server/` with PAT and OAuth2 device flow ([Integrations](https://docs.speedpy.com/docs/integrations#starter-examples)) |
-| **CLI example** | Ready | `examples/cli/` with PAT and device flow auth ([Integrations](https://docs.speedpy.com/docs/integrations#starter-examples)) |
-| **Integration manifest** | Ready | `/.well-known/speedpy.json` — machine-readable capabilities ([API docs](https://docs.speedpy.com/docs/api)) |
-| **API versioning** | Ready | URL-path versioning, deprecation headers, sunset pattern ([API Versioning](https://docs.speedpy.com/docs/api-versioning)) |
-| **Changelog** | Ready | Maintained at [docs.speedpy.com/docs/changelog](https://docs.speedpy.com/docs/changelog) |
-
-**What fork owners still need to configure:**
-
-- Define your **business resource endpoints** (the boilerplate provides infrastructure, not domain models)
-- Register **custom scopes** for your domain resources in `OAUTH2_PROVIDER["SCOPES"]`
-- Add **domain-specific webhook events** via `WebhookEvent` in `mainapp/webhooks/events.py`
-- Ensure **Celery** is running for async webhook delivery
-- Review **rate limits** — defaults (100/hr anon, 1000/hr auth) may need tuning for your use case
-- Set `ALLOWED_HOSTS`, `SECRET_KEY`, and `SALT_KEY` for production
-- Configure OAuth2 redirect URIs for your deployment domain
-
-See the full [Integration Readiness Checklist](https://docs.speedpy.com/docs/integration-readiness) in the documentation for expanded guidance.
-
-## How to work on the project
-Add your models in new files under `mainapp/models/` directory. Then add the model to `mainapp/models/__init__.py` file. This way you can split your models into multiple files.
-
-Add your views in new files under `mainapp/views/` directory. Then add the view to `mainapp/views/__init__.py` file. 
-
-Add your forms in new files under `mainapp/forms/` directory. Then add the form to `mainapp/forms/__init__.py` file. 
-
-Templates for the app go into the root `templates` directory under `mainapp` subdirectory. For example, if you have a view `mainapp.views.home`, then the template should be at `templates/mainapp/home.html`.
-
-The root `templates` directory is great because you can override templates from other apps.
+A separate `usermodel` app handles the custom user model with email-based authentication.
 
 ## Production Readiness
 
-SpeedPy ships demo content (Product CRUD, demo API endpoints, placeholder pages) as teaching examples. Before going to production, strip these from your fork:
+Before deploying to production, ensure you remove demo content and placeholder pages. Refer to the `PRODUCTION_READY.md` file in the repository or the [Production Readiness](https://docs.speedpy.com/docs/production-readiness) documentation for a complete checklist.
 
-- **`PRODUCTION_READY.md`** — step-by-step checklist
-- **`demo-content.json`** — machine-readable manifest of demo artifacts
-- **`/strip-demo`** — agent skill for automated, audit-first removal
+## Deployment
 
-Quick audit: `rg SPEEDPY_DEMO` to find all marked demo artifacts.
-
-## Deploy with Appliku
-
-Already includes `appliku.yml` file which will automatically configure your application within Appliku.
-
-* Create your app
-* Change the build image to Python 3.12 + node 20.10
-* Set the "Build command" to: `npm install && python manage.py generate_tailwind_directories && npm run tailwind:build`
-* Create Postgres 16 and Redis 7 databases
-* Add environment variables:
-  * ALLOWED_HOSTS – if you have multiple domains make it a comma separated without spaces
-  * SECRET_KEY
-  * CELERY_BROKER_URL - use value of REDIS_URL or use RabbitMQ
-* Create processes:
-  * `web`: `web.sh`
-  * `release`: `bash release.sh`
-  * `celery`: `bash celery-worker.sh`
-  * `beat`: `bash celery-beat.sh`
+SpeedPy includes an `appliku.yml` file for automatic configuration with [Appliku](https://appliku.com). See the [Deployment documentation](https://docs.speedpy.com/docs/deployment) for detailed instructions on setting up your application, databases, and background workers.
