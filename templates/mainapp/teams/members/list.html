@@ -9,56 +9,55 @@
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Team Members</h1>
-                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                <h1 class="text-2xl font-bold text-fg">Team Members</h1>
+                <p class="mt-2 text-sm text-fg-secondary">
                     Manage your team members and their roles
                 </p>
             </div>
             {% if can_invite %}
-            <a href="{% url 'invite_member' team_id=team.id %}"
-               class="py-2 px-4 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-offset-2">
+            <a href="{% url 'invite_member' team_id=team.id %}" class="btn btn-contained btn-primary">
                 Invite Member
             </a>
             {% endif %}
         </div>
 
         <!-- Members Table -->
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-900">
+        <div class="card overflow-hidden">
+            <table class="table">
+                <thead>
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-fg-secondary uppercase tracking-wider">
                             Member
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-fg-secondary uppercase tracking-wider">
                             Role
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-fg-secondary uppercase tracking-wider">
                             Joined
                         </th>
                         {% if can_invite %}
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-fg-secondary uppercase tracking-wider">
                             Actions
                         </th>
                         {% endif %}
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody>
                     {% for membership in members %}
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10">
-                                    <div class="h-10 w-10 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-medium">
+                                    <div class="h-10 w-10 rounded-full bg-primary text-primary-contrast flex items-center justify-center text-sm font-medium">
                                         {{ membership.user.email|slice:":2"|upper }}
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                    <div class="text-sm font-medium text-fg">
                                         {{ membership.user.email }}
                                     </div>
                                     {% if membership.user == user %}
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                    <div class="text-sm text-fg-secondary">
                                         (You)
                                     </div>
                                     {% endif %}
@@ -67,24 +66,16 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if membership.role == 'owner' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                                Owner
-                            </span>
+                            <span class="badge badge-secondary rounded-full">Owner</span>
                             {% elif membership.role == 'admin' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                Admin
-                            </span>
+                            <span class="badge badge-info rounded-full">Admin</span>
                             {% elif membership.role == 'member' %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                Member
-                            </span>
+                            <span class="badge badge-success rounded-full">Member</span>
                             {% else %}
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                                Viewer
-                            </span>
+                            <span class="badge rounded-full bg-fg-secondary/10 text-fg-secondary">Viewer</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-fg-secondary">
                             {{ membership.invite_accepted_at|date:"M d, Y" }}
                         </td>
                         {% if can_invite %}
@@ -92,14 +83,14 @@
                             {% if user_role == 'owner' or user_role == 'admin' and membership.role in 'member,viewer' %}
                                 {% if membership.user != user %}
                                 <a href="{% url 'update_member_role' team_id=team.id membership_id=membership.id %}"
-                                   class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3">
+                                   class="text-primary hover:text-primary/80 mr-3">
                                     Change Role
                                 </a>
                                 <form method="post" action="{% url 'remove_member' team_id=team.id membership_id=membership.id %}"
                                       style="display: inline;"
                                       onsubmit="return confirm('Are you sure you want to remove {{ membership.user.email }} from the team?');">
                                     {% csrf_token %}
-                                    <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                    <button type="submit" class="text-error hover:text-error/80">
                                         Remove
                                     </button>
                                 </form>
@@ -110,7 +101,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                        <td colspan="4" class="px-6 py-4 text-center text-sm text-fg-secondary">
                             No members found
                         </td>
                     </tr>
@@ -121,41 +112,41 @@
         <!-- Pending Invitations (Owner/Admin Only) -->
         {% if pending_invitations %}
         <div class="mt-8">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pending Invitations</h2>
-            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-900">
+            <h2 class="text-lg font-semibold text-fg mb-4">Pending Invitations</h2>
+            <div class="card overflow-hidden">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-fg-secondary uppercase tracking-wider">
                                 Email
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-fg-secondary uppercase tracking-wider">
                                 Role
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-fg-secondary uppercase tracking-wider">
                                 Invited By
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-fg-secondary uppercase tracking-wider">
                                 Expires
                             </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-fg-secondary uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody>
                         {% for invitation in pending_invitations %}
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-fg">
                                 {{ invitation.email }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 capitalize">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-fg-secondary capitalize">
                                 {{ invitation.role }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-fg-secondary">
                                 {{ invitation.invited_by.email }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-fg-secondary">
                                 {{ invitation.expires_at|date:"M d, Y" }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -163,7 +154,7 @@
                                       style="display: inline;"
                                       onsubmit="return confirm('Are you sure you want to revoke this invitation?');">
                                     {% csrf_token %}
-                                    <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                    <button type="submit" class="text-error hover:text-error/80">
                                         Revoke
                                     </button>
                                 </form>

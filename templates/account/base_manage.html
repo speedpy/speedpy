@@ -1,57 +1,118 @@
-{% extends "allauth/layouts/manage.html" %}
-{% load i18n %}
-{% block content %}
-    <div class="account-shell">
-        <aside class="flex overflow-x-auto border-b border-divider py-4 lg:block lg:w-64 lg:flex-none lg:border-0 lg:py-20">
-            <nav class="flex-none px-4 sm:px-6 lg:px-0">
-                {% url "account_profile" as profile_url %}
-                {% url "account_change_password" as password_url %}
-                {% url "account_email" as email_url %}
-                {% if SPEEDPY_MFA_BACKEND == "allauth_mfa" %}
-                    {% url "mfa_index" as mfa_url %}
-                {% else %}
-                    {% url "account_otp_settings" as mfa_url %}
-                {% endif %}
-                {% url "account_pat_list" as pat_url %}
-                <ul role="list" class="account-nav">
+{% extends "mainapp/layouts/sidebar_layout.html" %}
+{% load static i18n %}
+
+{% block sidebar_menu %}
+    {% url "account_profile" as profile_url %}
+    {% url "account_change_password" as password_url %}
+    {% url "account_email" as email_url %}
+    {% if SPEEDPY_MFA_BACKEND == "allauth_mfa" %}
+        {% url "mfa_index" as mfa_url %}
+    {% else %}
+        {% url "account_otp_settings" as mfa_url %}
+    {% endif %}
+    {% url "account_pat_list" as pat_url %}
+    <div class="sidebar">
+        <a href="/" class="sidebar-brand">
+            <img src="{% static LOGO_PATH %}" class="h-8 w-auto" alt="{{ SITE_TITLE }}"/>
+            <span class="sidebar-brand-text">{{ SITE_TITLE }}</span>
+        </a>
+
+        <nav class="flex-1" aria-label="Account settings navigation">
+            <p class="sidebar-section-label">{% trans "General" %}</p>
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="{% url 'dashboard' %}" class="sidebar-link">
+                        <svg class="sidebar-link-icon" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                            <path d="M3.5 10.5h5v6h-5v-6ZM11.5 3.5h5v13h-5v-13ZM3.5 3.5h5v4h-5v-4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                        </svg>
+                        <span>{% trans "Dashboard" %}</span>
+                    </a>
+                </li>
+            </ul>
+
+            <p class="sidebar-section-label mt-6">{% trans "Account Settings" %}</p>
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="{{ profile_url }}"
+                       class="sidebar-link {% if request.path == profile_url %}sidebar-link-active{% endif %}">
+                        <svg class="sidebar-link-icon" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                            <path d="M10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM4 16.5c0-2.5 2.69-4.5 6-4.5s6 2 6 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>{% trans "Your Profile" %}</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ password_url }}"
+                       class="sidebar-link {% if request.path == password_url %}sidebar-link-active{% endif %}">
+                        <svg class="sidebar-link-icon" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                            <path d="M5.5 9V6.5a4.5 4.5 0 0 1 9 0V9M4.5 9h11A1.5 1.5 0 0 1 17 10.5v5A1.5 1.5 0 0 1 15.5 17h-11A1.5 1.5 0 0 1 3 15.5v-5A1.5 1.5 0 0 1 4.5 9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                        </svg>
+                        <span>{% trans "Change Password" %}</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ email_url }}"
+                       class="sidebar-link {% if email_url in request.path %}sidebar-link-active{% endif %}">
+                        <svg class="sidebar-link-icon" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                            <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h11A1.5 1.5 0 0 1 17 6.5v7A1.5 1.5 0 0 1 15.5 15h-11A1.5 1.5 0 0 1 3 13.5v-7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                            <path d="m3.5 6.5 6.5 5 6.5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>{% trans "Change Email" %}</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ mfa_url }}"
+                       class="sidebar-link {% if mfa_url in request.path %}sidebar-link-active{% endif %}">
+                        <svg class="sidebar-link-icon" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                            <path d="M10 2.5 4 5v4.5c0 3.5 2.5 6.5 6 8 3.5-1.5 6-4.5 6-8V5l-6-2.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                            <path d="m7.75 10 1.5 1.5 3-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>{% trans "Two-Factor Authentication" %}</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ pat_url }}"
+                       class="sidebar-link {% if 'tokens' in request.path %}sidebar-link-active{% endif %}">
+                        <svg class="sidebar-link-icon" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                            <path d="M12.5 4a3.5 3.5 0 0 0-3.4 4.36L3.5 14v2.5H6v-1.5h1.5v-1.5h1.5l1.64-1.64A3.5 3.5 0 1 0 12.5 4Zm.75 2.75a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                        </svg>
+                        <span>{% trans "API Tokens" %}</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="mt-8 space-y-4">
+            <div class="sidebar-divider">
+                <ul class="sidebar-nav">
                     <li>
-                        <a href="{{ profile_url }}"
-                           class="account-nav-link {% if request.path == profile_url %}account-nav-link-active{% endif %}">
-                            <span class="font-semibold">{% trans "Your Profile" %}</span>
+                        <a href="https://docs.speedpy.com/" target="_blank" rel="noopener noreferrer" class="sidebar-link">
+                            <svg class="sidebar-link-icon" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                                <path d="M5 3.5h7l3 3V16a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 5 16V3.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                <path d="M12 3.5V7h3M7.75 10h4.5M7.75 13h4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>{% trans "Documentation" %}</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ password_url }}"
-                           class="account-nav-link {% if request.path == password_url %}account-nav-link-active{% endif %}">
-                            <span class="font-semibold">{% trans "Change Password" %}</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ email_url }}"
-                           class="account-nav-link {% if request.path == email_url %}account-nav-link-active{% endif %}">
-                            <span class="font-semibold">{% trans "Change Email" %}</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ mfa_url }}"
-                           class="account-nav-link {% if mfa_url in request.path %}account-nav-link-active{% endif %}">
-                            <span class="font-semibold">{% trans "Two-Factor Authentication" %}</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ pat_url }}"
-                           class="account-nav-link {% if 'tokens' in request.path %}account-nav-link-active{% endif %}">
-                            <span class="font-semibold">{% trans "API Tokens" %}</span>
+                        <a href="#" class="sidebar-link">
+                            <svg class="sidebar-link-icon" aria-hidden="true" fill="none" viewBox="0 0 20 20">
+                                <path d="M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M8.25 8a2 2 0 1 1 2.95 1.76c-.77.43-1.2.89-1.2 1.74M10 14h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                            <span>{% trans "Help" %}</span>
                         </a>
                     </li>
                 </ul>
-            </nav>
-        </aside>
-        <main class="px-4 py-16 sm:px-6 lg:flex-auto lg:px-0 lg:py-20">
-            <div class="card mx-auto max-w-2xl shadow-speedpyui-1 lg:mx-0 lg:max-w-none">
-                {% block main_content %}
-                {% endblock %}
             </div>
-        </main>
+        </div>
     </div>
-{% endblock %}
+{% endblock sidebar_menu %}
+
+{% block main_content %}
+    <div class="page-container max-w-3xl py-8 lg:py-12">
+        <div class="card mx-auto shadow-speedpyui-1 lg:mx-0 lg:max-w-none">
+            {% block settings_content %}{% endblock %}
+        </div>
+    </div>
+{% endblock main_content %}
