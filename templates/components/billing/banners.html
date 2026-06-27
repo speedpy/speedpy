@@ -1,0 +1,36 @@
+{% comment %}
+Persistent billing-state banners. Rendered on every authenticated page via the
+sidebar layout. Reads BILLING_STATE / BILLING_OVER_LIMIT from the `billing`
+context processor. The billing link resolves to the team page (team mode) or the
+account page (user mode); both are guarded so reverses never fire when off.
+{% endcomment %}
+{% if BILLING_STATE == 'grace' or BILLING_STATE == 'disabled' or BILLING_OVER_LIMIT %}
+    {% if SPEEDPY_TEAMS_ENABLED %}
+        {% if SIDEBAR_TEAM %}{% url 'team_billing' team_id=SIDEBAR_TEAM.id as billing_href %}{% endif %}
+    {% else %}
+        {% url 'account_billing' as billing_href %}
+    {% endif %}
+    <div class="page-container pt-4 space-y-3">
+        {% if BILLING_STATE == 'grace' %}
+            <div class="alert alert-warning">
+                Your payment is past due. Paid features still work, but creating new
+                records is paused.
+                {% if billing_href %}<a href="{{ billing_href }}" class="font-semibold underline">Update billing</a>.{% endif %}
+            </div>
+        {% elif BILLING_STATE == 'disabled' %}
+            <div class="alert alert-error">
+                Your subscription is inactive and paid features are turned off.
+                {% if billing_href %}<a href="{{ billing_href }}" class="font-semibold underline">Restore your subscription</a>.{% endif %}
+            </div>
+        {% endif %}
+
+        {% if BILLING_OVER_LIMIT.team_members %}
+            <div class="alert alert-warning">
+                Your team has {{ BILLING_OVER_LIMIT.team_members.count }} members but your
+                plan allows {{ BILLING_OVER_LIMIT.team_members.limit }}.
+                {% if billing_href %}<a href="{{ billing_href }}" class="font-semibold underline">Upgrade</a>{% endif %}
+                or remove members.
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

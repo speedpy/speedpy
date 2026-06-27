@@ -51,3 +51,31 @@ if getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
         path('teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/test/', webhook_views.TeamWebhookTestView.as_view(), name='team_webhook_test'),
         path('teams/<uuid:team_id>/webhooks/<uuid:webhook_id>/rotate-secret/', webhook_views.TeamWebhookRotateSecretView.as_view(), name='team_webhook_rotate_secret'),
     ]
+
+# Billing URLs (conditionally included based on SPEEDPY_BILLING_ENABLED)
+if getattr(settings, "SPEEDPY_BILLING_ENABLED", False):
+    # Provider webhooks — public, signature-verified, must work in BOTH modes
+    # (never gated on the teams flag). Registered with and without a trailing
+    # slash so APPEND_SLASH never 301-redirects a POST (which would drop the body
+    # and signature).
+    urlpatterns += [
+        path('billing/webhooks/stripe/', views.StripeWebhookView.as_view(), name='billing_stripe_webhook'),
+        path('billing/webhooks/stripe', views.StripeWebhookView.as_view()),
+        path('billing/webhooks/paddle/', views.PaddleWebhookView.as_view(), name='billing_paddle_webhook'),
+        path('billing/webhooks/paddle', views.PaddleWebhookView.as_view()),
+    ]
+
+    if getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
+        # Team billing (owner-only)
+        urlpatterns += [
+            path('teams/<uuid:team_id>/billing/', views.TeamBillingView.as_view(), name='team_billing'),
+            path('teams/<uuid:team_id>/billing/checkout/<str:plan_key>/<str:interval>/', views.TeamCheckoutView.as_view(), name='team_billing_checkout'),
+            path('teams/<uuid:team_id>/billing/portal/', views.TeamBillingPortalView.as_view(), name='team_billing_portal'),
+        ]
+    else:
+        # Account billing (user mode)
+        urlpatterns += [
+            path('accounts/billing/', views.AccountBillingView.as_view(), name='account_billing'),
+            path('accounts/billing/checkout/<str:plan_key>/<str:interval>/', views.AccountCheckoutView.as_view(), name='account_billing_checkout'),
+            path('accounts/billing/portal/', views.AccountBillingPortalView.as_view(), name='account_billing_portal'),
+        ]

@@ -17,9 +17,12 @@
                class="text-sm font-medium text-fg-secondary hover:text-primary transition-colors">
                 Webhooks
             </a>
-            <a href="#" class="text-sm font-medium text-fg-secondary hover:text-primary transition-colors">
+            {% if SPEEDPY_BILLING_ENABLED and user_role == 'owner' %}
+            <a href="{% url 'team_billing' team_id=team.id %}"
+               class="text-sm font-medium text-fg-secondary hover:text-primary transition-colors">
                 Billing
             </a>
+            {% endif %}
             {% if user_role == 'owner' or user_role == 'admin' %}
             <a href="{% url 'team_settings' team_id=team.id %}"
                class="text-sm font-medium text-fg-secondary hover:text-primary transition-colors">

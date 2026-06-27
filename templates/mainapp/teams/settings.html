@@ -50,20 +50,22 @@
             </div>
         </div>
 
-        <!-- Additional Settings Sections (Future) -->
-        <div class="alert alert-info mt-8">
-            <div class="flex items-start gap-3">
-                <svg class="h-6 w-6 text-info flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+        <!-- Billing -->
+        {% if SPEEDPY_BILLING_ENABLED and user_role == 'owner' %}
+        <div class="card mt-8">
+            <div class="card-body !p-6 flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h3 class="text-sm font-semibold text-fg">More Settings Coming Soon</h3>
+                    <h3 class="text-sm font-semibold text-fg">Billing</h3>
                     <p class="mt-1 text-sm text-fg-secondary">
-                        Additional settings like billing, member management, and danger zone will be available here.
+                        Manage your team's subscription, plan, and payment method.
                     </p>
                 </div>
+                <a href="{% url 'team_billing' team_id=team.id %}" class="btn btn-outlined btn-primary">
+                    Manage billing
+                </a>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

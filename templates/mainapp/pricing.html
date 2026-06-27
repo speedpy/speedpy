@@ -26,7 +26,7 @@
                         <span class="text-base text-fg">Yearly Payment</span>
                         <span class="inline-flex items-center justify-center rounded-full bg-primary text-primary-contrast
                                      text-[0.65rem] font-semibold uppercase tracking-wide h-5 px-2 ml-2">
-                            25% OFF
+                            Save annually
                         </span>
                     </div>
                 </div>
@@ -36,107 +36,75 @@
         <hr class="border-0 border-t border-divider m-0">
 
         {# ---------- Plans ---------- #}
+        {% if SPEEDPY_BILLING_ENABLED and user.is_authenticated %}
+            {% if SPEEDPY_TEAMS_ENABLED %}
+                {% if SIDEBAR_TEAM %}{% url 'team_billing' team_id=SIDEBAR_TEAM.id as billing_href %}{% endif %}
+            {% else %}
+                {% url 'account_billing' as billing_href %}
+            {% endif %}
+        {% endif %}
         <section class="py-12">
             <div class="max-w-6xl mx-auto px-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 
-                    {# ---------- Plan 1 : Free ---------- #}
+                    {% for plan in plans %}
                     <div class="flex flex-col max-w-md mx-auto md:mx-0 w-full">
                         <div class="p-8">
                             <div class="mt-4 flex items-baseline gap-1">
-                                <span class="text-3xl font-bold text-fg">$0</span>
-                                <span class="text-sm font-medium text-fg-secondary" x-text="yearly ? '/yr' : '/mo'">/mo</span>
+                                {% if plan.is_contact %}
+                                    <span class="text-3xl font-bold text-fg">Custom</span>
+                                {% else %}
+                                    <span class="text-3xl font-bold text-fg">
+                                        $<span x-text="yearly ? '{{ plan.price_yearly }}' : '{{ plan.price_monthly }}'">{{ plan.price_monthly }}</span>
+                                    </span>
+                                    <span class="text-sm font-medium text-fg-secondary" x-text="yearly ? '/yr' : '/mo'">/mo</span>
+                                {% endif %}
                             </div>
-                            <h3 class="mt-4 text-lg font-semibold text-fg">Free</h3>
-                            <p class="mt-2 text-sm text-fg-secondary">
-                                For hobby projects and testing. Includes all the basics to get you started.
-                            </p>
+                            <h3 class="mt-4 text-lg font-semibold text-fg">{{ plan.name }}</h3>
+                            <p class="mt-2 text-sm text-fg-secondary">{{ plan.description }}</p>
                         </div>
 
                         <hr class="border-0 border-t border-divider m-0">
 
                         <div class="flex flex-col flex-grow p-8">
                             <ul class="space-y-4 p-0 m-0 list-none">
-                                {% include "mainapp/pricing/_feature.html" with text="Basic features" %}
-                                {% include "mainapp/pricing/_feature.html" with text="Community support" %}
-                                {% include "mainapp/pricing/_feature.html" with text="One project" %}
+                                {% for feature in plan.features %}
+                                    {% include "mainapp/pricing/_feature.html" with text=feature %}
+                                {% endfor %}
                             </ul>
                             <div class="flex-grow"></div>
-                            <a href="{% url 'account_signup' %}"
-                               class="btn btn-outlined btn-primary w-full mt-10">
-                                Get started
-                            </a>
+
+                            {% if plan.is_contact %}
+                                <a href="{% url 'contact' %}"
+                                   class="btn btn-outlined btn-primary w-full mt-10">
+                                    Contact us
+                                </a>
+                            {% elif not plan.is_paid %}
+                                <a href="{% url 'account_signup' %}"
+                                   class="btn btn-outlined btn-primary w-full mt-10">
+                                    Get started
+                                </a>
+                            {% elif billing_href %}
+                                <a href="{{ billing_href }}"
+                                   class="btn btn-contained btn-primary w-full mt-10">
+                                    Choose {{ plan.name }}
+                                </a>
+                            {% else %}
+                                <a href="{% url 'account_signup' %}"
+                                   class="btn btn-contained btn-primary w-full mt-10">
+                                    Get started
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
-
-                    {# ---------- Plan 2 : Professional (popular) ---------- #}
-                    <div class="flex flex-col max-w-md mx-auto md:mx-0 w-full">
-                        <div class="p-8">
-                            <div class="mt-4 flex items-baseline gap-1">
-                                <span class="text-3xl font-bold text-fg" x-text="yearly ? '$801' : '$89'">$89</span>
-                                <span class="text-sm font-medium text-fg-secondary" x-text="yearly ? '/yr' : '/mo'">/mo</span>
-                            </div>
-                            <h3 class="mt-4 text-lg font-semibold text-fg">Professional</h3>
-                            <p class="mt-2 text-sm text-fg-secondary">
-                                For serious projects. Advanced features.
-                            </p>
-                        </div>
-
-                        <hr class="border-0 border-t border-divider m-0">
-
-                        <div class="flex flex-col flex-grow p-8">
-                            <ul class="space-y-4 p-0 m-0 list-none">
-                                {% include "mainapp/pricing/_feature.html" with text="Everything in Free" %}
-                                {% include "mainapp/pricing/_feature.html" with text="More cool stuff" %}
-                                {% include "mainapp/pricing/_feature.html" with text="Email support 14 business days" %}
-                                {% include "mainapp/pricing/_feature.html" with text="Unlimited projects" %}
-                            </ul>
-                            <div class="flex-grow"></div>
-                            <a href="{% url 'account_signup' %}"
-                               class="btn btn-contained btn-primary w-full mt-10">
-                                Coming soon
-                            </a>
-                        </div>
-                    </div>
-
-                    {# ---------- Plan 3 : Enterprise ---------- #}
-                    <div class="flex flex-col max-w-md mx-auto md:mx-0 w-full">
-                        <div class="p-8">
-                            <div class="mt-4 flex items-baseline gap-1">
-                                <span class="text-3xl font-bold text-fg" x-text="yearly ? '$269,991' : '$29,999'">$29,999</span>
-                                <span class="text-sm font-medium text-fg-secondary" x-text="yearly ? '/yr' : '/mo'">/mo</span>
-                            </div>
-                            <h3 class="mt-4 text-lg font-semibold text-fg">Enterprise</h3>
-                            <p class="mt-2 text-sm text-fg-secondary">
-                                For those who have hired too many developers.
-                            </p>
-                        </div>
-
-                        <hr class="border-0 border-t border-divider m-0">
-
-                        <div class="flex flex-col flex-grow p-8">
-                            <ul class="space-y-4 p-0 m-0 list-none">
-                                {% include "mainapp/pricing/_feature.html" with text="Everything in Professional" %}
-                                {% include "mainapp/pricing/_feature.html" with text="Actual support via email" %}
-                                {% include "mainapp/pricing/_feature.html" with text="SAML / SSO / AD auth" %}
-                                {% include "mainapp/pricing/_feature.html" with text="Extra large font for COBOL devs" %}
-                                {% include "mainapp/pricing/_feature.html" with text="Unlimited projects" %}
-                                {% include "mainapp/pricing/_feature.html" with text="IPO friendly" %}
-                            </ul>
-                            <div class="flex-grow"></div>
-                            <a href="{% url 'account_signup' %}"
-                               class="btn btn-outlined btn-primary w-full mt-10">
-                                Contact us
-                            </a>
-                        </div>
-                    </div>
+                    {% endfor %}
 
                 </div>
             </div>
         </section>
 
         <p class="text-center text-xs text-fg-secondary pb-10">
-            30% or even more sadly goes to fees and taxes
+            Taxes and provider fees may apply at checkout.
         </p>
     </main>
 

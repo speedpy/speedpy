@@ -4,6 +4,12 @@ from .otp_profile import UserOTPProfile
 from .teams import Team, TeamMembership, TeamInvitation, get_default_team_for_user
 from .tours import UserTourCompletion
 from .webhooks import WebhookEndpoint, WebhookDelivery
+from .billing import (
+    BillingCustomer,
+    BillingSubscription,
+    BillingEventLog,
+    resolve_billable,
+)
 
 __all__ = [
     'AsyncJob',
@@ -16,4 +22,8 @@ __all__ = [
     'UserTourCompletion',
     'WebhookEndpoint',
     'WebhookDelivery',
+    'BillingCustomer',
+    'BillingSubscription',
+    'BillingEventLog',
+    'resolve_billable',
 ]

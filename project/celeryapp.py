@@ -85,6 +85,14 @@ app.conf.beat_schedule = {
             "queue": "default",
         },
     },
+    "process-billing-subscriptions": {
+        "task": "process_billing_subscriptions",
+        "schedule": crontab(hour=3, minute=0),  # Run daily at 3:00 AM
+        "options": {
+            "ignore_result": True,
+            "queue": "default",
+        },
+    },
 }
 
 @setup_logging.connect

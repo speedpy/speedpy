@@ -1,0 +1,126 @@
+{% comment %}
+Shared billing overview body. Expects context from
+_BillingActionsMixin.get_billing_context: plan_rows, current_plan,
+current_plan_key, subscription, billing_state, has_active_subscription,
+over_limit, portal_url.
+{% endcomment %}
+<div x-data="{ yearly: false }">
+
+    {# ---- Current plan & status ---- #}
+    <div class="card">
+        <div class="card-body">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <p class="eyebrow">Current plan</p>
+                    <h2 class="h3 capitalize">{{ current_plan.name }}</h2>
+                    {% if subscription %}
+                        <p class="mt-1 text-sm text-fg-secondary">
+                            Status:
+                            {% if billing_state == 'enabled' %}
+                                <span class="badge badge-success">Active</span>
+                            {% elif billing_state == 'grace' %}
+                                <span class="badge badge-warning">Payment past due</span>
+                            {% else %}
+                                <span class="badge badge-error">Inactive</span>
+                            {% endif %}
+                        </p>
+                        {% if subscription.current_period_ends_at %}
+                            <p class="mt-1 text-sm text-fg-secondary">
+                                Renews / ends: {{ subscription.current_period_ends_at|date:"M d, Y" }}
+                            </p>
+                        {% endif %}
+                    {% else %}
+                        <p class="mt-1 text-sm text-fg-secondary">No active subscription.</p>
+                    {% endif %}
+                </div>
+
+                {% if has_active_subscription %}
+                    <form method="post" action="{{ portal_url }}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outlined btn-primary">
+                            Manage billing
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+
+            {% if over_limit.team_members %}
+                <div class="alert alert-warning mt-4">
+                    Your team has {{ over_limit.team_members.count }} members but your plan
+                    allows {{ over_limit.team_members.limit }}. Please remove members or upgrade.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ---- Plan picker ---- #}
+    <div class="mt-8 flex items-center gap-3">
+        <label class="switch">
+            <input type="checkbox" class="sr-only peer" x-model="yearly">
+            <span class="switch-track"></span>
+            <span class="switch-thumb"></span>
+        </label>
+        <span class="text-base text-fg">Yearly billing</span>
+        <span class="badge badge-primary">Save with annual</span>
+    </div>
+
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for row in plan_rows %}
+            {% with plan=row.plan %}
+            <div class="card {% if row.is_current %}border-2 border-primary{% endif %}">
+                <div class="card-body flex flex-col h-full">
+                    <h3 class="h4">{{ plan.name }}</h3>
+
+                    {% if plan.is_contact %}
+                        <p class="mt-2 text-2xl font-bold text-fg">Custom</p>
+                    {% else %}
+                        <p class="mt-2 text-2xl font-bold text-fg">
+                            $<span x-text="yearly ? '{{ plan.price_yearly }}' : '{{ plan.price_monthly }}'">{{ plan.price_monthly }}</span>
+                            <span class="text-sm font-medium text-fg-secondary" x-text="yearly ? '/yr' : '/mo'">/mo</span>
+                        </p>
+                    {% endif %}
+
+                    <p class="mt-2 text-sm text-fg-secondary">{{ plan.description }}</p>
+
+                    <ul class="mt-4 space-y-2 text-sm text-fg-secondary list-none p-0 m-0 flex-grow">
+                        {% for feature in plan.features %}
+                            <li>• {{ feature }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="mt-6">
+                        {% if row.is_current %}
+                            <button class="btn btn-contained btn-primary w-full" disabled>
+                                Current plan
+                            </button>
+                        {% elif plan.is_contact %}
+                            <a href="{% url 'contact' %}" class="btn btn-outlined btn-primary w-full">
+                                Contact us
+                            </a>
+                        {% elif not plan.is_paid %}
+                            {# Free tier — downgrade is handled via the portal/cancellation #}
+                            <span class="text-xs text-fg-secondary">Default plan</span>
+                        {% elif has_active_subscription %}
+                            <form method="post" action="{{ portal_url }}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outlined btn-primary w-full">
+                                    Change in portal
+                                </button>
+                            </form>
+                        {% else %}
+                            <a x-show="!yearly" href="{{ row.checkout_monthly_url }}"
+                               class="btn btn-contained btn-primary w-full">
+                                Choose {{ plan.name }}
+                            </a>
+                            <a x-show="yearly" href="{{ row.checkout_yearly_url }}"
+                               class="btn btn-contained btn-primary w-full" style="display:none;">
+                                Choose {{ plan.name }}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+</div>

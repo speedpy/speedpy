@@ -105,6 +105,9 @@
          aria-hidden="true"></div>
 
     <main class="pt-16 lg:ml-[17.5rem]">
+        {% if SPEEDPY_BILLING_ENABLED %}
+            {% include "components/billing/banners.html" %}
+        {% endif %}
         {% block main_content %}
         {% endblock main_content %}
     </main>

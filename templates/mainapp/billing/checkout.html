@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block head_title %}Checkout{% endblock %}
+
+{% block content %}
+<main class="section">
+    <div class="page-container max-w-xl py-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <p class="eyebrow">Subscribe</p>
+                <h1 class="h2">{{ plan.name }}</h1>
+                <p class="mt-2 text-2xl font-bold text-fg">
+                    {% if interval == 'yearly' %}${{ plan.price_yearly }}/yr{% else %}${{ plan.price_monthly }}/mo{% endif %}
+                </p>
+                <p class="mt-2 text-sm text-fg-secondary">{{ plan.description }}</p>
+
+                <div class="mt-6">
+                    <button id="open-checkout" class="btn btn-contained btn-primary">
+                        Open secure checkout
+                    </button>
+                </div>
+                <div class="checkout-container mt-6"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+{# Paddle.js is loaded from Paddle's CDN; checkout runs client-side. #}
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script>
+    (function () {
+        var environment = "{{ paddle_environment }}";
+        if (environment === "sandbox" && window.Paddle && Paddle.Environment) {
+            Paddle.Environment.set("sandbox");
+        }
+        if (!window.Paddle) { return; }
+        Paddle.Initialize({ token: "{{ paddle_client_token }}" });
+
+        function openCheckout() {
+            Paddle.Checkout.open({
+                items: [{ priceId: "{{ price_id }}", quantity: 1 }],
+                customer: { email: "{{ customer_email }}" },
+                customData: {{ custom_data_json|safe }},
+                settings: {
+                    displayMode: "overlay",
+                    successUrl: "{{ success_url }}"
+                }
+            });
+        }
+
+        var btn = document.getElementById("open-checkout");
+        if (btn) { btn.addEventListener("click", openCheckout); }
+        openCheckout();
+    })();
+</script>
+{% endblock %}

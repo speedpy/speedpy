@@ -99,6 +99,7 @@ TEMPLATES = [
                 "project.context_processors.tours_enabled",
                 "project.context_processors.current_year",
                 "project.context_processors.mfa_backend",
+                "project.context_processors.billing",
             ],
         },
     },
@@ -455,6 +456,43 @@ SPEEDPY_PAT_REQUIRE_RECENT_REAUTH = env.bool("SPEEDPY_PAT_REQUIRE_RECENT_REAUTH"
 
 # API access audit log — off by default; enable for full per-request audit trail.
 SPEEDPY_API_ACCESS_LOG_ENABLED = env.bool("SPEEDPY_API_ACCESS_LOG_ENABLED", default=False)
+
+# ---------------------------------------------------------------------------
+# Billing (pluggable Stripe / Paddle)
+# ---------------------------------------------------------------------------
+# Billing is OFF by default so fresh/demo installs work without provider
+# credentials. When enabled, SPEEDPY_BILLING_PROVIDER selects which adapter
+# handles new checkout/portal actions; existing subscriptions retain whichever
+# provider created them. The billable object is the Team when teams are enabled
+# and the User when they are disabled (see mainapp.billing.state).
+SPEEDPY_BILLING_ENABLED = env.bool("SPEEDPY_BILLING_ENABLED", default=False)
+SPEEDPY_BILLING_PROVIDER = env.str("SPEEDPY_BILLING_PROVIDER", default="")  # "stripe" or "paddle"
+# Days a past-due subscription keeps paid runtime features (grace) before billing
+# is disabled. New records are blocked during grace; runtime checks fail closed
+# after it.
+SPEEDPY_BILLING_GRACE_PERIOD_DAYS = env.int("SPEEDPY_BILLING_GRACE_PERIOD_DAYS", default=30)
+
+# Stripe
+STRIPE_SECRET_KEY = env.str("STRIPE_SECRET_KEY", default="")
+STRIPE_PUBLISHABLE_KEY = env.str("STRIPE_PUBLISHABLE_KEY", default="")
+STRIPE_WEBHOOK_SECRET = env.str("STRIPE_WEBHOOK_SECRET", default="")
+
+# Paddle (Billing v2)
+PADDLE_ENVIRONMENT = env.str("PADDLE_ENVIRONMENT", default="sandbox")  # "sandbox" or "production"
+PADDLE_API_KEY = env.str("PADDLE_API_KEY", default="")
+PADDLE_CLIENT_TOKEN = env.str("PADDLE_CLIENT_TOKEN", default="")  # browser-safe, checkout only
+PADDLE_WEBHOOK_SECRET = env.str("PADDLE_WEBHOOK_SECRET", default="")
+
+# Per-plan provider price IDs. Read by mainapp.subscription_plans via _price_id();
+# a missing ID simply means that plan/interval is not yet available for checkout.
+STRIPE_PRICE_PRO_MONTHLY = env.str("STRIPE_PRICE_PRO_MONTHLY", default="")
+STRIPE_PRICE_PRO_YEARLY = env.str("STRIPE_PRICE_PRO_YEARLY", default="")
+STRIPE_PRICE_BUSINESS_MONTHLY = env.str("STRIPE_PRICE_BUSINESS_MONTHLY", default="")
+STRIPE_PRICE_BUSINESS_YEARLY = env.str("STRIPE_PRICE_BUSINESS_YEARLY", default="")
+PADDLE_PRICE_PRO_MONTHLY = env.str("PADDLE_PRICE_PRO_MONTHLY", default="")
+PADDLE_PRICE_PRO_YEARLY = env.str("PADDLE_PRICE_PRO_YEARLY", default="")
+PADDLE_PRICE_BUSINESS_MONTHLY = env.str("PADDLE_PRICE_BUSINESS_MONTHLY", default="")
+PADDLE_PRICE_BUSINESS_YEARLY = env.str("PADDLE_PRICE_BUSINESS_YEARLY", default="")
 
 if SPEEDPY_MFA_BACKEND == "django_otp":
     INSTALLED_APPS += [

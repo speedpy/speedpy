@@ -7,7 +7,10 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from speedpycom.models import BaseModel
-from mainapp.subscription_plans import SUBSCRIPTION_PLANS, SUBSCRIPTION_PLANS_CHOICES
+from mainapp.subscription_plans import (
+    SUBSCRIPTION_PLANS_CHOICES,
+    get_plan_config as get_plan_config_for_key,
+)
 
 
 class Team(BaseModel):
@@ -64,8 +67,13 @@ class Team(BaseModel):
 
     # Plan & Quota Methods
     def get_plan_config(self):
-        """Get current plan configuration from settings"""
-        return SUBSCRIPTION_PLANS.get(self.plan, {})
+        """Get current plan configuration from the canonical plan registry.
+
+        Delegates to ``mainapp.subscription_plans.get_plan_config`` so the
+        registry stays the single source of truth (falls back to the free plan
+        for unknown/stale keys).
+        """
+        return get_plan_config_for_key(self.plan)
 
     # create can_* for every check of quota/usage
 

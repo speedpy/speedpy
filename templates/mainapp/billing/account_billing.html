@@ -1,0 +1,14 @@
+{% extends "account/base_manage.html" %}
+
+{% block head_title %}Billing{% endblock %}
+
+{% block settings_content %}
+<div class="card-body">
+    <div class="section-header">
+        <h1 class="h2">Billing</h1>
+        <p class="lead">Manage your subscription and plan.</p>
+    </div>
+
+    {% include "mainapp/billing/_overview.html" %}
+</div>
+{% endblock %}

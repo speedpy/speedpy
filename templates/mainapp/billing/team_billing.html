@@ -1,0 +1,15 @@
+{% extends "mainapp/layouts/sidebar_layout.html" %}
+
+{% block head_title %}{{ team.name }} - Billing{% endblock %}
+
+{% block main_content %}
+<div class="page-container py-8">
+    <div class="section-header">
+        <p class="eyebrow">{{ team.name }}</p>
+        <h1 class="h1">Billing</h1>
+        <p class="lead">Manage your team's subscription and plan.</p>
+    </div>
+
+    {% include "mainapp/billing/_overview.html" %}
+</div>
+{% endblock %}
