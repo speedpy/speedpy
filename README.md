@@ -67,14 +67,14 @@ docker compose up -d
 Comprehensive documentation is available at [docs.speedpy.com](https://docs.speedpy.com). 
 
 Key documentation pages:
-* [Installation & Requirements](https://docs.speedpy.com/docs/installation)
-* [Project Layout](https://docs.speedpy.com/docs/project-layout)
-* [Authentication](https://docs.speedpy.com/docs/authentication)
-* [API Reference](https://docs.speedpy.com/docs/api)
-* [Webhooks](https://docs.speedpy.com/docs/webhooks)
-* [Integrations](https://docs.speedpy.com/docs/integrations)
-* [Teams](https://docs.speedpy.com/docs/teams)
-* [Deployment](https://docs.speedpy.com/docs/deployment)
+* [Installation & Requirements](https://docs.speedpy.com/installation)
+* [Project Layout](https://docs.speedpy.com/project-layout)
+* [Authentication](https://docs.speedpy.com/authentication)
+* [API Reference](https://docs.speedpy.com/api)
+* [Webhooks](https://docs.speedpy.com/webhooks)
+* [Integrations](https://docs.speedpy.com/integrations)
+* [Teams](https://docs.speedpy.com/teams)
+* [Deployment](https://docs.speedpy.com/deployment)
 
 ## Project Structure
 
@@ -84,8 +84,8 @@ A separate `usermodel` app handles the custom user model with email-based authen
 
 ## Production Readiness
 
-Before deploying to production, ensure you remove demo content and placeholder pages. Refer to the `PRODUCTION_READY.md` file in the repository or the [Production Readiness](https://docs.speedpy.com/docs/production-readiness) documentation for a complete checklist.
+Before deploying to production, ensure you remove demo content and placeholder pages. Refer to the `PRODUCTION_READY.md` file in the repository or the [Production Readiness](https://docs.speedpy.com/production-readiness) documentation for a complete checklist.
 
 ## Deployment
 
-SpeedPy includes an `appliku.yml` file for automatic configuration with [Appliku](https://appliku.com). See the [Deployment documentation](https://docs.speedpy.com/docs/deployment) for detailed instructions on setting up your application, databases, and background workers.
+SpeedPy includes an `appliku.yml` file for automatic configuration with [Appliku](https://appliku.com). See the [Deployment documentation](https://docs.speedpy.com/deployment) for detailed instructions on setting up your application, databases, and background workers.
