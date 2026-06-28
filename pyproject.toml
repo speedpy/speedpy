@@ -15,7 +15,6 @@ dependencies = [
     "django-environ==0.13.0",
     "django-extensions==4.1",
     "django-post_office==3.11.0",
-    "django-ses==4.7.2",
     "django-stubs[compatible-mypy]==6.0.1",
     "djangoql==0.19.1",
     "gunicorn==25.1.0",
@@ -38,4 +37,5 @@ dependencies = [
     "djangorestframework-simplejwt>=5.5.1",
     "django-oauth-toolkit>=3.3.0",
     "django-cors-headers>=4.7.0",
+    "django-anymail[amazon-ses]==13.1",
 ]

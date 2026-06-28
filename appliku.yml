@@ -18,6 +18,8 @@ build_settings:
       source: manual
     - name: ADMIN_URL
       source: manual
+    - name: EMAIL_PROVIDER
+      source: manual
     - name: DEFAULT_FROM_EMAIL
       value: manual
   expose_web_port: false

@@ -418,6 +418,25 @@ socialaccount = [
 ]
 
 [[package]]
+name = "django-anymail"
+version = "13.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "requests" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a3/a5/258d7b7bc1b0ca91791c25c704fa4c2d500727d0c3e29843c182f9f9c4be/django_anymail-13.1.tar.gz", hash = "sha256:b51783176f8a8382e958808151551558e4a46d1375fbc343742d1ebd06ce8e9e", size = 96518, upload-time = "2025-09-03T20:00:21.071Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c9/ba/d34a011cb8da04ed4a7c60b9a7aa25eed61348d1f6113af66ba725b56ae4/django_anymail-13.1-py3-none-any.whl", hash = "sha256:63e48402ec8258f17640eb73c8c64141f16d2f8ae7d448d0fb1c66e82b7cbcf6", size = 134063, upload-time = "2025-09-03T20:00:19.427Z" },
+]
+
+[package.optional-dependencies]
+amazon-ses = [
+    { name = "boto3" },
+]
+
+[[package]]
 name = "django-cors-headers"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -551,19 +570,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/bd/a2/480cd2df8031c30afe0d67b0a5e6299ced20f2e65135a3c160c4031d7052/django_recaptcha-4.1.0.tar.gz", hash = "sha256:73097b958733f65b729d4e4630c51fc2bf147aca6f026017d18898dfc25cb4c5", size = 28676, upload-time = "2025-03-28T13:52:26.589Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/e7/0765f98e4953e26573512284995648c439b0eb252877b655683d28c90be2/django_recaptcha-4.1.0-py3-none-any.whl", hash = "sha256:463aa65967e973de466b28ce8e8b6abb2faffb1ce0c7faa1bf0e5b041e0497cb", size = 39473, upload-time = "2025-03-28T13:52:24.92Z" },
-]
-
-[[package]]
-name = "django-ses"
-version = "4.7.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "boto3" },
-    { name = "django" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7f/25/25838da8e213c9f125b26a25360f0bb8ac57f07c24977451f3e7a0d63ddd/django_ses-4.7.2.tar.gz", hash = "sha256:a36f2af0e4ce060bf36053ed4c94feac1703ea3351e677c6f6421abd01433a35", size = 71828, upload-time = "2026-02-20T19:22:35.078Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/84/f2/15d4bd54bd01e68e8a116e0b66243c91cb62a3fa0d780a39d2af6654e8ae/django_ses-4.7.2-py3-none-any.whl", hash = "sha256:f3db567fb6f43c01d7d890f5c991e1ebbfa48220de0be24d497ba6332004abcb", size = 37796, upload-time = "2026-02-20T19:22:32.819Z" },
 ]
 
 [[package]]
@@ -1375,6 +1381,7 @@ dependencies = [
     { name = "crispy-tailwind" },
     { name = "django" },
     { name = "django-allauth", extra = ["socialaccount"] },
+    { name = "django-anymail", extra = ["amazon-ses"] },
     { name = "django-cors-headers" },
     { name = "django-crispy-forms" },
     { name = "django-debug-toolbar" },
@@ -1385,7 +1392,6 @@ dependencies = [
     { name = "django-otp" },
     { name = "django-post-office" },
     { name = "django-recaptcha" },
-    { name = "django-ses" },
     { name = "django-structlog", extra = ["celery", "commands"] },
     { name = "django-stubs", extra = ["compatible-mypy"] },
     { name = "djangoql" },
@@ -1414,6 +1420,7 @@ requires-dist = [
     { name = "crispy-tailwind", specifier = "==1.0.3" },
     { name = "django", specifier = "==6.0.3" },
     { name = "django-allauth", extras = ["socialaccount"], specifier = "==65.15.0" },
+    { name = "django-anymail", extras = ["amazon-ses"], specifier = "==13.1" },
     { name = "django-cors-headers", specifier = ">=4.7.0" },
     { name = "django-crispy-forms", specifier = "==2.6" },
     { name = "django-debug-toolbar", specifier = "==6.2.0" },
@@ -1424,7 +1431,6 @@ requires-dist = [
     { name = "django-otp", specifier = "==1.7.0" },
     { name = "django-post-office", specifier = "==3.11.0" },
     { name = "django-recaptcha", specifier = "==4.1.0" },
-    { name = "django-ses", specifier = "==4.7.2" },
     { name = "django-structlog", extras = ["commands", "celery"], specifier = "==10.0.0" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = "==6.0.1" },
     { name = "djangoql", specifier = "==0.19.1" },

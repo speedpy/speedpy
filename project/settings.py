@@ -6,6 +6,8 @@ import structlog
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
 
+from project.email_providers import resolve_email_backend
+
 env = environ.Env(
     # set casting, default value
     DEBUG=(bool, False)
@@ -43,6 +45,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.gitlab",
     "debug_toolbar",
     "post_office",
+    "anymail",
     "usermodel.apps.UsermodelConfig",
     "speedpycom",
     "mainapp.apps.MainappConfig",
@@ -428,21 +431,43 @@ EMAIL_HOST_PASSWORD = email_config["EMAIL_HOST_PASSWORD"]
 EMAIL_USE_TLS = email_config.get("EMAIL_USE_TLS", False)
 EMAIL_USE_SSL = email_config.get("EMAIL_USE_SSL", False)
 DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="admin@example.com")
+SERVER_EMAIL = env.str("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+
+# Pluggable email sending: EMAIL_PROVIDER picks the backend post_office delegates
+# to. The outer EMAIL_BACKEND stays post_office (queuing + Celery); only the inner
+# sending backend changes. See project/email_providers.py for the provider map.
+# console/smtp use Django's built-in backends; the rest go through django-anymail.
+EMAIL_PROVIDER = env.str("EMAIL_PROVIDER", default="console").lower().strip()
 POST_OFFICE = {
     "BACKENDS": {
-        # "default": "django_ses.SESBackend",
-        "default": "django.core.mail.backends.console.EmailBackend",
-        # "default": "django.core.mail.backends.smtp.EmailBackend",
+        "default": resolve_email_backend(EMAIL_PROVIDER),
     },
     "DEFAULT_PRIORITY": "now",
     "CELERY_ENABLED": True,
 }
 
-AWS_SES_REGION_NAME = "eu-central-1"
-AWS_SES_REGION_ENDPOINT = "email.eu-central-1.amazonaws.com"
-AWS_SES_ACCESS_KEY_ID = env("AWS_SES_ACCESS_KEY_ID", default="change_me")
-AWS_SES_SECRET_ACCESS_KEY = env("AWS_SES_SECRET_ACCESS_KEY", default="change_me")
-AWS_SES_AUTO_THROTTLE = 0.5
+# SES goes through Anymail's boto3 session params rather than django-ses globals.
+# Only pass explicit AWS keys when provided so that, when they are omitted, boto3
+# falls back to its standard credential chain (IAM role, ~/.aws/credentials, etc.).
+_AMAZON_SES_CLIENT_PARAMS = {"region_name": env.str("AWS_SES_REGION_NAME", default="eu-central-1")}
+_aws_access_key_id = env.str("AWS_SES_ACCESS_KEY_ID", default="")
+_aws_secret_access_key = env.str("AWS_SES_SECRET_ACCESS_KEY", default="")
+if _aws_access_key_id and _aws_secret_access_key:
+    _AMAZON_SES_CLIENT_PARAMS["aws_access_key_id"] = _aws_access_key_id
+    _AMAZON_SES_CLIENT_PARAMS["aws_secret_access_key"] = _aws_secret_access_key
+
+# Anymail per-ESP credentials. Placeholder defaults let the app boot without real
+# keys; the selected provider will fail at send time until real credentials and a
+# verified sender/domain are configured.
+ANYMAIL = {
+    "MAILGUN_API_KEY": env.str("MAILGUN_API_KEY", default="change_me"),
+    "MAILGUN_SENDER_DOMAIN": env.str("MAILGUN_SENDER_DOMAIN", default="example.com"),
+    "MAILGUN_API_URL": env.str("MAILGUN_API_URL", default="https://api.mailgun.net/v3"),
+    "SENDGRID_API_KEY": env.str("SENDGRID_API_KEY", default="change_me"),
+    "POSTMARK_SERVER_TOKEN": env.str("POSTMARK_SERVER_TOKEN", default="change_me"),
+    "RESEND_API_KEY": env.str("RESEND_API_KEY", default="change_me"),
+    "AMAZON_SES_CLIENT_PARAMS": _AMAZON_SES_CLIENT_PARAMS,
+}
 
 DEFAULT_ADMIN_PASSWORD = env("DEFAULT_ADMIN_PASSWORD", default=None)
 DEMO_MODE = env.bool("DEMO_MODE", default=False)  # SPEEDPY_DEMO: fills login credentials on login form for demo purposes
