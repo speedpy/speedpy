@@ -19,6 +19,7 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from speedpycom.widgets import ImageUploadInput
 from usermodel.models import User
 
 
@@ -192,7 +193,7 @@ class UserProfileForm(forms.ModelForm):
         model = User
         fields = ("first_name", "last_name", "profile_picture")
         widgets = {
-            "profile_picture": forms.FileInput(attrs={"accept": "image/*"}),
+            "profile_picture": ImageUploadInput(),
         }
 
     def __init__(self, *args, **kwargs):

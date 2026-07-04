@@ -3,6 +3,8 @@ from crispy_forms.layout import Field, Layout
 from crispy_tailwind.layout import Submit
 from django import forms
 
+from speedpycom.widgets import ImageUploadInput
+
 
 class SpeedpyuiFormViewExampleForm(forms.Form):
     full_name = forms.CharField(
@@ -30,6 +32,12 @@ class SpeedpyuiFormViewExampleForm(forms.Form):
         ),
         widget=forms.RadioSelect,
     )
+    logo = forms.ImageField(
+        label="Logo",
+        required=False,
+        widget=ImageUploadInput(),
+        help_text="ImageUploadInput: drag & drop, live preview and clear support.",
+    )
     notes = forms.CharField(
         label="Project notes",
         help_text="Textarea widgets pick up the same token-driven styling.",
@@ -49,6 +57,7 @@ class SpeedpyuiFormViewExampleForm(forms.Form):
             Field("full_name"),
             Field("company_size"),
             Field("launch_plan"),
+            Field("logo"),
             Field("notes"),
             Submit("submit", "Preview submit", css_class="btn btn-contained btn-primary"),
         )

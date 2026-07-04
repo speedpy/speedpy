@@ -4,6 +4,7 @@ from crispy_forms.layout import Layout, Field, Div
 from crispy_tailwind.layout import Submit
 
 from mainapp.models import Team
+from speedpycom.widgets import ImageUploadInput
 
 
 class TeamCreateForm(forms.ModelForm):
@@ -146,10 +147,7 @@ class TeamSettingsForm(forms.ModelForm):
         model = Team
         fields = ('name', 'slug', 'logo')
         widgets = {
-            'logo': forms.FileInput(attrs={
-                'accept': 'image/*',
-                'class': 'block w-full text-sm text-fg border border-divider rounded-lg cursor-pointer bg-background'
-            })
+            'logo': ImageUploadInput(),
         }
 
     def __init__(self, *args, **kwargs):

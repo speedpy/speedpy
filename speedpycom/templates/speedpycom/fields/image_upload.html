@@ -1,0 +1,122 @@
+{% comment %}
+Reusable image upload widget (speedpycom.widgets.ImageUploadInput).
+Self-contained: Alpine.js component + guarded global script, styled with
+the project's design tokens so it works in light and dark mode.
+{% endcomment %}
+<div x-data="spImageUpload({
+        initialUrl: '{% if widget.is_initial and widget.value.url %}{{ widget.value.url|escapejs }}{% endif %}',
+        initialName: '{% if widget.is_initial %}{{ widget.value|escapejs }}{% endif %}'
+     })"
+     class="flex items-start gap-4">
+
+    {# Thumbnail preview: current image, live preview of new selection, or placeholder #}
+    <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-divider bg-background-paper"
+         :class="cleared ? 'opacity-40' : ''">
+        <img x-show="previewUrl" :src="previewUrl" class="h-full w-full object-contain p-1" alt="">
+        <svg x-show="!previewUrl" x-cloak class="h-8 w-8 text-fg-secondary" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A1.5 1.5 0 0 0 21.75 19.5V4.5A1.5 1.5 0 0 0 20.25 3H3.75A1.5 1.5 0 0 0 2.25 4.5v15A1.5 1.5 0 0 0 3.75 21Z" />
+        </svg>
+    </div>
+
+    <div class="min-w-0 flex-1">
+        {# Drop zone / file picker #}
+        <label class="flex cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-dashed border-divider px-4 py-3 text-center transition-colors hover:border-primary/60 hover:bg-primary/5"
+               :class="dragging ? 'border-primary bg-primary/5' : ''"
+               @dragover.prevent="dragging = true"
+               @dragleave.prevent="dragging = false"
+               @drop.prevent="onDrop($event)">
+            <input type="file"
+                   name="{{ widget.name }}"
+                   {% if widget.attrs.id %}id="{{ widget.attrs.id }}"{% endif %}
+                   accept="{{ widget.attrs.accept|default:'image/*' }}"
+                   class="sr-only"
+                   x-ref="input"
+                   @change="onSelect($event)"
+                   {% if widget.attrs.required %}required{% endif %}>
+            <span class="text-sm text-fg">
+                <span class="font-medium text-primary">Click to upload</span> or drag and drop
+            </span>
+            <span class="text-xs text-fg-secondary">PNG, JPG, SVG or GIF</span>
+        </label>
+
+        {# Status line + actions #}
+        <div class="mt-1.5 flex min-h-5 items-center gap-3 text-sm">
+            <span class="truncate text-fg-secondary" x-show="newFile" x-cloak>
+                New: <span class="font-medium text-fg" x-text="fileName"></span>
+            </span>
+            <span class="truncate text-fg-secondary" x-show="!newFile && !cleared && initialName" x-text="basename(initialName)"></span>
+            <span class="text-fg-secondary italic" x-show="cleared" x-cloak>Image will be removed on save</span>
+
+            <button type="button" x-show="newFile || cleared" x-cloak @click="reset()"
+                    class="shrink-0 font-medium text-primary hover:underline">Undo</button>
+            {% if widget.is_initial and not widget.required %}
+                <button type="button" x-show="!newFile && !cleared" @click="clear()"
+                        class="shrink-0 font-medium text-error hover:underline">Remove</button>
+            {% endif %}
+        </div>
+
+        {% if widget.is_initial and not widget.required %}
+            <input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}"
+                   class="hidden" tabindex="-1" aria-hidden="true" x-model="cleared">
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    if (!window.spImageUpload) {
+        window.spImageUpload = function (opts) {
+            return {
+                initialUrl: opts.initialUrl || '',
+                initialName: opts.initialName || '',
+                previewUrl: opts.initialUrl || '',
+                fileName: '',
+                newFile: false,
+                cleared: false,
+                dragging: false,
+
+                basename(path) {
+                    return path.split('/').pop();
+                },
+                onSelect(event) {
+                    this.setFile(event.target.files);
+                },
+                onDrop(event) {
+                    this.dragging = false;
+                    if (event.dataTransfer.files.length) {
+                        this.$refs.input.files = event.dataTransfer.files;
+                        this.setFile(event.dataTransfer.files);
+                    }
+                },
+                setFile(files) {
+                    const file = files[0];
+                    if (!file) return;
+                    // Selecting a file and checking "clear" together is a form
+                    // contradiction in Django, so a new selection always unclears.
+                    this.cleared = false;
+                    this.newFile = true;
+                    this.fileName = file.name;
+                    this.revokePreview();
+                    this.previewUrl = URL.createObjectURL(file);
+                },
+                clear() {
+                    this.reset();
+                    this.cleared = true;
+                    this.previewUrl = '';
+                },
+                reset() {
+                    this.$refs.input.value = '';
+                    this.newFile = false;
+                    this.fileName = '';
+                    this.cleared = false;
+                    this.revokePreview();
+                    this.previewUrl = this.initialUrl;
+                },
+                revokePreview() {
+                    if (this.previewUrl && this.previewUrl.startsWith('blob:')) {
+                        URL.revokeObjectURL(this.previewUrl);
+                    }
+                },
+            };
+        };
+    }
+</script>
