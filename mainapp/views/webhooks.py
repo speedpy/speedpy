@@ -2,12 +2,9 @@ import time
 import uuid
 
 import structlog
-from django.conf import settings as django_settings
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.http import Http404
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -17,7 +14,6 @@ from django.views.generic import DetailView, FormView, ListView
 from mainapp.forms.webhooks import WebhookEndpointForm
 from mainapp.models.webhooks import WebhookDelivery, WebhookEndpoint
 from mainapp.views.teams import TeamViewMixin
-from mainapp.webhooks.events import WebhookEvent
 from usermodel.views import _encrypt_token, _decrypt_token
 
 logger = structlog.get_logger(__name__)
@@ -30,18 +26,13 @@ class WebhookWriteMixin(TeamViewMixin):
     cannot execute before the permission gate.
     """
 
-    def dispatch(self, request, *args, **kwargs):
-        if not getattr(django_settings, "SPEEDPY_TEAMS_ENABLED", True):
-            raise Http404("Teams functionality is disabled")
-        team = self._get_team(kwargs)
-        team_membership = self._get_membership(request.user, team)
-        self.team = team
-        self.team_membership = team_membership
-        if team_membership.role not in ("owner", "admin", "member"):
+    def validate_team_access(self, request, *args, **kwargs):
+        response = super().validate_team_access(request, *args, **kwargs)
+        if response is not None:
+            return response
+        if self.team_membership.role not in ("owner", "admin", "member"):
             raise PermissionDenied("Your role does not allow managing webhooks.")
-        # Skip TeamViewMixin.dispatch (already resolved) and go to
-        # LoginRequiredMixin -> View.dispatch which runs the handler.
-        return super(TeamViewMixin, self).dispatch(request, *args, **kwargs)
+        return None
 
 
 class TeamWebhookListView(TeamViewMixin, ListView):

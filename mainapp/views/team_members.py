@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Count
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -13,7 +12,7 @@ from django.views.generic import ListView, FormView, TemplateView, View
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from mainapp.forms.teams import InviteMemberForm, UpdateMemberRoleForm
-from mainapp.models import Team, TeamMembership, TeamInvitation
+from mainapp.models import TeamMembership, TeamInvitation
 from mainapp.views.teams import TeamViewMixin, TeamAdminRequiredMixin
 
 User = get_user_model()
@@ -182,7 +181,7 @@ class DeclineInvitationView(View):
         return redirect('dashboard')
 
 
-class UpdateMemberRoleView(TeamAdminRequiredMixin, TeamViewMixin, FormView):
+class UpdateMemberRoleView(TeamAdminRequiredMixin, FormView):
     """
     Update a team member's role (owner/admin with restrictions).
 
@@ -193,20 +192,25 @@ class UpdateMemberRoleView(TeamAdminRequiredMixin, TeamViewMixin, FormView):
     form_class = UpdateMemberRoleForm
     target_membership = None
 
-    def dispatch(self, request, *args, **kwargs):
-        # Get the membership being updated
-        response = super().dispatch(request, *args, **kwargs)
+    def validate_team_access(self, request, *args, **kwargs):
+        response = super().validate_team_access(request, *args, **kwargs)
+        if response is not None:
+            return response
 
-        # Check if current user can manage this member
-        if not self.team_membership.can_manage_member(self.target_membership):
-            raise PermissionDenied("You don't have permission to manage this member")
+        # Resolve the target before the handler so checks see its
+        # pre-request role, never post-mutation state.
+        target = self.get_target_membership()
 
         # Prevent changing own role
-        if self.target_membership.user == request.user:
+        if target.user == request.user:
             messages.error(request, "You cannot change your own role")
             return redirect('team_members', team_id=self.team.pk)
 
-        return response
+        # Check if current user can manage this member
+        if not self.team_membership.can_manage_member(target):
+            raise PermissionDenied("You don't have permission to manage this member")
+
+        return None
 
     def get_target_membership(self):
         if self.target_membership:

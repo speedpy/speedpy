@@ -55,8 +55,26 @@ class TeamViewMixin(LoginRequiredMixin):
         self.team = team
         self.team_membership = team_membership
 
+        # Permission gate: must run before the handler so no side effect
+        # can execute for a user who fails the check.
+        response = self.validate_team_access(request, *args, **kwargs)
+        if response is not None:
+            return response
+
         # Continue normal dispatch
         return super().dispatch(request, *args, **kwargs)
+
+    def validate_team_access(self, request, *args, **kwargs):
+        """
+        Hook for permission checks that must run before the view handler.
+
+        Called after self.team and self.team_membership are set, before
+        get()/post() run. Override in subclasses to enforce role checks.
+
+        May raise PermissionDenied/Http404, or return an HttpResponse
+        (e.g. a redirect) to short-circuit dispatch. Return None to proceed.
+        """
+        return None
 
     def _get_team(self, kwargs):
         """
@@ -141,18 +159,18 @@ class TeamAdminRequiredMixin(TeamViewMixin):
             # Only owners and admins can access
     """
 
-    def dispatch(self, request, *args, **kwargs):
+    def validate_team_access(self, request, *args, **kwargs):
         """
-        Override dispatch to check admin privileges after team validation.
+        Check admin privileges before the view handler runs.
         """
-        # Get team and membership from parent TeamViewMixin
-        response = super().dispatch(request, *args, **kwargs)
+        response = super().validate_team_access(request, *args, **kwargs)
+        if response is not None:
+            return response
 
-        # Check if user has admin privileges
         if self.team_membership.role not in ['owner', 'admin']:
             raise PermissionDenied("Only team owners and admins can access this page")
 
-        return response
+        return None
 
 
 class TeamCreateView(LoginRequiredMixin, CreateView):
