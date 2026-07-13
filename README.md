@@ -89,3 +89,9 @@ Before deploying to production, ensure you remove demo content and placeholder p
 ## Deployment
 
 SpeedPy includes an `appliku.yml` file for automatic configuration with [Appliku](https://appliku.com). See the [Deployment documentation](https://docs.speedpy.com/deployment) for detailed instructions on setting up your application, databases, and background workers.
+
+## License
+
+SpeedPy is released under the [MIT License](LICENSE.md).
+
+The bundled Inter font (`static/fonts/Inter-SemiBold.ttf`, used for generating Open Graph images) is licensed separately under the [SIL Open Font License 1.1](static/fonts/OFL-Inter.txt).
