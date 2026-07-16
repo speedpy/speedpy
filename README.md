@@ -1,10 +1,15 @@
 # SpeedPy
 
-**Django-based SaaS boilerplate for the modern AI era.**
+**The free, open-source Django SaaS boilerplate for the AI era.**
 
-Instantly start your next SaaS project. Built on the rock-solid foundation of Django, supercharged with production-ready APIs, Webhooks, OAuth2, and Model Context Protocol (MCP) for AI agents.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
+[![GitHub stars](https://img.shields.io/github/stars/speedpy/speedpy?style=social)](https://github.com/speedpy/speedpy/stargazers)
 
-[Website](https://speedpy.com) | [Documentation](https://docs.speedpy.com) | [Discord](https://speedpy.com/discord)
+Instantly start your next SaaS project. Built on the rock-solid foundation of Django, supercharged with production-ready APIs, Webhooks, OAuth2, and Model Context Protocol (MCP) for AI agents. Free forever, MIT-licensed, and yours to deploy anywhere.
+
+[Website](https://speedpy.com) · [Documentation](https://docs.speedpy.com) · [Discord](https://speedpy.com/discord)
+
+> ⭐ **Star this repo** if SpeedPy saves you time — it helps other developers find it.
 
 ## Features
 
