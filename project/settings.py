@@ -23,7 +23,7 @@ DEBUG = env("DEBUG", default=False)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
-ADMIN_URL = env.str("ADMIN_URL", default="admin/")
+ADMIN_URL = env.str("ADMIN_URL", default="admin/") or "admin/"
 # Application definition
 
 INSTALLED_APPS = [
@@ -437,7 +437,7 @@ SERVER_EMAIL = env.str("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 # to. The outer EMAIL_BACKEND stays post_office (queuing + Celery); only the inner
 # sending backend changes. See project/email_providers.py for the provider map.
 # console/smtp use Django's built-in backends; the rest go through django-anymail.
-EMAIL_PROVIDER = env.str("EMAIL_PROVIDER", default="console").lower().strip()
+EMAIL_PROVIDER = env.str("EMAIL_PROVIDER", default="console").lower().strip() or "console"
 POST_OFFICE = {
     "BACKENDS": {
         "default": resolve_email_backend(EMAIL_PROVIDER),
