@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "appliku": {
+      "source": "appliku/skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "d9555cf54ab3859798f4a50eba6b9e5e095d305e8a26d7346360e911d41e1b21"
+    }
+  }
+}
