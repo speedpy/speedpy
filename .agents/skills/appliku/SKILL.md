@@ -95,6 +95,15 @@ appliku teams list
 appliku teams get <team_path>
 ```
 
+`teams get` returns the same fields whatever your membership level, but values you
+are not entitled to read come back as `null`. Admins see `null` for the billing
+fields (`paddle_*`), `can_invite_members` and `name_picked`; developers
+additionally see `null` for the deploy keys (`public_key`, `public_key_ed25519`)
+and the notification webhook URLs. So a `null` means either "not set" or "not
+visible to you" — for billing values, check as an owner before concluding a team
+has no subscription. Requires CLI 0.5.0 or newer; older versions crashed for any
+non-owner.
+
 ### apps
 
 ```bash
@@ -227,9 +236,14 @@ client.apps.update("my-team", app_id=42, branch="develop")
 client.apps.delete("my-team", app_id=42)
 client.apps.deploy("my-team", app_id=42)
 
-# Config vars
+# Config vars. get returns {"env_vars": [...]}; set takes a flat mapping.
 vars = client.apps.get_config_vars("my-team", app_id=42)
+
+# set MERGES: variables not named in the call are left untouched.
 client.apps.set_config_vars("my-team", app_id=42, vars={"DEBUG": "false"})
+
+# An empty ("" or None) value DELETES the variable rather than blanking it.
+client.apps.set_config_vars("my-team", app_id=42, vars={"DEBUG": ""})  # deletes DEBUG
 client.apps.delete_config_var("my-team", app_id=42, key="OLD_VAR")  # returns remaining vars
 
 # Logs — get_logs takes a list of processes (None = all), works on any mode.
