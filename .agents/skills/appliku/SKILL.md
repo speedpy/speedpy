@@ -148,15 +148,19 @@ Create starts the asynchronous initial `appliku.yml` inspection. It does not
 deploy the application. Deploy it separately when its setup is complete.
 
 **The target must be ready.** A server or cluster that has not finished setup is
-refused with HTTP 400. Check before creating — `appliku servers list` reports a
-`ready` field, and only a ready target can host a new application:
+refused with HTTP 400. Both list commands report a `ready` column, so pick the
+target from there rather than guessing an ID:
 
 ```bash
-appliku servers list --team <team_path> --output json | jq '.[] | select(.ready)'
+appliku servers list  --team <team_path>                 # Ready column
+appliku clusters list --team <team_path>                 # Ready column
+appliku servers list  --team <team_path> --output json | jq '[.[] | select(.ready)]'
 ```
 
-A team whose servers are all still provisioning cannot create an application
-yet. Wait for setup to finish rather than retrying immediately.
+A server is ready when it is active and its setup finished. A cluster is ready
+when its primary manager is — a cluster with no primary manager can never host
+an application. If nothing is ready, wait for setup to finish; retrying the
+create immediately just returns the same 400.
 
 ### deployments
 
