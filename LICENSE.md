@@ -19,12 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-## Third-party assets
-
-The Inter font (`static/fonts/Inter-SemiBold.ttf`) is copyright (c) 2016
-The Inter Project Authors (https://github.com/rsms/inter) and is licensed
-under the SIL Open Font License, Version 1.1 — not MIT. See
-`static/fonts/OFL-Inter.txt` for the full license text.

@@ -99,4 +99,4 @@ SpeedPy includes an `appliku.yml` file for automatic configuration with [Appliku
 
 SpeedPy is released under the [MIT License](LICENSE.md).
 
-The bundled Inter font (`static/fonts/Inter-SemiBold.ttf`, used for generating Open Graph images) is licensed separately under the [SIL Open Font License 1.1](static/fonts/OFL-Inter.txt).
+The bundled Inter font (`static/fonts/Inter-SemiBold.ttf`, used for generating Open Graph images) is licensed separately under the [SIL Open Font License 1.1](static/fonts/OFL-Inter.txt). See [NOTICE.md](NOTICE.md) for all third-party notices.
