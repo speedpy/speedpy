@@ -38,12 +38,19 @@ class TeamViewMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         """
         Override dispatch to resolve team and validate membership.
-
-        LoginRequiredMixin already ensures request.user is authenticated.
         """
         # Check if teams functionality is enabled
         if not getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
             raise Http404("Teams functionality is disabled")
+
+        # Anonymous users must be sent to login BEFORE any team lookup.
+        # LoginRequiredMixin cannot cover this: its check runs inside
+        # super().dispatch(), which this method only calls at the end — so the
+        # membership query below would run first and blow up trying to use
+        # AnonymousUser as a UUID (a 500 on every team URL for logged-out
+        # visitors).
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
 
         # Resolve team from URL parameters
         team = self._get_team(kwargs)
