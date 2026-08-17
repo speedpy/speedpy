@@ -199,10 +199,6 @@ class _BillingActionsMixin:
         plan = SUBSCRIPTION_PLANS.get(plan_key)
         if not plan or not plan.get("is_paid") or plan.get("is_contact"):
             raise Http404("Unknown plan")
-        # Tiers launch gradually (spec §3.11): a paid tier that is not yet
-        # self-serve has NO checkout path, even with a price ID configured.
-        if not plan.get("is_self_serve"):
-            raise Http404("Plan not available for self-serve checkout")
         if interval not in ("monthly", "yearly"):
             raise Http404("Unknown billing interval")
 
@@ -477,45 +473,3 @@ class StripeWebhookView(_ProviderWebhookView):
 @method_decorator(csrf_exempt, name="dispatch")
 class PaddleWebhookView(_ProviderWebhookView):
     provider = "paddle"
-
-
-class PaddleCheckoutResumeView(TemplateView):
-    """Target for Paddle's **default payment link** (required by Paddle).
-
-    Paddle refuses to create any transaction until a default payment link is
-    configured (``transaction_default_checkout_url_not_set``), and it uses that
-    link as the base URL for transaction checkout links, subscription
-    update-payment-method redirects, and dunning emails — appending
-    ``?_ptxn=<transaction_id>``.
-
-    Deliberately **no login required**: the transaction id in the link is the
-    capability, and a signed-out customer following a dunning email must still be
-    able to pay. The page reveals nothing about the transaction itself — Paddle
-    renders the payment UI in its own iframe.
-    """
-
-    template_name = "mainapp/billing/checkout_resume.html"
-
-    #: Paddle transaction ids are ``txn_`` + lowercase base32-ish characters. The
-    #: value lands inside a JS string literal, so anything else is dropped rather
-    #: than escaped — fail closed, never interpolate unvalidated input.
-    _TRANSACTION_ID_RE = re.compile(r"^txn_[a-z0-9]{1,60}$")
-
-    def dispatch(self, request, *args, **kwargs):
-        if not state.is_billing_enabled():
-            raise Http404("Billing is disabled")
-        if (getattr(settings, "SPEEDPY_BILLING_PROVIDER", "") or "").lower() != "paddle":
-            raise Http404("Paddle is not the active billing provider")
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        raw = self.request.GET.get("_ptxn", "") or ""
-        transaction_id = raw if self._TRANSACTION_ID_RE.match(raw) else ""
-        if raw and not transaction_id:
-            logger.warning("paddle_resume_bad_transaction_id", length=len(raw))
-        context["transaction_id"] = transaction_id
-        context["paddle_environment"] = getattr(settings, "PADDLE_ENVIRONMENT", "")
-        context["paddle_client_token"] = getattr(settings, "PADDLE_CLIENT_TOKEN", "")
-        context["pricing_url"] = reverse("pricing")
-        return context
