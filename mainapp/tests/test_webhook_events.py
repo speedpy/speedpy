@@ -144,8 +144,13 @@ class TeamInvitationCreatedSignalTests(TestCase):
         # (UUID PKs cause save()'s auto-expiry branch to be skipped)
         mock_delay.assert_called_once()
 
+    # The invitation endpoint also queues the invitation email via
+    # current_app.send_task inside transaction.on_commit. captureOnCommitCallbacks
+    # below executes those callbacks, so without this patch the test opens a real
+    # broker connection and dies on AMQP instead of asserting anything.
+    @patch("mainapp.api.teams.current_app.send_task")
     @patch("mainapp.tasks.webhooks.deliver_webhook.delay")
-    def test_api_invitation_dispatches_event(self, mock_delay):
+    def test_api_invitation_dispatches_event(self, mock_delay, mock_send_task):
         """POST /api/v1/teams/{id}/invitations/ triggers the signal."""
         client = APIClient()
         client.force_authenticate(user=self.inviter)
@@ -164,8 +169,11 @@ class TeamInvitationCreatedSignalTests(TestCase):
         )
         self.assertEqual(delivery.payload["data"]["email"], "api@example.com")
 
+    @patch("mainapp.api.teams.current_app.send_task")
     @patch("mainapp.tasks.webhooks.deliver_webhook.delay")
-    def test_idempotent_replay_does_not_create_duplicate_delivery(self, mock_delay):
+    def test_idempotent_replay_does_not_create_duplicate_delivery(
+        self, mock_delay, mock_send_task
+    ):
         """Replayed idempotent requests must not produce a second webhook delivery."""
         client = APIClient()
         client.force_authenticate(user=self.inviter)
