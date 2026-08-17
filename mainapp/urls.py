@@ -71,6 +71,10 @@ if getattr(settings, "SPEEDPY_BILLING_ENABLED", False):
             path('teams/<uuid:team_id>/billing/', views.TeamBillingView.as_view(), name='team_billing'),
             path('teams/<uuid:team_id>/billing/checkout/<str:plan_key>/<str:interval>/', views.TeamCheckoutView.as_view(), name='team_billing_checkout'),
             path('teams/<uuid:team_id>/billing/portal/', views.TeamBillingPortalView.as_view(), name='team_billing_portal'),
+            # GET polls activation status; POST reconciles from the provider.
+            # Closes the post-checkout race where the browser returns before
+            # the webhook lands and the page would show the old plan.
+            path('teams/<uuid:team_id>/billing/activation/', views.TeamBillingActivationView.as_view(), name='team_billing_activation'),
         ]
     else:
         # Account billing (user mode)
@@ -78,4 +82,5 @@ if getattr(settings, "SPEEDPY_BILLING_ENABLED", False):
             path('accounts/billing/', views.AccountBillingView.as_view(), name='account_billing'),
             path('accounts/billing/checkout/<str:plan_key>/<str:interval>/', views.AccountCheckoutView.as_view(), name='account_billing_checkout'),
             path('accounts/billing/portal/', views.AccountBillingPortalView.as_view(), name='account_billing_portal'),
+            path('accounts/billing/activation/', views.AccountBillingActivationView.as_view(), name='account_billing_activation'),
         ]

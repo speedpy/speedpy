@@ -10,12 +10,14 @@ the provider — handled errors return 200 (logged), unexpected errors return 50
 so the provider retries (and the dedupe marker is rolled back).
 """
 
+import re
+
 import structlog
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -70,11 +72,95 @@ class _BillingActionsMixin:
     def _portal_url(self):
         raise NotImplementedError
 
+    def _activation_url(self):
+        raise NotImplementedError
+
     def _checkout_success_url(self):
         return self.request.build_absolute_uri(self._overview_url())
 
     def _checkout_cancel_url(self):
         return self.request.build_absolute_uri(self._overview_url())
+
+    # -- Post-checkout activation ----------------------------------------
+
+    #: Provider transaction ids are opaque strings; validate the shape before
+    #: putting one in an API path. Fail closed on anything else.
+    TRANSACTION_ID_RE = re.compile(r"^[A-Za-z0-9_-]{6,80}$")
+
+    def activation_status(self):
+        """Snapshot the success page polls until the paid plan appears."""
+        billable = self.billable
+        cfg = state.get_plan_config_for(billable)
+        return {
+            "plan_key": state.effective_plan_key(billable),
+            "plan_name": cfg.get("name", "") or "",
+            "is_paid": bool(cfg.get("is_paid")),
+            "billing_state": state.get_billing_state(billable),
+            "has_active_subscription": state.has_active_ish_subscription(billable),
+        }
+
+    def reconcile_transaction(self, transaction_id):
+        """Provision from live provider state instead of waiting for the webhook.
+
+        Returns ``(payload, status_code)``. Every failure path returns the current
+        activation status with ``reconciled: False`` rather than an error, so the
+        page falls back to polling for the webhook instead of showing a dead end —
+        except a cross-tenant attempt, which is a 404.
+        """
+        payload = {"reconciled": False}
+
+        if not transaction_id or not self.TRANSACTION_ID_RE.match(transaction_id):
+            payload.update(self.activation_status())
+            return payload, 400
+
+        try:
+            adapter = registry.get_adapter()
+        except ImproperlyConfigured as exc:
+            logger.error("billing_not_configured", error=str(exc))
+            payload.update(self.activation_status())
+            return payload, 200
+
+        normalized = adapter.fetch_subscription_state(transaction_id)
+        if not normalized:
+            # Provider could not tell us yet (or does not support the read).
+            # The webhook remains the path; the caller polls.
+            payload.update(self.activation_status())
+            return payload, 200
+
+        # Tenant guard (spec §2.0 in spirit): the account is resolved from the
+        # provider's signed custom data, so a member of team A must not be able to
+        # drive provisioning by posting a transaction id belonging to team B.
+        # Check BEFORE applying, never after — applying first would be the bug.
+        our_type, our_id = state.billable_token(self.billable)
+        if (
+            normalized.get("billable_type") != our_type
+            or str(normalized.get("billable_id")) != str(our_id)
+        ):
+            logger.warning(
+                "billing_reconcile_tenant_mismatch",
+                provider=getattr(adapter, "provider", ""),
+                expected_billable_id=str(our_id),
+            )
+            raise Http404("Unknown transaction")
+
+        webhooks.apply_subscription_update(adapter.provider, normalized)
+        # apply_subscription_update writes the plan through its OWN freshly loaded
+        # billable, so the instance this request is holding (loaded during
+        # dispatch) is now stale and would report the pre-checkout plan back to
+        # the browser — which is the exact bug this endpoint exists to prevent.
+        refresh = getattr(self.billable, "refresh_from_db", None)
+        if callable(refresh):
+            refresh()
+        status = self.activation_status()
+        payload.update(status)
+        payload["reconciled"] = bool(status["has_active_subscription"])
+        logger.info(
+            "billing_reconciled_from_transaction",
+            provider=adapter.provider,
+            reconciled=payload["reconciled"],
+            plan_key=status["plan_key"],
+        )
+        return payload, 200
 
     def get_billing_context(self):
         billable = self.billable
@@ -97,6 +183,15 @@ class _BillingActionsMixin:
             "billing_provider": getattr(settings, "SPEEDPY_BILLING_PROVIDER", ""),
             "portal_url": self._portal_url(),
             "overview_url": self._overview_url(),
+            "activation_url": self._activation_url(),
+            # Rendered server-side so the pending notice appears on first paint
+            # rather than flashing in from JS. Suppressed the moment the
+            # subscription really is active, so a stale bookmark of
+            # ?activating=1 can never claim a paid plan is still pending.
+            "activating": (
+                self.request.GET.get("activating") == "1"
+                and not state.has_active_ish_subscription(billable)
+            ),
         }
 
     def start_checkout(self, request, plan_key, interval):
@@ -104,6 +199,10 @@ class _BillingActionsMixin:
         plan = SUBSCRIPTION_PLANS.get(plan_key)
         if not plan or not plan.get("is_paid") or plan.get("is_contact"):
             raise Http404("Unknown plan")
+        # Tiers launch gradually (spec §3.11): a paid tier that is not yet
+        # self-serve has NO checkout path, even with a price ID configured.
+        if not plan.get("is_self_serve"):
+            raise Http404("Plan not available for self-serve checkout")
         if interval not in ("monthly", "yearly"):
             raise Http404("Unknown billing interval")
 
@@ -160,7 +259,16 @@ class _BillingActionsMixin:
         # Client-side checkout (Paddle): render the overlay template.
         context = self.get_context_data() if hasattr(self, "get_context_data") else {}
         context.update(result.context)
-        context.update({"plan": plan, "interval": interval})
+        context.update(
+            {
+                "plan": plan,
+                "interval": interval,
+                # Lets the overlay provision from checkout.completed instead of
+                # racing the webhook, then land on an already-correct page.
+                "activation_url": self._activation_url(),
+                "overview_url": self._overview_url(),
+            }
+        )
         from django.shortcuts import render
 
         return render(request, "mainapp/billing/checkout.html", context)
@@ -207,6 +315,9 @@ class _TeamBillingURLsMixin:
     def _portal_url(self):
         return reverse("team_billing_portal", kwargs={"team_id": self.team.pk})
 
+    def _activation_url(self):
+        return reverse("team_billing_activation", kwargs={"team_id": self.team.pk})
+
 
 class TeamBillingView(
     TeamOwnerRequiredMixin, _TeamBillingURLsMixin, _BillingActionsMixin, TemplateView
@@ -233,6 +344,29 @@ class TeamBillingPortalView(
 ):
     def post(self, request, *args, **kwargs):
         return self.open_portal(request)
+
+
+class _ActivationJSONMixin:
+    """JSON endpoints the post-checkout page uses to avoid showing a stale plan.
+
+    ``GET`` polls the current activation status; ``POST`` additionally reconciles
+    from the provider before answering.
+    """
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse(self.activation_status())
+
+    def post(self, request, *args, **kwargs):
+        transaction_id = (request.POST.get("transaction_id") or "").strip()
+        payload, status_code = self.reconcile_transaction(transaction_id)
+        return JsonResponse(payload, status=status_code)
+
+
+class TeamBillingActivationView(
+    TeamOwnerRequiredMixin, _TeamBillingURLsMixin, _BillingActionsMixin,
+    _ActivationJSONMixin, View
+):
+    pass
 
 
 # --------------------------------------------------------------------------
@@ -262,6 +396,9 @@ class _AccountBillingBase(LoginRequiredMixin, _BillingActionsMixin):
     def _portal_url(self):
         return reverse("account_billing_portal")
 
+    def _activation_url(self):
+        return reverse("account_billing_activation")
+
 
 class AccountBillingView(_AccountBillingBase, TemplateView):
     template_name = "mainapp/billing/account_billing.html"
@@ -277,6 +414,10 @@ class AccountCheckoutView(_AccountBillingBase, TemplateView):
 
     def get(self, request, *args, **kwargs):
         return self.start_checkout(request, kwargs.get("plan_key"), kwargs.get("interval"))
+
+
+class AccountBillingActivationView(_AccountBillingBase, _ActivationJSONMixin, View):
+    pass
 
 
 class AccountBillingPortalView(_AccountBillingBase, View):
@@ -336,3 +477,45 @@ class StripeWebhookView(_ProviderWebhookView):
 @method_decorator(csrf_exempt, name="dispatch")
 class PaddleWebhookView(_ProviderWebhookView):
     provider = "paddle"
+
+
+class PaddleCheckoutResumeView(TemplateView):
+    """Target for Paddle's **default payment link** (required by Paddle).
+
+    Paddle refuses to create any transaction until a default payment link is
+    configured (``transaction_default_checkout_url_not_set``), and it uses that
+    link as the base URL for transaction checkout links, subscription
+    update-payment-method redirects, and dunning emails — appending
+    ``?_ptxn=<transaction_id>``.
+
+    Deliberately **no login required**: the transaction id in the link is the
+    capability, and a signed-out customer following a dunning email must still be
+    able to pay. The page reveals nothing about the transaction itself — Paddle
+    renders the payment UI in its own iframe.
+    """
+
+    template_name = "mainapp/billing/checkout_resume.html"
+
+    #: Paddle transaction ids are ``txn_`` + lowercase base32-ish characters. The
+    #: value lands inside a JS string literal, so anything else is dropped rather
+    #: than escaped — fail closed, never interpolate unvalidated input.
+    _TRANSACTION_ID_RE = re.compile(r"^txn_[a-z0-9]{1,60}$")
+
+    def dispatch(self, request, *args, **kwargs):
+        if not state.is_billing_enabled():
+            raise Http404("Billing is disabled")
+        if (getattr(settings, "SPEEDPY_BILLING_PROVIDER", "") or "").lower() != "paddle":
+            raise Http404("Paddle is not the active billing provider")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        raw = self.request.GET.get("_ptxn", "") or ""
+        transaction_id = raw if self._TRANSACTION_ID_RE.match(raw) else ""
+        if raw and not transaction_id:
+            logger.warning("paddle_resume_bad_transaction_id", length=len(raw))
+        context["transaction_id"] = transaction_id
+        context["paddle_environment"] = getattr(settings, "PADDLE_ENVIRONMENT", "")
+        context["paddle_client_token"] = getattr(settings, "PADDLE_CLIENT_TOKEN", "")
+        context["pricing_url"] = reverse("pricing")
+        return context

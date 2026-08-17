@@ -14,9 +14,11 @@ from .billing import (
     TeamBillingView,
     TeamCheckoutView,
     TeamBillingPortalView,
+    TeamBillingActivationView,
     AccountBillingView,
     AccountCheckoutView,
     AccountBillingPortalView,
+    AccountBillingActivationView,
     StripeWebhookView,
     PaddleWebhookView,
 )
@@ -45,6 +47,8 @@ __all__ = [
     "AccountBillingPortalView",
     "StripeWebhookView",
     "PaddleWebhookView",
+    "TeamBillingActivationView",
+    "AccountBillingActivationView",
 ]
 
 if getattr(django_settings, "SPEEDPY_MFA_BACKEND", "django_otp") == "django_otp":

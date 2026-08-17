@@ -18,6 +18,11 @@
                         Open secure checkout
                     </button>
                 </div>
+                {# Surfaces Paddle's own error detail. Without this the overlay
+                   shows only a generic "Something went wrong" and the cause
+                   (unapproved domain, missing default payment link, inactive
+                   price) is invisible. textContent only — never innerHTML. #}
+                <p id="checkout-error" class="mt-4 text-sm text-danger" hidden></p>
                 <div class="checkout-container mt-6"></div>
             </div>
         </div>
@@ -33,17 +38,92 @@
             Paddle.Environment.set("sandbox");
         }
         if (!window.Paddle) { return; }
-        Paddle.Initialize({ token: "{{ paddle_client_token }}" });
+
+        var errorEl = document.getElementById("checkout-error");
+        function showError(detail) {
+            if (!errorEl) { return; }
+            errorEl.textContent = detail
+                ? "Checkout could not open: " + detail
+                : "Checkout could not open. Please try again later.";
+            errorEl.hidden = false;
+        }
+
+        // Paddle redirects the browser the instant payment succeeds, but its
+        // webhook is a separate server call that lands afterwards — so landing on
+        // the billing page immediately would show the OLD plan. On
+        // checkout.completed we therefore provision from Paddle's own API first,
+        // then navigate, and only fall back to the "activating" polling state when
+        // that could not confirm. See reconcile_transaction in views/billing.py.
+        var activationUrl = "{{ activation_url }}";
+        var overviewUrl = "{{ overview_url }}";
+        var csrfToken = "{{ csrf_token }}";
+        var navigated = false;
+
+        function goToOverview(stillActivating) {
+            if (navigated) { return; }
+            navigated = true;
+            window.location.assign(
+                stillActivating ? overviewUrl + "?activating=1" : overviewUrl
+            );
+        }
+
+        function activateThenRedirect(transactionId) {
+            // Never strand the customer on the overlay if our own request stalls:
+            // navigate anyway after a short wait, in polling mode.
+            var fallback = window.setTimeout(function () { goToOverview(true); }, 4000);
+            var body = "transaction_id=" + encodeURIComponent(transactionId || "");
+
+            window.fetch(activationUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": csrfToken
+                },
+                body: body,
+                credentials: "same-origin"
+            })
+                .then(function (resp) { return resp.ok ? resp.json() : null; })
+                .then(function (data) {
+                    window.clearTimeout(fallback);
+                    goToOverview(!(data && data.reconciled));
+                })
+                .catch(function () {
+                    window.clearTimeout(fallback);
+                    goToOverview(true);
+                });
+        }
+
+        Paddle.Initialize({
+            token: "{{ paddle_client_token }}",
+            eventCallback: function (event) {
+                var name = event && event.name;
+                if (name === "checkout.completed") {
+                    var completed = event.data || {};
+                    activateThenRedirect(completed.transaction_id || completed.id || "");
+                    return;
+                }
+                if (name === "checkout.error" || name === "checkout.failed") {
+                    // console.error so the detail lands in the browser log too.
+                    console.error("paddle_checkout_error", event);
+                    // Paddle puts code/detail on the event itself, not in .data.
+                    var data = event.data || {};
+                    showError(
+                        event.detail || event.code || data.detail || data.message || name
+                    );
+                }
+            }
+        });
 
         function openCheckout() {
+            // No settings.successUrl on purpose: Paddle would redirect out from
+            // under us before provisioning finished. We navigate from
+            // checkout.completed instead, which is Paddle's documented hook for
+            // provisioning after payment.
             Paddle.Checkout.open({
                 items: [{ priceId: "{{ price_id }}", quantity: 1 }],
                 customer: { email: "{{ customer_email }}" },
                 customData: {{ custom_data_json|safe }},
-                settings: {
-                    displayMode: "overlay",
-                    successUrl: "{{ success_url }}"
-                }
+                settings: { displayMode: "overlay" }
             });
         }
 

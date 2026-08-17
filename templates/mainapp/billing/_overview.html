@@ -2,7 +2,7 @@
 Shared billing overview body. Expects context from
 _BillingActionsMixin.get_billing_context: plan_rows, current_plan,
 current_plan_key, subscription, billing_state, has_active_subscription,
-over_limit, portal_url.
+over_limit, portal_url, overview_url, activation_url, activating.
 {% endcomment %}
 <div x-data="{ yearly: false }">
 
@@ -13,6 +13,22 @@ over_limit, portal_url.
                 <div>
                     <p class="eyebrow">Current plan</p>
                     <h2 class="h3 capitalize">{{ current_plan.name }}</h2>
+                    {% if activating %}
+                        {# Post-checkout: payment succeeded but the provider's
+                           webhook has not landed yet, so the plan above is still
+                           the old one. Say so plainly instead of showing a number
+                           the customer knows is wrong. #}
+                        <p id="activation-pending" class="mt-2 text-sm text-fg-secondary">
+                            <span class="badge badge-warning">Activating</span>
+                            Your payment went through. We are activating your
+                            subscription — this usually takes a few seconds.
+                        </p>
+                        <p id="activation-timeout" class="mt-2 text-sm text-fg-secondary" hidden>
+                            This is taking longer than usual. Your payment is safe.
+                            Reload the page in a moment, or contact support if the
+                            plan still looks wrong.
+                        </p>
+                    {% endif %}
                     {% if subscription %}
                         <p class="mt-1 text-sm text-fg-secondary">
                             Status:
@@ -124,3 +140,52 @@ over_limit, portal_url.
         {% endfor %}
     </div>
 </div>
+
+{% if activating %}
+{# Bounded polling with backoff, not a blind timed reload: a fixed delay guesses
+   wrong in both directions (too early shows the old plan a second time, too late
+   reloads for nothing). We ask the server until the plan really flips, then
+   reload once to render the full correct state, and give up loudly instead of
+   spinning forever. #}
+<script>
+    (function () {
+        var statusUrl = "{{ activation_url }}";
+        var overviewUrl = "{{ overview_url }}";
+        var pendingEl = document.getElementById("activation-pending");
+        var timeoutEl = document.getElementById("activation-timeout");
+        // Backoff in ms; the sum is the give-up budget (~64s).
+        var delays = [1000, 1000, 2000, 3000, 5000, 8000, 8000, 12000, 12000, 12000];
+        var attempt = 0;
+
+        function giveUp() {
+            if (pendingEl) { pendingEl.hidden = true; }
+            if (timeoutEl) { timeoutEl.hidden = false; }
+        }
+
+        function poll() {
+            if (attempt >= delays.length) { giveUp(); return; }
+            var wait = delays[attempt];
+            attempt += 1;
+            window.setTimeout(function () {
+                window.fetch(statusUrl, {
+                    credentials: "same-origin",
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                })
+                    .then(function (resp) { return resp.ok ? resp.json() : null; })
+                    .then(function (data) {
+                        if (data && data.has_active_subscription) {
+                            // Reload without ?activating so the server renders the
+                            // real plan, portal button and limits.
+                            window.location.replace(overviewUrl);
+                            return;
+                        }
+                        poll();
+                    })
+                    .catch(function () { poll(); });
+            }, wait);
+        }
+
+        poll();
+    })();
+</script>
+{% endif %}

@@ -177,6 +177,70 @@ class PaddleAdapter(BillingAdapter):
         normalized = self._normalize_subscription(data, event)
         webhooks.apply_subscription_update(self.provider, normalized)
 
+    # -- Post-checkout reconciliation -------------------------------------
+
+    def _get(self, path):
+        """GET a Paddle API resource, returning its ``data`` dict or None."""
+        try:
+            resp = requests.get(
+                f"{api_base()}{path}", headers=self._headers(), timeout=_TIMEOUT
+            )
+        except requests.RequestException as exc:
+            logger.error("paddle_api_get_error", path=path, error=str(exc))
+            return None
+        if resp.status_code >= 400:
+            logger.error(
+                "paddle_api_get_failed",
+                path=path,
+                status_code=resp.status_code,
+                body=resp.text[:500],
+            )
+            return None
+        try:
+            data = resp.json().get("data")
+        except ValueError:
+            logger.error("paddle_api_get_unparseable", path=path)
+            return None
+        return data if isinstance(data, dict) else None
+
+    def fetch_subscription_state(self, transaction_id):
+        """Read the subscription behind a completed checkout transaction.
+
+        Two hops, because a transaction only references its subscription: read the
+        transaction for its ``subscription_id``, then read the subscription, which
+        has the same shape as a ``subscription.*`` webhook's ``data`` — so it goes
+        through the exact same normalization (and therefore the same fail-closed
+        price→plan resolution and signed-token account resolution) as a webhook.
+        """
+        if not transaction_id:
+            return None
+        txn = self._get(f"/transactions/{transaction_id}")
+        if txn is None:
+            return None
+        subscription_id = txn.get("subscription_id") or ""
+        if not subscription_id:
+            # One-off purchase, or the subscription is not created yet.
+            logger.info(
+                "paddle_reconcile_no_subscription_on_transaction",
+                transaction_id=transaction_id,
+            )
+            return None
+        subscription = self._get(f"/subscriptions/{subscription_id}")
+        if subscription is None:
+            return None
+        # occurred_at is left unset on purpose. apply_subscription_update uses it
+        # only to reject stale events; an API read IS the current provider state,
+        # so it must never be rejected — and stamping it with our own clock could
+        # make a genuinely newer webhook look stale and be dropped.
+        return self._normalize_subscription(
+            subscription,
+            {
+                "source": "reconcile",
+                "transaction_id": transaction_id,
+                "data": subscription,
+            },
+        )
+
     def _normalize_subscription(self, data, raw_event):
         custom_data = data.get("custom_data") or {}
         price_id, product_id = self._first_price(data)

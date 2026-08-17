@@ -86,3 +86,22 @@ class BillingAdapter(ABC):
     @abstractmethod
     def process_event(self, event):
         """Apply a verified webhook event to local billing state (idempotent)."""
+
+    def fetch_subscription_state(self, transaction_id):
+        """Read live subscription state for a completed checkout transaction.
+
+        Closes the post-checkout race: the browser is redirected back the instant
+        payment succeeds, while the provider's webhook is a separate server call
+        that lands afterwards (or, rarely, never). Reading the provider's own API
+        lets the success page provision immediately instead of guessing.
+
+        Returns the same provider-neutral dict shape that ``process_event`` feeds
+        to ``webhooks.apply_subscription_update``, or ``None`` when the state
+        cannot be determined. It deliberately does **not** apply the update — the
+        caller must first check that the resolved billable is the account it is
+        acting for, so one tenant cannot drive another tenant's provisioning.
+
+        Adapters that cannot support this return ``None``; the caller then falls
+        back to waiting for the webhook.
+        """
+        return None
