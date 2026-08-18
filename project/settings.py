@@ -7,6 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
 
 from project.email_providers import resolve_email_backend
+from project.media import normalize_media_url
 
 env = environ.Env(
     # set casting, default value
@@ -242,8 +243,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 STATIC_URL = env.str("STATIC_URL", default="/static/")
 STATIC_ROOT = env.str("STATIC_ROOT", default=BASE_DIR / "staticfiles")
 
+# Appliku volumes export <PREFIX>_ROOT and <PREFIX>_URL from the volume's
+# environment-variable prefix, so the default `media` volume (prefix MEDIA) sets
+# MEDIA_ROOT and MEDIA_URL directly. Read exactly those names: the URL used to be
+# read from MEDIA_PATH, which the platform never sets, so a volume with a
+# non-default web path was silently ignored.
 MEDIA_ROOT = env("MEDIA_ROOT", default=BASE_DIR / "media")
-MEDIA_URL = env("MEDIA_PATH", default="/media/")
+MEDIA_URL = normalize_media_url(env.str("MEDIA_URL", default=""))
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_AUTOREFRESH = DEBUG
 STATICFILES_DIRS = [
