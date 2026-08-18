@@ -39,3 +39,11 @@ dependencies = [
     "django-cors-headers>=4.7.0",
     "django-anymail[amazon-ses]==13.1",
 ]
+
+# Object storage is opt-in: boto3 and botocore are large, and most projects start
+# on local disk. Install with `uv sync --extra s3` when you set USE_S3=True.
+[project.optional-dependencies]
+s3 = [
+    "django-storages[s3]==1.14.6",
+    "boto3==1.42.74",
+]

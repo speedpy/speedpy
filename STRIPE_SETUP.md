@@ -5,6 +5,7 @@ the provider. Billing is **off by default** — nothing here is required to run 
 app locally or in demo mode.
 
 See also: [PADDLE_SETUP.md](PADDLE_SETUP.md) for the Paddle provider, and
+[STORAGE_SETUP.md](STORAGE_SETUP.md) for media/object storage, and
 `mainapp/subscription_plans.py` for the canonical plan/price registry that drives
 the pricing page, billing UI, feature gating, and the catalog command below.
 

@@ -5,6 +5,7 @@ SpeedPy ships a pluggable billing layer. This guide covers wiring **Paddle**
 required to run the app locally or in demo mode.
 
 See also: [STRIPE_SETUP.md](STRIPE_SETUP.md) for the Stripe provider, and
+[STORAGE_SETUP.md](STORAGE_SETUP.md) for media/object storage, and
 `mainapp/subscription_plans.py` for the canonical plan/price registry that drives
 the pricing page, billing UI, feature gating, and the catalog command below.
 

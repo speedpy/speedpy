@@ -14,6 +14,8 @@ Two traps come with that, and both are handled here:
    yields subtly wrong URLs rather than an error.
 """
 
+from django.core.files.storage import FileSystemStorage
+
 DEFAULT_MEDIA_URL = "/media/"
 
 #: Values that mean "the platform set this variable but there is nothing in it".
@@ -28,3 +30,49 @@ def normalize_media_url(raw, default=DEFAULT_MEDIA_URL):
     if not value.endswith("/"):
         value += "/"
     return value
+
+
+
+class PrivateFileSystemStorage(FileSystemStorage):
+    """Local-disk storage for files that must never be fetched by URL.
+
+    Django's ``FileSystemStorage.base_url`` falls back to ``MEDIA_URL`` when it is
+    given ``None``, so simply omitting a base URL is not enough — the file would
+    still get a working, web-server-served URL. Refuse to produce one at all, and
+    say what to do instead.
+    """
+
+    def url(self, name):
+        raise ValueError(
+            "This file is private and has no public URL. Serve it through a view "
+            "that checks permissions and returns FileResponse(field.open()), or "
+            "switch to object storage (USE_S3=True) for signed URLs."
+        )
+
+
+def private_storage():
+    """Storage for files that must not be readable by URL alone.
+
+    Returns the S3 private backend when ``USE_S3`` is on, and local disk otherwise,
+    so a model field works in both modes:
+
+        from project.media import private_storage
+
+        class Invoice(models.Model):
+            pdf = models.FileField(storage=private_storage, upload_to="invoices/")
+
+    Pass the function itself, not a call — Django accepts a callable and records
+    the reference in migrations, so flipping ``USE_S3`` needs no migration.
+
+    In local mode files land in ``PRIVATE_MEDIA_ROOT``, which defaults to a
+    directory **outside** ``MEDIA_ROOT`` on purpose: anything under ``MEDIA_ROOT``
+    is served by the web server, so a "private" subdirectory there would be public.
+    """
+    from django.conf import settings
+
+    if getattr(settings, "USE_S3", False):
+        from speedpycom.storages import PrivateMediaStorage
+
+        return PrivateMediaStorage()
+
+    return PrivateFileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT)

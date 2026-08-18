@@ -250,6 +250,63 @@ STATIC_ROOT = env.str("STATIC_ROOT", default=BASE_DIR / "staticfiles")
 # non-default web path was silently ignored.
 MEDIA_ROOT = env("MEDIA_ROOT", default=BASE_DIR / "media")
 MEDIA_URL = normalize_media_url(env.str("MEDIA_URL", default=""))
+# Local-disk home for private uploads (project.media.private_storage). Deliberately
+# OUTSIDE MEDIA_ROOT: everything under MEDIA_ROOT is served by the web server, so a
+# "private" subdirectory in there would be publicly fetchable.
+PRIVATE_MEDIA_ROOT = env("PRIVATE_MEDIA_ROOT", default=BASE_DIR / "private-media")
+
+# ---- Object storage: local disk by default, S3-compatible when you need it ----
+# Flip USE_S3=True and set the S3_* variables to move media off the local disk to
+# any S3-compatible provider (AWS S3, DigitalOcean Spaces, Cloudflare R2, Wasabi,
+# Backblaze B2, MinIO). The provider is chosen purely by S3_ENDPOINT_URL — nothing
+# here is vendor-specific. Requires the optional dependency: uv sync --extra s3
+# See STORAGE_SETUP.md, and speedpycom/storages.py for the two backends.
+USE_S3 = env.bool("USE_S3", default=False)
+S3_ACCESS_KEY_ID = env.str("S3_ACCESS_KEY_ID", default="")
+S3_SECRET_ACCESS_KEY = env.str("S3_SECRET_ACCESS_KEY", default="")
+S3_BUCKET_NAME = env.str("S3_BUCKET_NAME", default="")
+S3_REGION_NAME = env.str("S3_REGION_NAME", default="")
+# Empty = AWS S3. Otherwise the provider's endpoint, e.g.
+# https://fra1.digitaloceanspaces.com or https://<account>.r2.cloudflarestorage.com
+S3_ENDPOINT_URL = env.str("S3_ENDPOINT_URL", default="")
+# Optional CDN/custom domain in front of the bucket; public URLs use it when set.
+S3_CDN_BASE = env.str("S3_CDN_BASE", default="")
+# ACLs are NOT portable. Empty (the default) works everywhere. Set "public-read"
+# on DigitalOcean Spaces. Leave empty on AWS buckets with ACLs disabled (the
+# default since April 2023) and on Cloudflare R2, which has no ACLs — grant public
+# read with a bucket policy or a public bucket instead.
+S3_DEFAULT_ACL = env.str("S3_DEFAULT_ACL", default="")
+S3_SEND_PRIVATE_ACL = env.bool("S3_SEND_PRIVATE_ACL", default=True)
+S3_SIGNED_URL_EXPIRE = env.int("S3_SIGNED_URL_EXPIRE", default=600)
+# "path" for MinIO and some self-hosted gateways; empty lets boto3 decide.
+S3_ADDRESSING_STYLE = env.str("S3_ADDRESSING_STYLE", default="")
+
+if USE_S3:
+    # Fail loudly at boot rather than on the first upload.
+    _missing = [
+        name
+        for name, value in (
+            ("S3_ACCESS_KEY_ID", S3_ACCESS_KEY_ID),
+            ("S3_SECRET_ACCESS_KEY", S3_SECRET_ACCESS_KEY),
+            ("S3_BUCKET_NAME", S3_BUCKET_NAME),
+        )
+        if not value
+    ]
+    if _missing:
+        raise ImproperlyConfigured(
+            "USE_S3=True requires " + ", ".join(_missing)
+        )
+
+# Static files stay on WhiteNoise in both modes: atomic deploys, no collectstatic
+# round-trip to object storage, and no CDN invalidation step on every release.
+STORAGES = {
+    "default": {
+        "BACKEND": "speedpycom.storages.PublicMediaStorage"
+        if USE_S3
+        else "django.core.files.storage.FileSystemStorage"
+    },
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_AUTOREFRESH = DEBUG
 STATICFILES_DIRS = [
