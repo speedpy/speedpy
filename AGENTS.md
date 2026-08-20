@@ -278,7 +278,28 @@ rows, and simple data display. Keep preview/documentation examples one component
 - Badges: `badge`, `badge-lg`, `badge-primary`, `badge-secondary`, `badge-success`,
   `badge-info`, `badge-warning`, `badge-error`
 - Alerts: `alert`, `alert-primary`, `alert-secondary`, `alert-success`, `alert-info`,
-  `alert-warning`, `alert-error`, `alert-danger`, `alert-light`, `alert-neutral`
+  `alert-warning`, `alert-error`, `alert-danger`, `alert-light`, `alert-neutral`.
+  **`.alert` is a flex row** (`@apply flex …`), so every direct child is a flex item.
+  Put the whole message in ONE `<span>` whenever it mixes text with an inline
+  element — a bare text node and a sibling `<a>`/`<strong>` become two anonymous
+  flex items and the whitespace between them is dropped, rendering
+  "records is paused.Update billing.":
+
+  ```django
+  {# wrong — the spaces around the link disappear #}
+  <div class="alert alert-warning">
+      Payment is past due. <a href="…" class="underline">Update billing</a>.
+  </div>
+
+  {# right — one flex item #}
+  <div class="alert alert-warning">
+      <span>Payment is past due. <a href="…" class="underline">Update billing</a>.</span>
+  </div>
+  ```
+
+  Deliberate multi-item alerts (icon + text, message + copy button) are fine —
+  that is what the flex row is for; add `items-center gap-2` and, for the text
+  half, still wrap it in its own `<span>`.
 - Tables: `table`, `table-hover`, `table-striped`, `table-sm`
 - Pagination: use `pagination`, `pagination-summary`, `pagination-list`,
   `pagination-link`, `pagination-link-active`, `pagination-link-disabled`, and
