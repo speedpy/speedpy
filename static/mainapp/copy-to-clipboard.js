@@ -28,6 +28,8 @@
         'btn-primary', 'btn-secondary', 'btn-success', 'btn-info',
         'btn-warning', 'btn-error', 'btn-inherit'
     ];
+    // Result colors this handler applies, and therefore has to take back off.
+    const RESULT_CLASSES = ['btn-success', 'btn-error'];
 
     function textToCopy(button) {
         if (button.hasAttribute('data-copy-value')) {
@@ -94,30 +96,42 @@
         selection.addRange(range);
     }
 
-    function showState(button, doneLabel, doneClass) {
+    // Every result state is applied from the SAME captured idle state. Reading
+    // the current classes each time would capture btn-success as the "idle"
+    // color on a second click inside the reset window, and the button would
+    // stay green for good.
+    function rememberIdle(button) {
         if (button.dataset.copyIdleLabel === undefined) {
             button.dataset.copyIdleLabel = button.textContent;
+            button.dataset.copyIdleColor = COLOR_CLASSES.filter(function (name) {
+                return button.classList.contains(name);
+            }).join(' ');
         }
-        window.clearTimeout(Number(button.dataset.copyTimer || 0));
+    }
 
-        const idleColor = COLOR_CLASSES.filter(function (name) {
-            return button.classList.contains(name);
-        });
+    function restoreIdle(button) {
+        if (button.dataset.copyIdleLabel === undefined) return;
+        button.textContent = button.dataset.copyIdleLabel;
+        RESULT_CLASSES.forEach(function (name) { button.classList.remove(name); });
+        (button.dataset.copyIdleColor || '').split(' ')
+            .filter(Boolean)
+            .forEach(function (name) { button.classList.add(name); });
+    }
+
+    function showState(button, doneLabel, doneClass) {
+        rememberIdle(button);
+        window.clearTimeout(Number(button.dataset.copyTimer || 0));
+        restoreIdle(button);
+
+        const idleColor = (button.dataset.copyIdleColor || '').split(' ').filter(Boolean);
         if (doneClass && idleColor.length) {
-            button.dataset.copyIdleColor = idleColor.join(' ');
             idleColor.forEach(function (name) { button.classList.remove(name); });
             button.classList.add(doneClass);
         }
         button.textContent = doneLabel;
 
         button.dataset.copyTimer = String(window.setTimeout(function () {
-            button.textContent = button.dataset.copyIdleLabel;
-            if (doneClass) {
-                button.classList.remove(doneClass);
-                (button.dataset.copyIdleColor || '').split(' ')
-                    .filter(Boolean)
-                    .forEach(function (name) { button.classList.add(name); });
-            }
+            restoreIdle(button);
         }, RESET_MS));
     }
 
