@@ -38,6 +38,8 @@
                     </div>
                 {% endfor %}
             </div>
+            <textarea id="backup-codes-text" hidden readonly>{% for code in backup_codes %}{{ code }}
+{% endfor %}</textarea>
         </div>
 
         <div class="flex gap-3">
@@ -45,10 +47,8 @@
                     class="py-2 px-4 text-sm font-medium text-blue-600 bg-white border border-blue-600 rounded-lg hover:bg-blue-50">
                 {% trans "Print Codes" %}
             </button>
-            <button onclick="copyCodes()"
-                    class="py-2 px-4 text-sm font-medium text-blue-600 bg-white border border-blue-600 rounded-lg hover:bg-blue-50">
-                {% trans "Copy to Clipboard" %}
-            </button>
+            {% trans "Copy to Clipboard" as copy_codes_label %}
+            {% include "components/copy_button.html" with copy_target="#backup-codes-text" label=copy_codes_label btn_class="py-2 px-4 text-sm font-medium text-blue-600 bg-white border border-blue-600 rounded-lg hover:bg-blue-50" %}
         </div>
 
         <div class="mt-8 pt-6 border-t border-gray-200">
@@ -65,14 +65,6 @@
 <script>
 function printCodes() {
     window.print();
-}
-
-function copyCodes() {
-    const codes = [{% for code in backup_codes %}'{{ code }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
-    const text = codes.join('\n');
-    navigator.clipboard.writeText(text).then(() => {
-        alert('{% trans "Backup codes copied to clipboard!" %}');
-    });
 }
 </script>
 {% endblock %}

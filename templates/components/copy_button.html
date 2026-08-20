@@ -1,0 +1,33 @@
+{% load i18n %}{% comment %}
+Copy-to-clipboard button with visible feedback.
+
+Wired by static/mainapp/copy-to-clipboard.js (loaded for every page in
+base.html). The button reports the result: the label becomes "Copied!" on a
+green button for two seconds, or "Copy failed — press Ctrl+C" with the text
+selected when the browser refuses the clipboard write.
+
+Usage:
+
+    {% include "components/copy_button.html" with copy_target="#new-secret-value" %}
+    {% include "components/copy_button.html" with copy_target="#share-url" label="Copy link" btn_class="btn btn-text btn-primary btn-sm" %}
+
+Parameters:
+    copy_target  CSS selector of the element holding the text (input value,
+                 link href, or text content). Either this or copy_value.
+    copy_value   Literal text to copy instead of reading an element.
+    label        Idle label. Default the translated "Copy".
+    done_label   Success label. Default the translated "Copied!".
+    btn_class    Button classes. Default a small outlined secondary button.
+{% endcomment %}
+{% trans "Copy" as default_label %}
+{% trans "Copied!" as default_done_label %}
+{% trans "Copy failed — press Ctrl+C" as default_failed_label %}
+<button type="button"
+        class="{{ btn_class|default:'btn btn-outlined btn-secondary btn-sm' }}"
+        {% if copy_target %}data-copy-target="{{ copy_target }}"{% endif %}
+        {% if copy_value %}data-copy-value="{{ copy_value }}"{% endif %}
+        data-copy-done="{{ done_label|default:default_done_label }}"
+        data-copy-failed="{{ failed_label|default:default_failed_label }}"
+        data-copy-done-class="btn-success"
+        data-copy-failed-class="btn-error"
+        aria-live="polite">{{ label|default:default_label }}</button>

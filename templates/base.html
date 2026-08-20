@@ -86,6 +86,8 @@
 <script src="{% static "floating-core/floating-ui.core.umd.js" %}"></script>
 <script src="{% static "floating-ui/floating-ui.dom.umd.js" %}"></script>
 <script src="{% static "mainapp/index.js" %}"></script>
+{# Copy-to-clipboard buttons with visible feedback — components/copy_button.html #}
+<script defer src="{% static "mainapp/copy-to-clipboard.js" %}"></script>
 {% if SPEEDPY_TOURS_ENABLED %}<script src="{% static "vendors/driverjs/driver.js.iife.js" %}"></script>
 {% include "partials/_tour.html" %}{% endif %}
 </body>
