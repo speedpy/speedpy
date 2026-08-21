@@ -181,6 +181,11 @@ ACCOUNT_ADAPTER = "usermodel.adapters.CustomAccountAdapter"
 SOCIALACCOUNT_ADAPTER = "usermodel.adapters.CustomSocialAccountAdapter"
 LOGIN_REDIRECT_URL = reverse_lazy("dashboard")
 
+# Root log level. DEBUG in development, INFO in production — a production root
+# at DEBUG makes third-party libraries dump request bodies (see the logger pins
+# below). Override deliberately with LOG_LEVEL when debugging.
+LOG_LEVEL = env.str("LOG_LEVEL", default="DEBUG" if DEBUG else "INFO").upper()
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -203,7 +208,21 @@ LOGGING = {
     "handlers": {
         "console": {"class": "logging.StreamHandler", "formatter": "plain_console"}
     },
-    "loggers": {"": {"handlers": ["console"], "level": "DEBUG"}},
+    "loggers": {
+        "": {"handlers": ["console"], "level": LOG_LEVEL},
+        # Pinned to WARNING independently of the root level, and deliberately
+        # NOT just lowered along with it. At DEBUG these libraries log every
+        # HTTP request body they send. For any project that sends mail through
+        # an AWS/boto-backed ESP that means password-reset tokens (as decodable
+        # base64 MIME), whole message bodies, and SigV4 Authorization headers
+        # written to the container log. Pinning here means the leak cannot come
+        # back the next time somebody raises the root level to debug something
+        # unrelated, which is exactly when nobody would notice.
+        "botocore": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "boto3": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "s3transfer": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "urllib3": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+    },
 }
 
 structlog.configure(
