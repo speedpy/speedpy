@@ -566,6 +566,33 @@ SPEEDPY_EMAIL_EVENT_TEAM_RESOLVER = env.str(
     "SPEEDPY_EMAIL_EVENT_TEAM_RESOLVER", default=""
 )
 
+# --- Blocking email addresses by domain --------------------------------------
+# Two lists, kept apart on purpose: the bundled one is replaced wholesale when
+# refreshed from upstream, so project-specific domains would be lost if they
+# lived in it. See speedpycom/data/README.md and AGENTS.md.
+
+#: Block the ~8,000 throwaway-mail providers bundled in
+#: speedpycom/data/disposable_email_blocklist.conf.
+#: NOTE FOR UPGRADERS: this is on by default, so signups from mailinator and
+#: friends start being refused as soon as you take this version. Set it to False
+#: if you were relying on accepting them.
+SPEEDPY_BLOCK_DISPOSABLE_EMAIL_DOMAINS = env.bool(
+    "SPEEDPY_BLOCK_DISPOSABLE_EMAIL_DOMAINS", default=True
+)
+
+#: The project's own list. One domain per line, `#` comments allowed, and a
+#: leading dot (".example.com") also covers subdomains. Missing file is fine.
+SPEEDPY_BLOCKED_EMAIL_DOMAINS_FILE = env.str(
+    "SPEEDPY_BLOCKED_EMAIL_DOMAINS_FILE",
+    default=str(BASE_DIR / "blocked_email_domains.txt"),
+)
+
+#: Extra domains from the environment, for a one-off block without a deploy of
+#: the file. Merged with the file rather than replacing it.
+SPEEDPY_BLOCKED_EMAIL_DOMAINS = env.list(
+    "SPEEDPY_BLOCKED_EMAIL_DOMAINS", default=[]
+)
+
 #: Shown to people whose address we stopped emailing, on the account email page.
 SUPPORT_EMAIL = env.str("SUPPORT_EMAIL", default="")
 

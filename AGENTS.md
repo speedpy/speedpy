@@ -1020,6 +1020,68 @@ To restrict open registration, set `DCR_ENABLED = False` in settings (default:
 must be registered via Django admin or the `create_oauth2_app` management
 command.
 
+## Blocked email domains
+
+Two lists, and the split is the whole point.
+
+| List | File | Who owns it |
+|---|---|---|
+| Throwaway-mail providers (~8,000 domains) | `speedpycom/data/disposable_email_blocklist.conf` | **upstream** — replaced wholesale on refresh |
+| This project's own | `blocked_email_domains.txt` (repo root) | **the project** — upstream never writes to it |
+
+**Never add a domain to the bundled file.** It is overwritten every time it is
+refreshed, so the edit disappears without a trace. Project domains go in
+`blocked_email_domains.txt`, or in `SPEEDPY_BLOCKED_EMAIL_DOMAINS` for a one-off
+block with no deploy. Both sources are merged, not one-or-the-other.
+
+Checked by `speedpycom/services/email_domains.py::is_blocked`, called from
+`usermodel/forms.py::clean_email` before the MX lookup — two in-memory set
+lookups cost nothing next to a DNS call with a five-second budget.
+
+Format: one domain per line, `#` comments, blank lines ignored, matching is
+case-insensitive. A **leading dot** covers subdomains: `.corp.example` blocks
+`corp.example` and `mail.corp.example`, while a bare `corp.example` blocks only
+itself. That asymmetry is deliberate — silently blocking every subdomain of a
+bare entry would surprise people.
+
+Settings: `SPEEDPY_BLOCK_DISPOSABLE_EMAIL_DOMAINS` (default **True**),
+`SPEEDPY_BLOCKED_EMAIL_DOMAINS_FILE`, `SPEEDPY_BLOCKED_EMAIL_DOMAINS`. Turning
+the bundled list off does **not** disable the project list; they are two
+decisions.
+
+### Refreshing the bundled list
+
+Source: <https://github.com/disposable-email-domains/disposable-email-domains>
+(CC0-1.0, so no attribution obligation — recorded so you know where to look).
+
+```bash
+curl -sS -o speedpycom/data/disposable_email_blocklist.conf \
+  https://raw.githubusercontent.com/disposable-email-domains/disposable-email-domains/main/disposable_email_blocklist.conf
+```
+
+**No automation, on purpose.** A signup gate that changes what it rejects on a
+schedule, unattended, is not a thing to want. Refresh it by hand and read the
+diff.
+
+Then run `python manage.py test speedpycom.tests.test_email_domains`. It asserts
+the list does not contain any of twenty real providers — because the failure mode
+of a bad upstream pull request is that signups from Gmail stop working, nothing
+errors, nothing logs, and nobody complains, since they cannot sign up to
+complain.
+
+That list of ~8,000 vetted domains was chosen over the aggregated 100,000+ ones
+on purpose: refusing one real customer costs more than letting a throwaway
+signup through.
+
+### The refusal message
+
+One message for every reason, from `email_domains.BLOCKED_EMAIL_MESSAGE`, and it
+says nothing about which list matched or why. A wording per reason *is* the
+diagnosis, and a person probing the filter learns from it what to try next. The
+cost is that a real customer hits a wall, which is why the message points at
+support. Keep it that way — and if you add another reason for refusing an
+address, reuse this message rather than writing a second one.
+
 ## Email bounces and suppression
 
 **This already exists. Do not build it again.** If a project needs to stop

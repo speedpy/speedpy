@@ -1,0 +1,25 @@
+# Project-specific blocked email domains.
+#
+# One domain per line. Blank lines and lines starting with # are ignored.
+# Matching is case-insensitive and applies to the part after the @.
+#
+# This file is YOURS. Nothing upstream ever writes to it, so it will not
+# conflict when you merge the boilerplate. The bundled list of throwaway-mail
+# providers lives in speedpycom/data/disposable_email_blocklist.conf and is
+# replaced wholesale whenever it is refreshed — which is exactly why your own
+# entries belong here instead.
+#
+# A leading dot blocks subdomains too:
+#
+#     example.com        blocks alice@example.com
+#     .example.com       blocks alice@mail.example.com AND alice@example.com
+#
+# Reasons to put a domain here: a competitor you would rather not onboard, a
+# partner who asked you to route their staff through SSO instead, a domain that
+# keeps producing abusive signups, or a free-mail provider your plan rules
+# exclude.
+#
+# Bear in mind that anyone refused gets a deliberately vague message and no way
+# to tell why. That is the right call against an attacker probing your filter,
+# and it is a bad experience for a real customer, so keep this list short and
+# make sure support can find out that an address was refused here.

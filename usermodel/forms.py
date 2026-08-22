@@ -21,6 +21,10 @@ from django.utils.translation import gettext_lazy as _
 
 from speedpycom.widgets import ImageUploadInput
 from usermodel.models import User
+from speedpycom.services.email_domains import (
+    BLOCKED_EMAIL_MESSAGE,
+    is_blocked,
+)
 
 
 def recaptcha_enabled():
@@ -89,6 +93,18 @@ class UsermodelSignupForm(SignupForm):
 
     def clean_email(self):
         email = super().clean_email()
+
+        # Domain blocklists run BEFORE the MX lookup: they are two set lookups
+        # against data already in memory, where the MX check is a network call
+        # with a 5-second budget. No reason to pay for DNS to reject
+        # mailinator.com.
+        #
+        # The message is deliberately the same whichever list matched, and says
+        # nothing about which. A wording per reason would tell somebody probing
+        # the filter what to try next.
+        if email and is_blocked(email):
+            raise forms.ValidationError(BLOCKED_EMAIL_MESSAGE)
+
         if email and not settings.DEBUG and getattr(settings, "SIGNUP_EMAIL_MX_CHECK", True):
             domain = email.rsplit("@", 1)[-1]
             try:
