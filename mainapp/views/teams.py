@@ -246,20 +246,21 @@ class TeamOwnerRequiredMixin(TeamViewMixin):
     Mixin that restricts access to team owners only.
 
     Deliberately narrower than TeamAdminRequiredMixin: an admin may manage a
-    team, but ending it is the owner's decision. Any current owner qualifies —
-    a team can have several, and each already has the power to schedule a
+    team, but billing it and ending it are the owner's powers. Any current
+    owner qualifies — a team can have several, and each can already schedule a
     deletion, so refusing one the right to undo another's would be theatre.
+
+    The check sits in ``_get_membership``, which ``dispatch`` calls *before* the
+    handler runs, so a non-owner is rejected before any side effect (a deletion,
+    a provider checkout session) can start. This is the one owner-only mixin;
+    ``views/billing.py`` imports it from here rather than keeping its own.
     """
 
-    def validate_team_access(self, request, *args, **kwargs):
-        response = super().validate_team_access(request, *args, **kwargs)
-        if response is not None:
-            return response
-
-        if self.team_membership.role != "owner":
-            raise PermissionDenied("Only team owners can delete a team")
-
-        return None
+    def _get_membership(self, user, team):
+        membership = super()._get_membership(user, team)
+        if membership.role != "owner":
+            raise PermissionDenied("Only the team owner can do that.")
+        return membership
 
 
 class TeamDeleteView(TeamOwnerRequiredMixin, View):

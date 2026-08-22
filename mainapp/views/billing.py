@@ -33,25 +33,9 @@ from mainapp.subscription_plans import (
     get_provider_price_id,
     get_public_plans,
 )
-from mainapp.views.teams import TeamViewMixin
+from mainapp.views.teams import TeamOwnerRequiredMixin, TeamViewMixin
 
 logger = structlog.get_logger(__name__)
-
-
-class TeamOwnerRequiredMixin(TeamViewMixin):
-    """Restrict access to team owners only (billing is an owner power).
-
-    The role check is enforced inside ``_get_membership`` — which
-    ``TeamViewMixin.dispatch`` calls *before* dispatching to the handler — so a
-    non-owner is rejected before any billing side effect (provider session,
-    portal) can run.
-    """
-
-    def _get_membership(self, user, team):
-        membership = super()._get_membership(user, team)
-        if membership.role != "owner":
-            raise PermissionDenied("Only the team owner can manage billing.")
-        return membership
 
 
 class _BillingActionsMixin:
