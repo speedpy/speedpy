@@ -5,7 +5,7 @@
 {% elif field|is_checkbox %}
     {% include 'tailwind/layout/checkbox.html' %}
 {% else %}
-    {# Opening Div and Label first #}
+    {% comment %}Opening Div and Label first{% endcomment %}
 
     <{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" class="{% if wrapper_class %}{{ wrapper_class }} {% endif %}{% if field_class %}{{ field_class }}{% else %}form-field{% endif %}">
     {% if field.label and form_show_labels %}
@@ -14,7 +14,7 @@
         </label>
     {% endif %}
 
-    {# if field has a special template then use this #}
+    {% comment %}if field has a special template then use this{% endcomment %}
     {% if field|is_select %}
         <div{% if flat_attrs %} {{ flat_attrs|safe }}{% endif %}>
             {% include 'tailwind/layout/select.html' %}
@@ -28,7 +28,7 @@
             {% include 'tailwind/layout/radioselect.html' %}
         </div>
     {% else %}
-        {# otherwise use django rendering with additional classes added #}
+        {% comment %}otherwise use django rendering with additional classes added{% endcomment %}
         {% tailwind_field field %}
     {% endif %}
 

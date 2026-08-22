@@ -6,7 +6,7 @@ over_limit, portal_url, overview_url, activation_url, activating.
 {% endcomment %}
 <div x-data="{ yearly: false }">
 
-    {# ---- Current plan & status ---- #}
+    {% comment %}---- Current plan & status ----{% endcomment %}
     <div class="card">
         <div class="card-body">
             <div class="flex flex-wrap items-start justify-between gap-4">
@@ -70,7 +70,7 @@ over_limit, portal_url, overview_url, activation_url, activating.
         </div>
     </div>
 
-    {# ---- Plan picker ---- #}
+    {% comment %}---- Plan picker ----{% endcomment %}
     <div class="mt-8 flex items-center gap-3">
         <label class="switch">
             <input type="checkbox" class="sr-only peer" x-model="yearly">
@@ -115,7 +115,7 @@ over_limit, portal_url, overview_url, activation_url, activating.
                                 Contact us
                             </a>
                         {% elif not plan.is_paid %}
-                            {# Free tier — downgrade is handled via the portal/cancellation #}
+                            {% comment %}Free tier — downgrade is handled via the portal/cancellation{% endcomment %}
                             <span class="text-xs text-fg-secondary">Default plan</span>
                         {% elif has_active_subscription %}
                             <form method="post" action="{{ portal_url }}">

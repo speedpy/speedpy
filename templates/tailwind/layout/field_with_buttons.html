@@ -1,15 +1,26 @@
 {% load tailwind_field %}
+{% comment %}
+A field with buttons attached to its right edge.
 
+Was a hand-rolled input group: `border-gray-300 text-gray-700` on the field and
+`bg-gray-200 text-gray-800` on the addon, both light-only, plus `border-red-500`
+for the error state. Now `input-group` + `input-outlined` + `input-group-text`,
+which are theme-aware, and `input-error` for the error state.
+{% endcomment %}
 <div{% if div.css_id %} id="{{ div.css_id }}"{% endif %} class="{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}{% if div.css_class %} {{ div.css_class }}{% endif %}" {{ div.flat_attrs|safe }}>
     {% if field.label and form_show_labels %}
-        <label for="{{ field.id_for_label }}" class="{% if 'form-horizontal' in form_class %}col-form-label {% endif %}{{ label_class }}{% if field.field.required %} requiredField{% endif %}">
+        <label for="{{ field.id_for_label }}" class="{% if 'form-horizontal' in form_class %}col-form-label {% endif %}{% if label_class %}{{ label_class }}{% else %}input-label{% endif %}{% if field.field.required %} requiredField{% endif %}">
             {{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
         </label>
     {% endif %}
 
-    <div class="flex{% if field_class %} {{ field_class }}{% endif %}">
-        {% tailwind_field field "class" "border border-gray-300 rounded-lg rounded-r-none px-4 py-2 w-full focus:outline-none text-gray-700 border-r-0 leading-normal" %}
-            <span class="{% if field.errors %}border-red-500 border-r-0 {% else %}border-gray-300 {% endif %}border rounded-lg rounded-l-none bg-gray-200 text-gray-800 flex items-center">{{ buttons|safe }}</span>
+    <div class="input-group{% if field_class %} {{ field_class }}{% endif %}">
+        {% if field.errors %}
+            {% tailwind_field field "class" "input-outlined input-error rounded-r-none border-r-0" %}
+        {% else %}
+            {% tailwind_field field "class" "input-outlined rounded-r-none border-r-0" %}
+        {% endif %}
+        <span class="input-group-text input-group-text-append{% if field.errors %} border-error{% endif %}">{{ buttons|safe }}</span>
         {% include 'tailwind/layout/help_text_and_errors.html' %}
     </div>
 </div>

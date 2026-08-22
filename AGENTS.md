@@ -1020,6 +1020,31 @@ To restrict open registration, set `DCR_ENABLED = False` in settings (default:
 must be registered via Django admin or the `create_oauth2_app` management
 command.
 
+## Template comments: always `{% comment %}`, never `{# #}`
+
+**Hard rule. `{# #}` is banned in templates.** A test fails on any occurrence.
+
+The short form works right up until somebody wraps the line, and then it stops
+being a comment and starts printing to the page — Django's `{# #}` is
+single-line only. Nothing errors, the page still returns 200, and every
+assertion about its content still passes.
+
+That has already shipped twice here. Once above the sign-in form, and once inside
+`{% if activating %}` on the billing overview, which is the post-checkout state a
+paying customer sees. The reason it survives review is that the harmless cases
+are indistinguishable from the broken ones in a diff: a comment placed between
+`{% extends %}` and the first `{% block %}` is discarded with all other
+out-of-block content, so it looks fine forever, while the identical construct
+inside a block leaks.
+
+```django
+{% comment %}
+Use this. It behaves the same on one line or ten.
+{% endcomment %}
+```
+
+`{% comment %}` also nests other tags safely, which `{# #}` does not.
+
 ## Use the design system, do not re-create it
 
 `static/mainapp/input.css` defines the components — buttons, alerts, badges,

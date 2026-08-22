@@ -22,7 +22,7 @@
             </button>
         </header>
 
-        {# ---------- Typography and layout ---------- #}
+        {% comment %}---------- Typography and layout ----------{% endcomment %}
         <section class="space-y-6">
             <div class="section-header text-left mx-0">
                 <p class="eyebrow">Foundation</p>
@@ -56,7 +56,7 @@
             </div>
         </section>
 
-        {# ---------- Buttons ---------- #}
+        {% comment %}---------- Buttons ----------{% endcomment %}
         <section class="space-y-6">
             <div class="section-header text-left mx-0">
                 <p class="eyebrow">Actions</p>
@@ -103,7 +103,7 @@
             </div>
         </section>
 
-        {# ---------- Low-JS primitives ---------- #}
+        {% comment %}---------- Low-JS primitives ----------{% endcomment %}
         <section class="space-y-6">
             <div class="section-header text-left mx-0">
                 <p class="eyebrow">New Primitives</p>
@@ -399,7 +399,7 @@
             </div>
         </section>
 
-        {# ---------- Forms ---------- #}
+        {% comment %}---------- Forms ----------{% endcomment %}
         <section class="space-y-6">
             <div class="section-header text-left mx-0">
                 <p class="eyebrow">Forms</p>
@@ -451,8 +451,12 @@
                         <div class="form-field">
                             <span class="input-label">Input group</span>
                             <div class="input-group">
-                                <span class="input-group-text">@</span>
+                                <span class="input-group-text input-group-text-prepend">@</span>
                                 <input class="input-outlined" type="text" placeholder="username">
+                            </div>
+                            <div class="input-group mt-3">
+                                <input type="text" class="input-outlined" placeholder="Amount">
+                                <span class="input-group-text input-group-text-append">.00</span>
                             </div>
                         </div>
 
@@ -490,8 +494,8 @@
             </div>
         </section>
 
-        {# ---------- CRUD screens ---------- #}
-        {# SPEEDPY_DEMO: demo app links section — remove before production #}
+        {% comment %}---------- CRUD screens ----------{% endcomment %}
+        {% comment %}SPEEDPY_DEMO: demo app links section — remove before production{% endcomment %}
         <section class="space-y-6">
             <div class="section-header text-left mx-0">
                 <p class="eyebrow">Demo App</p>
@@ -545,7 +549,7 @@ class ProductCreateView(CreateView):
             </div>
         </section>
 
-        {# ---------- Surfaces ---------- #}
+        {% comment %}---------- Surfaces ----------{% endcomment %}
         <section class="space-y-6">
             <div class="section-header text-left mx-0">
                 <p class="eyebrow">Surfaces</p>
@@ -659,7 +663,7 @@ class ProductCreateView(CreateView):
             </div>
         </section>
 
-        {# ---------- Tables ---------- #}
+        {% comment %}---------- Tables ----------{% endcomment %}
         <section class="space-y-6">
             <div class="section-header text-left mx-0">
                 <p class="eyebrow">Data Display</p>
@@ -704,7 +708,7 @@ class ProductCreateView(CreateView):
             </div>
         </section>
 
-        {# ---------- Account and sidebar navigation ---------- #}
+        {% comment %}---------- Account and sidebar navigation ----------{% endcomment %}
         <section class="space-y-6">
             <div class="section-header text-left mx-0">
                 <p class="eyebrow">Navigation</p>
@@ -821,7 +825,7 @@ class ProductCreateView(CreateView):
             </div>
         </section>
 
-        {# ---------- Previously uncompiled components ---------- #}
+        {% comment %}---------- Previously uncompiled components ----------{% endcomment %}
         {% comment %}
           Everything in this section was DECLARED in input.css and used in no
           template, which means Tailwind never compiled it and using any of these

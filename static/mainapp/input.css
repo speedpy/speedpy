@@ -252,14 +252,21 @@
   .input-group {
     @apply flex flex-row items-stretch w-full;
   }
+  /* Rounding is NOT baked in here: an addon can sit before or after the input,
+     and a prepend-shaped radius on an append addon looks broken. Pair with
+     `input-group-text-prepend` or `input-group-text-append`. */
   .input-group-text {
     @apply flex items-center px-3 text-sm text-fg-secondary
-           bg-neutral-100 border border-divider rounded-l-lg
+           bg-neutral-100 border border-divider
            dark:bg-neutral-800;
   }
-  .input-group > .input-outlined {
-    @apply flex-1 rounded-l-none border-l-0;
-  }
+  /* Side-specific addon shapes. The addon and the input each drop the radius
+     and border on the edge where they meet, so the pair reads as one control. */
+  .input-group-text-prepend { @apply rounded-l-lg border-r-0; }
+  .input-group-text-append  { @apply rounded-r-lg border-l-0; }
+  .input-group > .input-outlined { @apply flex-1; }
+  .input-group-text-prepend + .input-outlined { @apply rounded-l-none; }
+  .input-outlined:has(+ .input-group-text-append) { @apply rounded-r-none; }
 
   /* ==========================================================================
    * LAYOUT, TYPOGRAPHY, AND CONTENT PRIMITIVES
@@ -557,7 +564,9 @@
   .tab[aria-selected="true"] { @apply border-primary text-primary; }
   .tab-underline[aria-selected="true"] { @apply -mb-1 border-0 border-b-2 border-primary text-primary; }
   .accordion-body { @apply py-3; }
-  .accordion-item { @apply flex flex-col bg-white rounded-lg p-4 mb-3; }
+  /* bg-background-paper, not bg-white: this was a light-only surface, so an
+     accordion in dark mode was a white panel on a dark page. */
+  .accordion-item { @apply flex flex-col bg-background-paper rounded-lg p-4 mb-3; }
   .accordion-header {
     @apply w-full flex items-center text-xl font-semibold text-left transition-all duration-300 cursor-pointer hover:text-primary-700 after:w-5 after:h-5 after:flex-shrink-0 after:ml-auto after:content-[''] after:bg-arrow-down after:transition after:duration-300;
   }

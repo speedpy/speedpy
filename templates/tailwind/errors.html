@@ -1,14 +1,20 @@
+{% comment %}
+Non-field form errors, on the design system.
+
+This used to put `alert` on the wrapper and then hand-build a red box inside it
+with `border-red-400 bg-red-100 text-red-700` — so the border and padding were
+applied twice, and the colours were light-only. One `alert alert-error` does the
+whole job and follows the theme.
+{% endcomment %}
 {% if form.non_field_errors %}
-  <div class="alert mb-4">
-    {% if form_error_title %}
-      <div class="bg-red-500 text-white font-bold rounded-t px-4 py-2">
-        {{ form_error_title }}
-      </div>
-    {% endif %}
-    <div class="border border-red-400 rounded-b bg-red-100 px-4 py-3 text-red-700">
-      <ul>
-        {{ form.non_field_errors|unordered_list }}
-      </ul>
+    <div class="alert alert-error mb-4" role="alert">
+        <div>
+            {% if form_error_title %}
+                <p class="font-bold mb-1">{{ form_error_title }}</p>
+            {% endif %}
+            <ul>
+                {{ form.non_field_errors|unordered_list }}
+            </ul>
+        </div>
     </div>
-  </div>
 {% endif %}

@@ -5,7 +5,7 @@
 
     <main class="bg-background-paper" x-data="{ yearly: false }">
 
-        {# ---------- Hero ---------- #}
+        {% comment %}---------- Hero ----------{% endcomment %}
         <section class="bg-background py-12">
             <div class="max-w-6xl mx-auto px-6">
                 <div>
@@ -35,7 +35,7 @@
 
         <hr class="border-0 border-t border-divider m-0">
 
-        {# ---------- Plans ---------- #}
+        {% comment %}---------- Plans ----------{% endcomment %}
         {% if SPEEDPY_BILLING_ENABLED and user.is_authenticated %}
             {% if SPEEDPY_TEAMS_ENABLED %}
                 {% if SIDEBAR_TEAM %}{% url 'team_billing' team_id=SIDEBAR_TEAM.id as billing_href %}{% endif %}

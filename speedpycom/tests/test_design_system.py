@@ -191,9 +191,18 @@ class TemplateCommentTests(SimpleTestCase):
     Use `{% comment %}`, which behaves the same wherever it appears.
     """
 
-    def test_no_multiline_hash_comments_in_templates(self):
+    def test_no_hash_comments_in_templates_at_all(self):
+        """`{# #}` is banned outright, not just its multi-line form.
+
+        Written across two lines it renders as visible text, which has shipped
+        twice. Written on one line it works — until somebody wraps the line, and
+        then it silently starts printing to the page. There is no way to tell by
+        looking at a diff which of those two you are getting, so the short form
+        is not worth its convenience. `{% comment %}` behaves the same however it
+        is wrapped.
+        """
         offenders = []
-        pattern = re.compile(r"\{#(?![^\n]*#\})")
+        pattern = re.compile(r"\{#")
         for path in (BASE / "templates").rglob("*.html"):
             text = path.read_text(errors="ignore")
             for match in pattern.finditer(text):
@@ -202,6 +211,6 @@ class TemplateCommentTests(SimpleTestCase):
         self.assertEqual(
             offenders,
             [],
-            "multi-line {# #} renders as visible text — use {% comment %}: "
+            "{# #} is banned — use {% comment %}, which survives line wrapping: "
             f"{offenders}",
         )
