@@ -822,7 +822,7 @@ class ProductCreateView(CreateView):
         </section>
 
         {# ---------- Previously uncompiled components ---------- #}
-        {#
+        {% comment %}
           Everything in this section was DECLARED in input.css and used in no
           template, which means Tailwind never compiled it and using any of these
           classes rendered nothing at all — no error, no warning. 50 of 243
@@ -830,7 +830,7 @@ class ProductCreateView(CreateView):
 
           They are here because this gallery is what forces classes into the
           build. Deleting a block below removes that component from styles.css.
-        #}
+{% endcomment %}
         <section class="mt-16 space-y-8">
             <div class="space-y-2">
                 <p class="eyebrow">Recovered components</p>

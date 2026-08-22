@@ -42,8 +42,9 @@ Override `entrance_card_class` if a page needs a wider card.
             {% endblock %}
         </div>
         <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
-            {# `paper` carries the surface and text tokens; the border stays
-               dark-only, as it was, so light mode keeps its clean white card. #}
+            {% comment %} `paper` carries the surface and text tokens; the border stays
+               dark-only, as it was, so light mode keeps its clean white card.
+{% endcomment %}
             <div class="{% block entrance_card_class %}paper px-6 py-12 shadow dark:border dark:border-divider sm:px-12{% endblock %}">
                 {% block entrance_content %}{% endblock %}
             </div>

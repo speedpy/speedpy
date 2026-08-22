@@ -17,8 +17,9 @@
                 {% trans "Open your authenticator app and scan this QR code:" %}
             </p>
 
-            {# bg-white stays, deliberately. A QR code needs black on white for a
-   camera to read it, so this surface must NOT follow the theme. #}
+            {% comment %} bg-white stays, deliberately. A QR code needs black on white for a
+   camera to read it, so this surface must NOT follow the theme.
+{% endcomment %}
             <div class="flex justify-center p-6 bg-white border-2 border-divider rounded-lg">
                 <img src="{{ totp_svg_data_uri }}" alt="{% trans "QR Code" %}" class="w-48 h-48">
             </div>

@@ -174,3 +174,34 @@ class CompiledCssTests(SimpleTestCase):
             for match in pattern.finditer(path.read_text(errors="ignore")):
                 offenders.append(f"{path.relative_to(BASE)}: {match.group(0)}")
         self.assertEqual(offenders, [], f"hardcoded theme colours: {offenders}")
+
+
+class TemplateCommentTests(SimpleTestCase):
+    """A multi-line `{# #}` is not a comment — it renders as visible text.
+
+    Django's `{# #}` is single-line only. Written across two lines it is not
+    parsed as a comment at all and the text is printed to the page.
+
+    What made this survive so long is where it hid. A comment between
+    `{% extends %}` and the first `{% block %}` is discarded with every other
+    out-of-block node, so those look harmless. Only the ones inside a rendered
+    block leak — and one of those sat inside `{% if activating %}` on the billing
+    overview, the post-checkout state a paying customer sees.
+
+    Use `{% comment %}`, which behaves the same wherever it appears.
+    """
+
+    def test_no_multiline_hash_comments_in_templates(self):
+        offenders = []
+        pattern = re.compile(r"\{#(?![^\n]*#\})")
+        for path in (BASE / "templates").rglob("*.html"):
+            text = path.read_text(errors="ignore")
+            for match in pattern.finditer(text):
+                line = text[: match.start()].count("\n") + 1
+                offenders.append(f"{path.relative_to(BASE)}:{line}")
+        self.assertEqual(
+            offenders,
+            [],
+            "multi-line {# #} renders as visible text — use {% comment %}: "
+            f"{offenders}",
+        )

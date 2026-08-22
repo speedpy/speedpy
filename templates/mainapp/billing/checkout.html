@@ -18,10 +18,11 @@
                         Open secure checkout
                     </button>
                 </div>
-                {# Surfaces Paddle's own error detail. Without this the overlay
+                {% comment %} Surfaces Paddle's own error detail. Without this the overlay
                    shows only a generic "Something went wrong" and the cause
                    (unapproved domain, missing default payment link, inactive
-                   price) is invisible. textContent only — never innerHTML. #}
+                   price) is invisible. textContent only — never innerHTML.
+{% endcomment %}
                 <p id="checkout-error" class="mt-4 text-sm text-danger" hidden></p>
                 <div class="checkout-container mt-6"></div>
             </div>

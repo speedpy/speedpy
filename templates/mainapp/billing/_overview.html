@@ -14,10 +14,11 @@ over_limit, portal_url, overview_url, activation_url, activating.
                     <p class="eyebrow">Current plan</p>
                     <h2 class="h3 capitalize">{{ current_plan.name }}</h2>
                     {% if activating %}
-                        {# Post-checkout: payment succeeded but the provider's
+                        {% comment %} Post-checkout: payment succeeded but the provider's
                            webhook has not landed yet, so the plan above is still
                            the old one. Say so plainly instead of showing a number
-                           the customer knows is wrong. #}
+                           the customer knows is wrong.
+{% endcomment %}
                         <p id="activation-pending" class="mt-2 text-sm text-fg-secondary">
                             <span class="badge badge-warning">Activating</span>
                             Your payment went through. We are activating your
@@ -142,11 +143,12 @@ over_limit, portal_url, overview_url, activation_url, activating.
 </div>
 
 {% if activating %}
-{# Bounded polling with backoff, not a blind timed reload: a fixed delay guesses
+{% comment %} Bounded polling with backoff, not a blind timed reload: a fixed delay guesses
    wrong in both directions (too early shows the old plan a second time, too late
    reloads for nothing). We ask the server until the plan really flips, then
    reload once to render the full correct state, and give up loudly instead of
-   spinning forever. #}
+   spinning forever.
+{% endcomment %}
 <script>
     (function () {
         var statusUrl = "{{ activation_url }}";
