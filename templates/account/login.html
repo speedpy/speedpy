@@ -4,26 +4,16 @@
 
 {% block head_title %}{% trans "Signup" %}{% endblock %}
 
-{% block content %}
-    <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <img class="mx-auto h-20 w-auto" src="{% static "mainapp/speedpy_logo.png" %}" alt="SpeedPy.Com">
-
-            <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900  dark:text-white">
-                {% trans "Sign In" %}
-            </h2>
-            <p class="mt-2 text-center text-sm leading-6 text-gray-500 dark:text-gray-400">
-                Don't have an account?
+{% block entrance_title %}{% trans "Sign In" %}{% endblock %}
+{% block entrance_subtitle %}
+    Don't have an account?
                 <a href="{% url "account_signup" %}"
-                   class="font-semibold text-indigo-600 hover:text-indigo-500">
+                   class="font-semibold text-primary hover:text-primary-dark">
                     Sign Up
                 </a>
-            </p>
-        </div>
-        <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
-            <div class="bg-white dark:bg-gray-800 dark:border dark:border-gray-700 dark:text-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
+{% endblock %}
 
-
+{% block entrance_content %}
                 {% get_providers as socialaccount_providers %}
 
                 {% if socialaccount_providers %}
@@ -41,7 +31,7 @@
                 {# SPEEDPY_DEMO: demo credentials block — remove before production #}
                 {% if DEMO_MODE %}
                     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-                        <h3 class="text-center text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+                        <h3 class="text-center text-xl font-bold tracking-tight text-fg">
                             This is a demo mode.
                         </h3>
                         <p class="text-center ">
@@ -55,7 +45,4 @@
                 {% endif %}
 
                 {% crispy form %}
-            </div>
-        </div>
-    </div>
 {% endblock %}

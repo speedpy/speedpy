@@ -1,29 +1,22 @@
 {% extends "account/base_entrance.html" %}
-{% load i18n static crispy_forms_tags %}
+{% load i18n crispy_forms_tags %}
+{% comment %}
+This page had no dark variants at all — `bg-white` with `text-gray-900` and
+nothing else — so in dark mode it was a white card with dark text sitting on a
+dark page. The shared base uses tokens, which fixes it as a side effect of the
+de-duplication.
+{% endcomment %}
 
 {% block head_title %}{% trans "Two-Factor Authentication" %}{% endblock %}
 
-{% block content %}
-    <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <img class="mx-auto h-20 w-auto" src="{% static "mainapp/speedpy_logo.png" %}" alt="SpeedPy.Com">
+{% block entrance_title %}{% trans "Two-Factor Authentication" %}{% endblock %}
+{% block entrance_subtitle %}
+    {% trans "Signing in as" %} <span class="font-semibold">{{ user_email }}</span>
+{% endblock %}
 
-            <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-                {% trans "Two-Factor Authentication" %}
-            </h2>
-            <p class="mt-2 text-center text-sm leading-6 text-gray-500">
-                {% trans "Signing in as" %} <span class="font-semibold">{{ user_email }}</span>
-            </p>
-        </div>
-        <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
-            <div class="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
-
-                <form method="post">
-                    {% csrf_token %}
-                    {% crispy form %}
-                </form>
-
-            </div>
-        </div>
-    </div>
+{% block entrance_content %}
+    <form method="post">
+        {% csrf_token %}
+        {% crispy form %}
+    </form>
 {% endblock %}

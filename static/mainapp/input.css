@@ -540,7 +540,11 @@
   .navbar-dark .navbar-btn { @apply focus:ring-white; }
   .navbar > .container-fluid, .navbar > .container { @apply flex flex-wrap justify-between md:flex-nowrap px-3 md:px-5; }
   .dropdown-item {
-    @apply bg-transparent py-1.5 px-4 hover:text-primary-800 focus:text-primary-800 hover:bg-primary-100 focus:bg-primary-100 focus:outline-none focus:shadow-outline;
+    /* `focus:shadow-outline` was here: a Tailwind v1 utility removed in v2, so
+       this rule broke the whole CSS build the moment anything referenced
+       `dropdown-item`. It stayed dormant only because no template used the
+       class, and unused component rules are tree-shaken before @apply runs. */
+    @apply bg-transparent py-1.5 px-4 hover:text-primary-800 focus:text-primary-800 hover:bg-primary-100 focus:bg-primary-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40;
   }
   .dropdown-menu {
     @apply absolute hidden transition duration-200 opacity-0 w-max py-2 bg-white border border-gray-300 rounded mt-2 min-w-[160px] z-[1000];

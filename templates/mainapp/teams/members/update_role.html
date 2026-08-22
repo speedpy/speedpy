@@ -8,23 +8,23 @@
     <div class="max-w-2xl mx-auto">
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Update Member Role</h1>
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            <h1 class="text-2xl font-bold text-fg">Update Member Role</h1>
+            <p class="mt-2 text-sm text-fg-secondary">
                 Change the role for {{ target_membership.user.email }}
             </p>
         </div>
 
         <!-- Member Info -->
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 mb-6">
+        <div class="paper shadow sm:rounded-lg p-6 mb-6">
             <div class="flex items-center mb-4">
-                <div class="h-12 w-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-medium">
+                <div class="h-12 w-12 rounded-full bg-primary text-primary-contrast flex items-center justify-center text-sm font-medium">
                     {{ target_membership.user.email|slice:":2"|upper }}
                 </div>
                 <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                    <div class="text-sm font-medium text-fg">
                         {{ target_membership.user.email }}
                     </div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                    <div class="text-sm text-fg-secondary capitalize">
                         Current role: {{ target_membership.role }}
                     </div>
                 </div>
@@ -47,20 +47,20 @@
         </div>
 
         <!-- Role Update Form -->
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6">
+        <div class="paper shadow sm:rounded-lg p-6">
             <form method="post" novalidate>
                 {% csrf_token %}
 
                 {% crispy form %}
 
                 <!-- Action Buttons -->
-                <div class="mt-6 flex items-center gap-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div class="mt-6 flex items-center gap-x-3 pt-6 border-t border-divider">
                     <button type="submit"
                             class="py-2 px-4 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-offset-2">
                         Update Role
                     </button>
                     <a href="{% url 'team_members' team_id=team.id %}"
-                       class="text-sm font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
+                       class="text-sm font-semibold text-fg-secondary hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
                         Cancel
                     </a>
                 </div>

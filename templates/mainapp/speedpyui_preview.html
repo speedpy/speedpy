@@ -820,6 +820,244 @@ class ProductCreateView(CreateView):
                 </div>
             </div>
         </section>
+
+        {# ---------- Previously uncompiled components ---------- #}
+        {#
+          Everything in this section was DECLARED in input.css and used in no
+          template, which means Tailwind never compiled it and using any of these
+          classes rendered nothing at all — no error, no warning. 50 of 243
+          component classes were in that state.
+
+          They are here because this gallery is what forces classes into the
+          build. Deleting a block below removes that component from styles.css.
+        #}
+        <section class="mt-16 space-y-8">
+            <div class="space-y-2">
+                <p class="eyebrow">Recovered components</p>
+                <h2 class="h2">Display, Quotes, Overlays, Tabs</h2>
+                <p class="text-fg-secondary">
+                    Each of these existed in <code>input.css</code> but compiled to
+                    nothing, because no template referenced it. Keep them rendered here.
+                </p>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Display headings</h3>
+                    <p class="display-4">Ship it</p>
+                    <p class="display-6">Smaller display</p>
+                    <div class="hidden">
+                        <span class="display-1">1</span><span class="display-2">2</span>
+                        <span class="display-3">3</span><span class="display-5">5</span>
+                    </div>
+                </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;h1 class="display-1"&gt;Hero&lt;/h1&gt;
+&lt;p class="display-4"&gt;Section opener&lt;/p&gt;</code></pre>
+                    <p class="mt-3 text-xs text-fg-secondary">
+                        <code>display-1</code> to <code>display-6</code>, largest first.
+                        Fluid: they scale with the viewport, so they are for marketing
+                        pages rather than dense UI.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Blockquotes</h3>
+                    <blockquote class="blockquote blockquote-primary">Cut the scope, not the quality.</blockquote>
+                    <blockquote class="blockquote blockquote-info mt-3">Measure before you optimise.</blockquote>
+                    <blockquote class="blockquote blockquote-warning mt-3">This one needs a second pair of eyes.</blockquote>
+                    <div class="hidden">
+                        <span class="blockquote-success"></span><span class="blockquote-danger"></span>
+                        <span class="blockquote-secondary"></span><span class="blockquote-tertiary"></span>
+                        <span class="blockquote-neutral"></span><span class="blockquote-muted"></span>
+                        <span class="blockquote-dark"></span><span class="blockquote-light"></span>
+                        <span class="blockquote-black"></span><span class="blockquote-white"></span>
+                    </div>
+                </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;blockquote class="blockquote blockquote-primary"&gt;
+  Cut the scope, not the quality.
+&lt;/blockquote&gt;</code></pre>
+                    <p class="mt-3 text-xs text-fg-secondary">
+                        Variants: <code>primary</code> <code>secondary</code>
+                        <code>tertiary</code> <code>success</code> <code>info</code>
+                        <code>warning</code> <code>danger</code> <code>neutral</code>
+                        <code>muted</code> <code>dark</code> <code>light</code>
+                        <code>black</code> <code>white</code>. The base
+                        <code>blockquote</code> sets the type; the variant adds the
+                        left rule and tint.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Tabs</h3>
+                    <div class="tab-list tab-list-underline">
+                        <button type="button" class="tab tab-underline" aria-selected="true">Overview</button>
+                        <button type="button" class="tab tab-underline" aria-selected="false">Activity</button>
+                        <button type="button" class="tab tab-underline" aria-selected="false">Settings</button>
+                    </div>
+                    <div class="tab-content text-fg-secondary">Panel content sits here.</div>
+                </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="tab-list tab-list-underline"&gt;
+  &lt;button class="tab tab-underline" aria-selected="true"&gt;Overview&lt;/button&gt;
+  &lt;button class="tab tab-underline" aria-selected="false"&gt;Activity&lt;/button&gt;
+&lt;/div&gt;
+&lt;div class="tab-content"&gt;...&lt;/div&gt;</code></pre>
+                    <p class="mt-3 text-xs text-fg-secondary">
+                        The selected style is driven by
+                        <code>aria-selected="true"</code>, so the accessible attribute
+                        and the visual state cannot drift apart. Panel switching is
+                        yours — these are styles, not behaviour.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Tooltip and dropdown item</h3>
+                    <p class="text-fg-secondary text-sm">
+                        A tooltip is hidden until a script positions it, so it is shown
+                        here forced visible:
+                    </p>
+                    <span class="tooltip !static !visible !block !opacity-100 mt-2">Copied to clipboard<span class="tooltip-arrow"></span></span>
+                    <div class="mt-4 dropdown-menu !static !block">
+                        <a href="#" class="dropdown-item">Rename</a>
+                        <a href="#" class="dropdown-item">Duplicate</a>
+                    </div>
+                </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;span class="tooltip"&gt;Copied&lt;span class="tooltip-arrow"&gt;&lt;/span&gt;&lt;/span&gt;
+
+&lt;div class="dropdown-menu"&gt;
+  &lt;a class="dropdown-item" href="#"&gt;Rename&lt;/a&gt;
+&lt;/div&gt;</code></pre>
+                    <p class="mt-3 text-xs text-fg-secondary">
+                        Both are styles only. <code>tooltip</code> ships hidden and
+                        transparent — position and reveal it yourself, or it will look
+                        broken rather than absent.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Modal</h3>
+                    <p class="text-fg-secondary text-sm">
+                        Shown inline rather than as an overlay, since a real one covers
+                        the page:
+                    </p>
+                    <div class="modal !static !h-auto !w-auto !opacity-100 mt-3">
+                        <div class="modal-content !mt-0 modal-sm p-4">
+                            <p class="font-semibold">Delete this project?</p>
+                            <p class="text-sm text-fg-secondary mt-1">This cannot be undone.</p>
+                            <div class="mt-4 flex gap-2">
+                                <button type="button" class="btn btn-contained btn-error btn-sm">Delete</button>
+                                <button type="button" class="btn btn-text btn-primary btn-sm">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hidden">
+                        <span class="modal-bg"></span><span class="modal-lg"></span><span class="modal-xl"></span>
+                    </div>
+                </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="modal"&gt;
+  &lt;div class="modal-bg"&gt;&lt;/div&gt;
+  &lt;div class="modal-content modal-sm"&gt;...&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+                    <p class="mt-3 text-xs text-fg-secondary">
+                        Widths: <code>modal-sm</code> <code>modal-lg</code>
+                        <code>modal-xl</code>. Styles only — opening, closing, focus
+                        trapping and Escape handling are yours.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Progress, input sizes, elevation</h3>
+                    <div class="progress mb-2"><div class="progress-bar progress-info" style="width: 45%"></div></div>
+                    <div class="progress mb-2"><div class="progress-bar progress-error" style="width: 20%"></div></div>
+                    <div class="progress progress-xl mb-4"><div class="progress-bar progress-secondary" style="width: 70%"></div></div>
+                    <input type="text" class="input-outlined input-outlined-sm mb-2" placeholder="Small">
+                    <input type="text" class="input-outlined input-outlined-lg" placeholder="Large">
+                    <div class="mt-4 flex gap-3">
+                        <div class="paper paper-padded paper-elevation-8 text-xs">elevation 8</div>
+                        <div class="paper paper-padded paper-elevation-24 text-xs">elevation 24</div>
+                    </div>
+                </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="progress progress-xl"&gt;
+  &lt;div class="progress-bar progress-info" style="width: 45%"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;input class="input-outlined input-outlined-sm"&gt;
+&lt;div class="paper paper-elevation-8"&gt;...&lt;/div&gt;</code></pre>
+                    <p class="mt-3 text-xs text-fg-secondary">
+                        Bar colours: <code>progress-primary</code>
+                        <code>progress-secondary</code> <code>progress-success</code>
+                        <code>progress-info</code> <code>progress-warning</code>
+                        <code>progress-error</code>. Elevations 1, 8, 16, 24.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="paper paper-outlined paper-padded paper-elevation-1">
+                    <h3 class="h4 mb-3">Timeline and step link</h3>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker timeline-marker-error"></div>
+                            <div class="timeline-content">
+                                <p class="font-semibold">Payment failed</p>
+                                <p class="text-sm text-fg-secondary">Card declined.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="#" class="step-link mt-4 inline-block p-2">A focusable step</a>
+                </div>
+                <div class="rounded-lg border border-divider bg-background-paper p-5">
+                    <p class="eyebrow">Code</p>
+                    <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="timeline-marker timeline-marker-error"&gt;&lt;/div&gt;
+&lt;a class="step-link" href="#"&gt;Step&lt;/a&gt;</code></pre>
+                    <p class="mt-3 text-xs text-fg-secondary">
+                        <code>step-link</code> only adds the focus ring and removes the
+                        underline — wrap it around a step you want keyboard-reachable.
+                    </p>
+                </div>
+            </div>
+
+            <div class="paper paper-outlined paper-padded paper-elevation-1">
+                <h3 class="h4 mb-2">Integration hooks, not components</h3>
+                <p class="text-sm text-fg-secondary">
+                    These four are declared but have nothing to show: they are hooks for
+                    other things. <code>accordion-collapse</code> is the collapsed state
+                    an accordion script toggles, <code>fa-ul</code> indents a
+                    FontAwesome list, <code>taos-init</code> is the animate-on-scroll
+                    library's initial state, and <code>account-shell</code> plus the
+                    <code>navbar-*</code> helpers are layout scaffolding. They are named
+                    here so Tailwind compiles them — without a reference somewhere, they
+                    do not exist at runtime.
+                </p>
+                <div class="hidden">
+                    <span class="accordion-collapse"></span><span class="fa-ul"></span>
+                    <span class="taos-init"></span><span class="account-shell"></span>
+                    <span class="navbar-brand"></span><span class="navbar-btn"></span>
+                    <span class="navbar-col"></span><span class="navbar-dark"></span>
+                </div>
+            </div>
+        </section>
     </div>
 </main>
 {% endblock %}

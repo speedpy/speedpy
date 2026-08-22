@@ -35,7 +35,7 @@
                {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
                {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %}
                 {% if attrs.type == "text" or attrs.type == "email" %}
-               class="textinput py-2 focus:outline-none block rounded-lg text-gray-700 px-4 w-full border bg-white appearance-none border-gray-300 leading-normal"
+               class="textinput input-outlined w-full"
                 {% endif %}
                value="{{ attrs.value|default_if_none:"" }}"
                type="{{ attrs.type }}">
