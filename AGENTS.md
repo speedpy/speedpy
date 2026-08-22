@@ -1238,6 +1238,56 @@ answer, and a null is honest where a guess is not.
 
 Full setup, including the AWS side, is in `speedpy-docs/docs/email-bounces.md`.
 
+## Team deletion (owner-only, with an undo window)
+
+A team is the foreign key of every tenant row, so ending one is the most
+destructive action a customer has. It is also the gap that used to leave
+abandoned teams — and whatever they still serve publicly — in the database
+forever, with no way to remove them outside the admin.
+
+**Setting.** `SPEEDPY_TEAM_DELETION_DELAY_HOURS`, default 24. `0` deletes on the
+click. Anything else schedules the deletion that many hours out and lets any
+owner undo it until then. The copy beside the button follows the setting, so
+there is one source of truth for the number.
+
+**Where it lives.**
+
+| Piece | File |
+|---|---|
+| Fields + lifecycle + the billing invariant | `mainapp/models/teams.py` (`Team.request_deletion`, `cancel_scheduled_deletion`, `deletion_blocked_reason`, `delete`) |
+| The finalizer and the cleanup-hook runner | `mainapp/models/teams.py` (`finalize_team_deletion`, `run_team_cleanup_hooks`) |
+| Owner-only views | `mainapp/views/teams.py` (`TeamOwnerRequiredMixin`, `TeamDeleteView`, `TeamDeleteCancelView`) |
+| Danger zone UI | `templates/mainapp/teams/settings.html` |
+| Hourly purge | `mainapp/tasks/teams.py::purge_scheduled_team_deletions`, beat entry in `project/celeryapp.py` |
+| Tests | `mainapp/tests/test_team_deletion.py` (33) |
+
+**Four decisions, each with a reason. Do not "tidy" any of them away.**
+
+1. **A scheduled team stays active.** `TeamViewMixin` resolves `is_active` teams
+   only, so setting `is_active=False` when scheduling would hide the undo button
+   behind a 404 from the one person allowed to press it. The team is not deleted
+   yet; it keeps working until it is.
+2. **A live subscription blocks the deletion, everywhere.** `active`, `past_due`
+   and `paused` all block (`BillingSubscription.ACTIVE_ISH_STATUSES`) — `past_due`
+   can still retry a card and `paused` can resume. `canceled` does not block,
+   even inside its paid period: nobody is charged again. The check is **not**
+   gated on `SPEEDPY_BILLING_ENABLED`, because that flag says whether you sell,
+   not whether a provider is charging. It runs in the view, again in the purge
+   task, and last of all in `Team.delete()` so admin and shell cannot walk around
+   it. Checkout is refused for a scheduled team for the same reason
+   (`mainapp/views/billing.py::start_checkout`).
+3. **The purge deletes one team per transaction, under `select_for_update`.** A
+   bulk queryset delete would bypass `Team.delete()` and with it the invariant,
+   and it would race with an undo.
+4. **Object storage is the project's problem, not the boilerplate's.** A cascade
+   deletes rows and nothing else, so files (logos, uploads, transcoded video, CDN
+   copies) outlive their rows: unreachable, still paid for, sometimes still
+   publicly readable. `SPEEDPY_TEAM_DELETION_CLEANUP_HOOKS` is a list of dotted
+   paths, each called with the team **before** the rows go. A hook must be
+   idempotent and must **raise** on failure — a raising hook keeps the team
+   scheduled so the next run retries, which is why the rows are not deleted
+   first.
+
 ## Webhook Extension Guide
 
 This section explains how to add a new webhook event type to SpeedPy. The

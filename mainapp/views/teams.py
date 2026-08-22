@@ -219,6 +219,17 @@ class TeamSettingsView(TeamAdminRequiredMixin, UpdateView):
         """Return the team from TeamViewMixin context."""
         return self.team
 
+    def get_context_data(self, **kwargs):
+        """Add what the danger zone needs to describe itself.
+
+        The copy beside the delete button has to match the configured delay, so
+        the number reaches the template rather than being duplicated there.
+        """
+        context = super().get_context_data(**kwargs)
+        context["team_deletion_delay_hours"] = Team.deletion_delay_hours()
+        context["team_deletion_blocked_reason"] = self.team.deletion_blocked_reason()
+        return context
+
     def get_success_url(self):
         """Redirect back to settings page after successful update."""
         messages.success(self.request, "Team settings updated successfully!")
@@ -228,3 +239,72 @@ class TeamSettingsView(TeamAdminRequiredMixin, UpdateView):
         """Add error message on form validation failure."""
         messages.error(self.request, "Please correct the errors below.")
         return super().form_invalid(form)
+
+
+class TeamOwnerRequiredMixin(TeamViewMixin):
+    """
+    Mixin that restricts access to team owners only.
+
+    Deliberately narrower than TeamAdminRequiredMixin: an admin may manage a
+    team, but ending it is the owner's decision. Any current owner qualifies —
+    a team can have several, and each already has the power to schedule a
+    deletion, so refusing one the right to undo another's would be theatre.
+    """
+
+    def validate_team_access(self, request, *args, **kwargs):
+        response = super().validate_team_access(request, *args, **kwargs)
+        if response is not None:
+            return response
+
+        if self.team_membership.role != "owner":
+            raise PermissionDenied("Only team owners can delete a team")
+
+        return None
+
+
+class TeamDeleteView(TeamOwnerRequiredMixin, View):
+    """
+    Delete the team, or schedule the deletion, depending on
+    SPEEDPY_TEAM_DELETION_DELAY_HOURS. POST only: this is not a safe method,
+    and a GET that deletes a tenant would be deleted by a link prefetcher.
+    """
+
+    def post(self, request, *args, **kwargs):
+        from mainapp.models import TeamDeletionBlocked
+
+        try:
+            outcome = self.team.request_deletion(by_user=request.user)
+        except TeamDeletionBlocked as exc:
+            messages.error(request, str(exc))
+            return HttpResponseRedirect(
+                reverse("team_settings", kwargs={"team_id": self.team.pk})
+            )
+
+        if outcome == "deleted":
+            messages.success(request, f"Team “{self.team.name}” has been deleted.")
+            return HttpResponseRedirect(reverse("dashboard"))
+
+        if outcome == "already_scheduled":
+            messages.info(request, "This team is already scheduled for deletion.")
+        else:
+            messages.warning(
+                request,
+                "This team is scheduled for deletion. You can undo it from this "
+                "page until then.",
+            )
+        return HttpResponseRedirect(
+            reverse("team_settings", kwargs={"team_id": self.team.pk})
+        )
+
+
+class TeamDeleteCancelView(TeamOwnerRequiredMixin, View):
+    """Undo a scheduled deletion. POST only, owner only, idempotent."""
+
+    def post(self, request, *args, **kwargs):
+        if self.team.cancel_scheduled_deletion(by_user=request.user):
+            messages.success(request, "The scheduled deletion has been cancelled.")
+        else:
+            messages.info(request, "This team was not scheduled for deletion.")
+        return HttpResponseRedirect(
+            reverse("team_settings", kwargs={"team_id": self.team.pk})
+        )

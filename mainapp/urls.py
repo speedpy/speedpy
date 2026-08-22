@@ -31,6 +31,8 @@ if getattr(settings, "SPEEDPY_TEAMS_ENABLED", True):
         path('teams/create/', views.TeamCreateView.as_view(), name='team_create'),
         path('teams/<uuid:team_id>/dashboard/', views.TeamDashboardView.as_view(), name='team_dashboard'),
         path('teams/<uuid:team_id>/settings/', views.TeamSettingsView.as_view(), name='team_settings'),
+        path('teams/<uuid:team_id>/delete/', views.TeamDeleteView.as_view(), name='team_delete'),
+        path('teams/<uuid:team_id>/delete/cancel/', views.TeamDeleteCancelView.as_view(), name='team_delete_cancel'),
 
         # Team member management
         path('teams/<uuid:team_id>/members/', team_members.TeamMembersListView.as_view(), name='team_members'),

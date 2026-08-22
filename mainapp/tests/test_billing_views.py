@@ -108,6 +108,21 @@ class TeamCheckoutGuardTests(BillingURLConfMixin, TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn("billing", resp.url)
 
+    def test_a_team_scheduled_for_deletion_cannot_start_a_subscription(self):
+        """Otherwise the two rules fight each other: the deletion is refused
+        while a subscription is live, so the person would pay for a team they
+        already asked us to delete and the purge task would never finish."""
+        with override_settings(SPEEDPY_TEAM_DELETION_DELAY_HOURS=24):
+            self.team.request_deletion(by_user=self.owner)
+
+        # Asserted on the message, not the redirect: a missing price id
+        # redirects to the same place, so the URL alone proves nothing.
+        resp = self.client.get(
+            f"/teams/{self.team.id}/billing/checkout/pro/monthly/", follow=True
+        )
+
+        self.assertContains(resp, "scheduled for deletion")
+
     def test_missing_price_id_redirects(self):
         # No Stripe price configured for 'pro' -> cannot checkout, redirect.
         resp = self._checkout("pro")

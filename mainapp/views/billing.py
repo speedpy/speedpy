@@ -202,6 +202,18 @@ class _BillingActionsMixin:
         if interval not in ("monthly", "yearly"):
             raise Http404("Unknown billing interval")
 
+        # A team on its way out must not be given a subscription: the team
+        # deletion is refused while one is live, so the person would end up
+        # paying for a team they had already asked us to delete, and the purge
+        # task would keep refusing to finish. Undo the deletion first.
+        if getattr(self.billable, "is_deletion_scheduled", False):
+            messages.error(
+                request,
+                "This team is scheduled for deletion. Undo the deletion before "
+                "starting a subscription.",
+            )
+            return redirect(self._overview_url())
+
         # Plan changes go through the customer portal, not a second checkout.
         if state.has_active_ish_subscription(self.billable):
             messages.info(

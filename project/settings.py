@@ -625,6 +625,21 @@ ANYMAIL = {
 DEFAULT_ADMIN_PASSWORD = env("DEFAULT_ADMIN_PASSWORD", default=None)
 DEMO_MODE = env.bool("DEMO_MODE", default=False)  # SPEEDPY_DEMO: fills login credentials on login form for demo purposes
 SPEEDPY_TEAMS_ENABLED = env.bool("SPEEDPY_TEAMS_ENABLED", default=True)  # enable/disable teams functionality
+# Owner-requested team deletion. 0 deletes on the click; anything else schedules
+# the deletion that many hours out and lets the owner undo it until then. The
+# team keeps working during the window — it is not deleted yet, and the undo
+# button lives on the team settings page, which an inactive team cannot reach.
+SPEEDPY_TEAM_DELETION_DELAY_HOURS = max(
+    0, env.int("SPEEDPY_TEAM_DELETION_DELAY_HOURS", default=24)
+)
+# Dotted paths called with the team just before its rows go, for whatever the
+# database cascade cannot reach (object storage, CDN, a provider's customer
+# record). Each must be idempotent and must raise on failure — a raising hook
+# keeps the team scheduled so the next run retries. See
+# mainapp/models/teams.py::run_team_cleanup_hooks.
+SPEEDPY_TEAM_DELETION_CLEANUP_HOOKS = env.list(
+    "SPEEDPY_TEAM_DELETION_CLEANUP_HOOKS", default=[]
+)
 SPEEDPY_MFA_BACKEND = env.str("SPEEDPY_MFA_BACKEND", default="allauth_mfa")  # "django_otp" or "allauth_mfa"
 
 # Token issuance gates — all on by default (conservative).

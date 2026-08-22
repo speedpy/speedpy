@@ -50,6 +50,69 @@
             </div>
         </div>
 
+        <!-- Danger zone: delete the team, or undo a scheduled deletion.
+             Owner only. Which of the two blocks shows depends on whether a
+             deletion is already scheduled, and the copy depends on
+             SPEEDPY_TEAM_DELETION_DELAY_HOURS: with 0 the click deletes, with
+             anything else it schedules and stays undoable until then. -->
+        {% if user_role == 'owner' %}
+        <div class="card mt-8 border-error/40">
+            <div class="card-body !p-6">
+                {% if team.is_deletion_scheduled %}
+                    <h3 class="text-sm font-semibold text-error">Deletion scheduled</h3>
+                    <p class="mt-1 text-sm text-fg-secondary">
+                        This team and everything in it will be deleted on
+                        <strong>{{ team.deletion_scheduled_at }}</strong>. You can
+                        still undo it until then.
+                    </p>
+                    {% if team_deletion_blocked_reason %}
+                    <div class="alert alert-warning mt-4">{{ team_deletion_blocked_reason }}</div>
+                    {% endif %}
+                    <form method="post"
+                          action="{% url 'team_delete_cancel' team_id=team.id %}"
+                          class="mt-4">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-contained btn-primary">
+                            Undo scheduled deletion
+                        </button>
+                    </form>
+                {% else %}
+                    <h3 class="text-sm font-semibold text-error">Delete this team</h3>
+                    <p class="mt-1 text-sm text-fg-secondary">
+                        Everything in this team goes with it — members, and all the
+                        data that belongs to the team. This cannot be undone once it
+                        has run.
+                        {% if team_deletion_delay_hours == 0 %}
+                            <strong>The team is deleted immediately.</strong>
+                        {% else %}
+                            <strong>The team is deleted after
+                            {{ team_deletion_delay_hours }} hour{{ team_deletion_delay_hours|pluralize }}</strong>,
+                            and you can undo it until then.
+                        {% endif %}
+                    </p>
+                    {% if team_deletion_blocked_reason %}
+                    <div class="alert alert-warning mt-4">{{ team_deletion_blocked_reason }}</div>
+                    {% endif %}
+                    <form method="post"
+                          action="{% url 'team_delete' team_id=team.id %}"
+                          class="mt-4"
+                          onsubmit="return confirm('Delete the team “{{ team.name|escapejs }}”?');">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="btn btn-contained btn-error"
+                                {% if team_deletion_blocked_reason %}disabled{% endif %}>
+                            {% if team_deletion_delay_hours == 0 %}
+                                Delete team
+                            {% else %}
+                                Schedule deletion
+                            {% endif %}
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Billing -->
         {% if SPEEDPY_BILLING_ENABLED and user_role == 'owner' %}
         <div class="card mt-8">

@@ -77,6 +77,17 @@ app.conf.beat_schedule = {
             "queue": "default",
         },
     },
+    "purge-scheduled-team-deletions": {
+        "task": "purge_scheduled_team_deletions",
+        # Hourly: the undo window is configured in whole hours, so a finer
+        # cadence would only add noise, and a coarser one would make a
+        # 1-hour window mean "up to two hours".
+        "schedule": crontab(minute=15),
+        "options": {
+            "ignore_result": True,
+            "queue": "default",
+        },
+    },
     "expire-team-invitations": {
         "task": "expire_team_memberships_invitations",
         "schedule": crontab(hour=2, minute=30),  # Run daily at 2:30 AM
