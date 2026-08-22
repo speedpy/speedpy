@@ -1020,6 +1020,71 @@ To restrict open registration, set `DCR_ENABLED = False` in settings (default:
 must be registered via Django admin or the `create_oauth2_app` management
 command.
 
+## Email bounces and suppression
+
+**This already exists. Do not build it again.** If a project needs to stop
+emailing addresses that bounce, wire what is here rather than writing a new one.
+
+It is deliberately in two halves, and knowing which is which saves a rewrite
+when the ESP changes:
+
+**Enforcement — provider-agnostic, always on.**
+
+| Piece | Where |
+|---|---|
+| `SuppressedEmail`, `EmailEvent` | `speedpycom/models/email_events.py` |
+| record / suppress / release / query | `speedpycom/services/email_events.py` |
+| pre-send guard | `speedpycom/email_backends.py` |
+| "we stopped emailing you" notice | `speedpycom/templatetags/suppression.py` + `templates/account/snippets/_suppression_warning.html` |
+
+`POST_OFFICE["BACKENDS"]["default"]` is the guard, which wraps whatever
+`EMAIL_PROVIDER` resolves to. That is the point: allauth mail, invitations and
+any third-party package are covered without touching their call sites. None of
+this cares which ESP you use.
+
+**Detection — Amazon-specific, opt-in.**
+
+| Piece | Where |
+|---|---|
+| SNS signature verification | `speedpycom/services/sns.py` |
+| webhook view | `speedpycom/views_ses.py` |
+| URL, not routed by default | `speedpycom/urls_email_events.py` |
+
+On another ESP, write this half yourself and call
+`speedpycom.services.email_events.suppress()` from it. Everything downstream
+already works.
+
+### Four things that will bite you
+
+1. **A transient bounce must never suppress.** An out-of-office auto-reply
+   arrives as a bounce event. Suppress on "bounce" without reading the
+   permanence and everyone who goes on holiday stops receiving your email,
+   permanently, with nothing to tell you.
+2. **Anymail's normalized `tracking` signal flattens exactly that
+   distinction.** It looks like the obvious provider-agnostic route, but
+   `anymail/webhooks/amazon_ses.py` maps *every* SES bounce, permanent and
+   transient, to `EventType.BOUNCED`. The permanence survives only in
+   `description` ("Transient: General") and the raw `esp_event`. Read those, or
+   you ship the bug in point 1.
+3. **A configuration set is a second IAM resource.** Setting
+   `AWS_SES_CONFIGURATION_SET` without adding the configuration-set ARN to the
+   sending policy's `Resource` denies **every** send — and post_office swallows
+   it into the database while the page still says the mail was sent.
+4. **Tell people you stopped.** Suppression without a notice means a customer
+   whose mailbox filled up goes silent forever: no password resets, no error,
+   no explanation. The account-page notice is included in
+   `templates/account/email.html` for exactly this.
+
+### Tenant attribution
+
+`EmailEvent.team` is filled by whatever `SPEEDPY_EMAIL_EVENT_TEAM_RESOLVER`
+points at — a dotted path taking a recipient and returning a `Team` or `None`.
+Unset by default. **Whatever you write there must return `None` when the answer
+is ambiguous**; an address belonging to two customers has no single right
+answer, and a null is honest where a guess is not.
+
+Full setup, including the AWS side, is in `speedpy-docs/docs/email-bounces.md`.
+
 ## Webhook Extension Guide
 
 This section explains how to add a new webhook event type to SpeedPy. The

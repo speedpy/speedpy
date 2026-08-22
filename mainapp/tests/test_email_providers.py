@@ -33,12 +33,24 @@ class EmailProviderResolutionTests(SimpleTestCase):
         for provider in EMAIL_PROVIDER_BACKENDS:
             self.assertIn(provider, message)
 
-    def test_default_settings_use_console_backend(self):
-        # No EMAIL_PROVIDER set in the test environment -> console default.
-        # (Django's test runner overrides the outer EMAIL_BACKEND to locmem, so
-        # we assert the inner post_office backend that EMAIL_PROVIDER controls.)
+    def test_post_office_delegates_through_the_suppression_guard(self):
+        # post_office's backend is now the suppression guard, which wraps the
+        # backend EMAIL_PROVIDER selects. Wrapping there rather than at each
+        # call site is what makes an address that hard-bounced un-sendable from
+        # allauth, team invitations and any third-party package alike.
         self.assertEqual(
             settings.POST_OFFICE["BACKENDS"]["default"],
+            "speedpycom.email_backends.SuppressionAwareEmailBackend",
+        )
+
+    def test_default_settings_use_console_backend(self):
+        # No EMAIL_PROVIDER set in the test environment -> console default.
+        # Asserted through the guard's own resolution rather than through
+        # POST_OFFICE, since the guard is what post_office now points at.
+        from speedpycom.email_backends import SuppressionAwareEmailBackend
+
+        self.assertEqual(
+            SuppressionAwareEmailBackend._inner_path(),
             "django.core.mail.backends.console.EmailBackend",
         )
 

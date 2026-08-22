@@ -522,11 +522,52 @@ SERVER_EMAIL = env.str("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 EMAIL_PROVIDER = env.str("EMAIL_PROVIDER", default="console").lower().strip() or "console"
 POST_OFFICE = {
     "BACKENDS": {
-        "default": resolve_email_backend(EMAIL_PROVIDER),
+        # Every outgoing message passes the suppression guard, which then hands
+        # off to resolve_email_backend(EMAIL_PROVIDER). Wrapping here rather
+        # than at each call site is the point: allauth, team invitations and any
+        # third-party package are all covered without touching their code.
+        "default": "speedpycom.email_backends.SuppressionAwareEmailBackend",
     },
     "DEFAULT_PRIORITY": "now",
     "CELERY_ENABLED": True,
 }
+
+# --- Bounce and complaint handling -------------------------------------------
+# Two halves, and the difference matters when you change ESP:
+#
+#   Enforcement — provider-agnostic. The SuppressedEmail list plus the backend
+#   above. An address that hard-bounced is never ATTEMPTED again, because ESPs
+#   throttle and eventually suspend an account that keeps hard-bouncing.
+#
+#   Detection — how you learn an address bounced. What ships here is SES via SNS
+#   (speedpycom/services/sns.py, opt-in URLs in speedpycom/urls_email_events.py).
+#   On another ESP, write that half and call
+#   speedpycom.services.email_events.suppress() from it.
+#
+# See docs/email-bounces.md.
+
+#: The SNS topic SES publishes delivery events to. **Set this before you
+#: subscribe the endpoint.** While it is empty the webhook accepts any topic —
+#: which lets the subscription handshake complete before you know the ARN, but
+#: also means anyone who creates their own SNS topic can post to you with a
+#: genuine AWS signature.
+SES_EVENT_TOPIC_ARN = env.str("SES_EVENT_TOPIC_ARN", default="")
+
+#: SES sends no events at all unless the message went out through a
+#: configuration set that has an event destination attached. Omitting this is
+#: silent: mail delivers perfectly and no events ever arrive.
+AWS_SES_CONFIGURATION_SET = env.str("AWS_SES_CONFIGURATION_SET", default="")
+
+#: Optional dotted path to a callable taking a recipient address and returning a
+#: Team or None, used to attribute an event to a tenant. Unset means no
+#: attribution, which is the right default for a single-tenant project.
+#: Whatever you point this at MUST return None when the answer is ambiguous.
+SPEEDPY_EMAIL_EVENT_TEAM_RESOLVER = env.str(
+    "SPEEDPY_EMAIL_EVENT_TEAM_RESOLVER", default=""
+)
+
+#: Shown to people whose address we stopped emailing, on the account email page.
+SUPPORT_EMAIL = env.str("SUPPORT_EMAIL", default="")
 
 # SES goes through Anymail's boto3 session params rather than django-ses globals.
 # Only pass explicit AWS keys when provided so that, when they are omitted, boto3
@@ -549,6 +590,9 @@ ANYMAIL = {
     "POSTMARK_SERVER_TOKEN": env.str("POSTMARK_SERVER_TOKEN", default="change_me"),
     "RESEND_API_KEY": env.str("RESEND_API_KEY", default="change_me"),
     "AMAZON_SES_CLIENT_PARAMS": _AMAZON_SES_CLIENT_PARAMS,
+    # `or None`, not `or ""`: Anymail tests `is not None`, so an empty string
+    # would send ConfigurationSetName="" and SES would reject every message.
+    "AMAZON_SES_CONFIGURATION_SET_NAME": AWS_SES_CONFIGURATION_SET or None,
 }
 
 DEFAULT_ADMIN_PASSWORD = env("DEFAULT_ADMIN_PASSWORD", default=None)

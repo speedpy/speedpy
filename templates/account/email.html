@@ -7,6 +7,7 @@
 {% endblock head_title %}
 
 {% block settings_content %}
+    {% include "account/snippets/_suppression_warning.html" %}
     <div class="card-header">
         <h2 class="h3 mb-0">{% trans "Email Addresses" %}</h2>
     </div>

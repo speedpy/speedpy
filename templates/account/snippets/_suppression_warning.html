@@ -1,0 +1,55 @@
+{% comment %}
+Included at the top of allauth's account/email.html. Kept as a separate file so
+the vendor template gains exactly one line — see PROVENANCE.md.
+
+Why this page needs it at all: when an address hard-bounces we stop sending to
+it, and the only channel we would normally use to say so is email — to the
+address we just stopped using. Without this, a customer whose mailbox filled up
+or whose domain expired just goes silent and never learns why.
+
+Wording: what happened, what it means, what to do. It does not blame the person,
+because the usual causes are a full mailbox, an expired domain, or a receiving
+server that decided to reject us — and the last one is our fault, not theirs. It
+names password resets explicitly, since that is the consequence most likely to
+strand somebody.
+
+Uses `alert-error` for colour but **NOT the `alert` class**.
+`templates/components/messages.html` runs `document.querySelectorAll('.alert')`
+on a 10-second timer and removes every match anywhere on the page — a
+boilerplate bug (loose end 9). This is a standing condition, not a flash
+message, and must not vanish mid-sentence. A test pins the class out.
+
+The layout utilities are spelled out because `.alert` supplied them. Every class
+here already exists in the compiled `styles.css`. Do NOT reach for
+arbitrary-opacity utilities like `bg-error/10`: the first version of this file
+did, and they rendered as a transparent background with a grey border, because
+Tailwind only compiles classes it saw at build time. There is a test asserting
+every class used here is present in the stylesheet.
+{% endcomment %}
+{% load i18n suppression %}
+{% suppressed_addresses_for request.user as suppression %}
+{% for row in suppression.rows %}
+    <div class="alert-error mb-4 rounded-lg border px-4 py-3 text-sm"
+         role="alert">
+        <p class="font-semibold">
+            {% blocktranslate with email=row.email %}We stopped sending email to {{ email }}{% endblocktranslate %}
+        </p>
+        <p class="mt-1">
+            {% if row.reason == "complaint" %}
+                {% blocktranslate %}This address reported our email as spam, so nothing is sent there now — including password reset links.{% endblocktranslate %}
+            {% else %}
+                {% blocktranslate %}Our messages kept failing, so nothing is sent there now — including password reset links. Usually that means a full mailbox, an address or domain that no longer exists, or a mail server rejecting us.{% endblocktranslate %}
+            {% endif %}
+            {% blocktranslate with support=suppression.support_email %}Email {{ support }} once it works again and we will switch it back on — we do not do that automatically, because retrying a broken address can get our email blocked for everyone.{% endblocktranslate %}
+        </p>
+    </div>
+{% endfor %}
+{% if suppression.all_blocked %}
+    <div class="alert-warning mb-4 rounded-lg border px-4 py-3 text-sm"
+         role="alert">
+        <p class="font-semibold">{% translate "You have no working email address" %}</p>
+        <p class="mt-1">
+            {% blocktranslate %}Every address on this account has stopped accepting our email, so we cannot send you a password reset. Add another address below and verify it while you are still signed in.{% endblocktranslate %}
+        </p>
+    </div>
+{% endif %}

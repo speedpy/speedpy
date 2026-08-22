@@ -52,6 +52,9 @@ urlpatterns = [
     path("accounts/tokens/", PersonalAccessTokenListView.as_view(), name="account_pat_list"),
     path("accounts/tokens/create/", PersonalAccessTokenCreateView.as_view(), name="account_pat_create"),
     path("accounts/tokens/<uuid:pk>/revoke/", PersonalAccessTokenRevokeView.as_view(), name="account_pat_revoke"),
+    # SES delivery events. Opt-in because it is Amazon-specific — drop this
+    # line if your ESP is not SES. See docs/email-bounces.md.
+    path("", include("speedpycom.urls_email_events")),
     path("og-image.png", speedpycom.views.default_og_image, name="default-og-image"),
     path("o/register/", DynamicClientRegistrationView.as_view(), name="dcr-register"),
     path("o/", include("oauth2_provider.urls", namespace="oauth2_provider")),
