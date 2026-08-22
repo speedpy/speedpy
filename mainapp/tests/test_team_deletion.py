@@ -62,6 +62,24 @@ class DelayTests(TestCase):
         self.assertEqual(team.request_deletion(by_user=owner), "deleted")
         self.assertFalse(Team.objects.filter(pk=team.pk).exists())
 
+    @override_settings(
+        SPEEDPY_TEAM_DELETION_DELAY_HOURS=0,
+        SPEEDPY_TEAM_DELETION_CLEANUP_HOOKS=[
+            "mainapp.tests.test_team_deletion.a_hook_that_records"
+        ],
+    )
+    def test_zero_hours_still_runs_the_cleanup_hooks(self):
+        """The first version called delete() directly here, so an immediate
+        deletion left every stored object behind."""
+        team = a_team()
+        owner = a_member(team, "owner@example.com", "owner")
+        team_id = str(team.pk)  # delete() clears the pk on the instance
+        _RECORD.clear()
+
+        team.request_deletion(by_user=owner)
+
+        self.assertEqual(_RECORD, [team_id])
+
     @override_settings(SPEEDPY_TEAM_DELETION_DELAY_HOURS=48)
     def test_a_delay_schedules_it_and_leaves_the_team_working(self):
         team = a_team()
@@ -204,19 +222,37 @@ class PurgeTaskTests(TestCase):
         self.assertTrue(team.is_deletion_scheduled)
 
     def test_a_failing_cleanup_hook_keeps_the_team_and_the_schedule(self):
+        """Through the task, because the rollback is the point: the hook may
+        already have deleted rows before it failed, and those writes have to go
+        back too. Catching the error inside the transaction would commit them
+        while reporting that the team was kept for a retry."""
         self._schedule_in_the_past()
 
         with override_settings(
             SPEEDPY_TEAM_DELETION_CLEANUP_HOOKS=[
-                "mainapp.tests.test_team_deletion.a_hook_that_fails"
+                "mainapp.tests.test_team_deletion.a_hook_that_deletes_then_fails"
             ]
         ):
-            self.assertFalse(
-                finalize_team_deletion(Team.objects.get(pk=self.team.pk))
-            )
+            purge_scheduled_team_deletions()
 
         team = Team.objects.get(pk=self.team.pk)
         self.assertTrue(team.is_deletion_scheduled)
+        # The row the hook deleted before it failed is back.
+        self.assertTrue(
+            TeamMembership.objects.filter(team=team, user=self.owner).exists()
+        )
+
+    def test_the_finalizer_refuses_a_team_that_is_not_due(self):
+        """It is called "finalize" — a future caller must not be able to use it
+        to skip the undo window."""
+        self.team.request_deletion(by_user=self.owner)
+
+        with self.assertRaises(ValueError):
+            finalize_team_deletion(Team.objects.get(pk=self.team.pk))
+
+    def test_the_finalizer_refuses_a_team_that_was_never_scheduled(self):
+        with self.assertRaises(ValueError):
+            finalize_team_deletion(Team.objects.get(pk=self.team.pk))
 
     def test_cleanup_hooks_run_before_the_rows_go(self):
         self._schedule_in_the_past()
@@ -247,6 +283,14 @@ _RECORD = []
 
 
 def a_hook_that_fails(team):
+    raise RuntimeError("object storage is unreachable")
+
+
+def a_hook_that_deletes_then_fails(team):
+    """Like a real teardown: it removes some rows, then hits a storage error."""
+    from mainapp.models import TeamMembership
+
+    TeamMembership.objects.filter(team=team).delete()
     raise RuntimeError("object storage is unreachable")
 
 

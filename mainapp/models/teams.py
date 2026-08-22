@@ -200,20 +200,33 @@ class Team(BaseModel):
                 team_slug=self.slug,
                 requested_by_id=str(by_user.pk) if by_user else None,
             )
-            self.delete()
+            # Through the finalizer, NOT self.delete(): the cleanup hooks are
+            # what remove the objects the cascade cannot see, and a zero-hour
+            # delay must not mean a team is deleted without them.
+            finalize_team_deletion(self, require_due=False)
             return "deleted"
 
-        self.deletion_scheduled_at = now + timezone.timedelta(hours=hours)
-        self.deletion_requested_at = now
-        self.deletion_requested_by = by_user
-        self.save(
-            update_fields=[
+        # Compare-and-set, so two simultaneous first requests cannot each write
+        # their own deadline with the later one winning.
+        scheduled_at = now + timezone.timedelta(hours=hours)
+        claimed = Team.objects.filter(
+            pk=self.pk, deletion_scheduled_at__isnull=True
+        ).update(
+            deletion_scheduled_at=scheduled_at,
+            deletion_requested_at=now,
+            deletion_requested_by=by_user,
+            updated_at=now,
+        )
+        self.refresh_from_db(
+            fields=[
                 "deletion_scheduled_at",
                 "deletion_requested_at",
                 "deletion_requested_by",
-                "updated_at",
             ]
         )
+        if not claimed:
+            return "already_scheduled"
+
         logger.warning(
             "team_deletion_scheduled",
             team_id=str(self.pk),
@@ -253,6 +266,10 @@ class TeamDeletionBlocked(Exception):
     """A team deletion was refused for a reason the owner has to act on."""
 
 
+class TeamCleanupFailed(Exception):
+    """A cleanup hook failed, so the team was kept and will be retried."""
+
+
 def teams_due_for_deletion(now=None):
     """Teams whose undo window has run out. Ordered oldest request first."""
     now = now or timezone.now()
@@ -288,13 +305,25 @@ def run_team_cleanup_hooks(team):
         import_string(path)(team)
 
 
-def finalize_team_deletion(team):
-    """Actually delete a scheduled team. Idempotent and safe to retry.
+def finalize_team_deletion(team, require_due=True):
+    """Actually delete a team. Idempotent and safe to retry.
 
     Order matters: re-check the invariant, tear down external objects, then
     delete rows. The billing re-check is not paranoia — the undo window is
     hours long, and a webhook can revive a subscription inside it.
+
+    ``require_due`` is the guard against being called on the wrong team: the
+    name says "finalize", so anything but the zero-delay path (which never
+    schedules, by definition) must prove the undo window has actually run out.
+    Raises ``TeamCleanupFailed`` when a cleanup hook fails, so the caller's
+    transaction rolls back rather than committing half a teardown.
     """
+    if require_due:
+        if not team.is_deletion_scheduled:
+            raise ValueError("This team is not scheduled for deletion")
+        if team.deletion_scheduled_at > timezone.now():
+            raise ValueError("This team is still inside its undo window")
+
     reason = team.deletion_blocked_reason()
     if reason:
         logger.warning(
@@ -310,9 +339,12 @@ def finalize_team_deletion(team):
     try:
         run_team_cleanup_hooks(team)
     except Exception as exc:
-        # Keep the team AND the schedule: the next run retries. A team whose
-        # storage teardown keeps failing is a visible stuck row, which is the
-        # point — the alternative is silently orphaned objects.
+        # Raise, do not return False. A hook that fails half way has already
+        # written to the database (a purged video deletes its row), and
+        # swallowing the error here would COMMIT that half-teardown while
+        # reporting "kept for retry" — the opposite of the contract. The caller
+        # runs this inside a transaction, so raising rolls those writes back and
+        # the retry starts from a whole team again.
         logger.error(
             "team_deletion_cleanup_failed",
             team_id=str(team.pk),
@@ -320,7 +352,7 @@ def finalize_team_deletion(team):
             error=str(exc),
             exc_info=True,
         )
-        return False
+        raise TeamCleanupFailed(str(exc)) from exc
 
     team_id, team_slug = str(team.pk), team.slug
     team.delete()

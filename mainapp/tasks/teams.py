@@ -5,7 +5,12 @@ from django.utils import timezone
 from post_office import mail
 import structlog
 from mainapp.models import TeamMembership, TeamInvitation, Team
-from mainapp.models.teams import finalize_team_deletion, teams_due_for_deletion
+from mainapp.models.teams import (
+    TeamCleanupFailed,
+    TeamDeletionBlocked,
+    finalize_team_deletion,
+    teams_due_for_deletion,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -141,24 +146,33 @@ def purge_scheduled_team_deletions():
 
     deleted = skipped = 0
     for team_id in list(teams_due_for_deletion().values_list("pk", flat=True)):
-        with transaction.atomic():
-            team = (
-                Team.objects.select_for_update()
-                .filter(pk=team_id, deletion_scheduled_at__isnull=False)
-                .first()
-            )
-            if team is None:
-                # Undone (or already gone) between the scan and the lock.
-                skipped += 1
-                continue
-            if team.deletion_scheduled_at > timezone.now():
-                # Undone and re-scheduled further out.
-                skipped += 1
-                continue
-            if finalize_team_deletion(team):
-                deleted += 1
-            else:
-                skipped += 1
+        try:
+            # The try wraps the atomic block, not the other way round: a hook
+            # that fails part way through has already written to the database,
+            # and the exception has to leave the block for those writes to roll
+            # back. Catching inside would commit half a teardown.
+            with transaction.atomic():
+                team = (
+                    Team.objects.select_for_update()
+                    .filter(pk=team_id, deletion_scheduled_at__isnull=False)
+                    .first()
+                )
+                if team is None:
+                    # Undone (or already gone) between the scan and the lock.
+                    skipped += 1
+                    continue
+                if team.deletion_scheduled_at > timezone.now():
+                    # Undone and re-scheduled further out.
+                    skipped += 1
+                    continue
+                if finalize_team_deletion(team):
+                    deleted += 1
+                else:
+                    skipped += 1
+        except (TeamCleanupFailed, TeamDeletionBlocked):
+            # Both leave the team whole and still scheduled, so the next run
+            # retries. Already logged with the reason at the point of failure.
+            skipped += 1
 
     logger.info(
         "purge_scheduled_team_deletions_completed", deleted=deleted, skipped=skipped

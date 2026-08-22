@@ -1288,6 +1288,18 @@ there is one source of truth for the number.
    scheduled so the next run retries, which is why the rows are not deleted
    first.
 
+**Two limits worth knowing before you trust the retry story.** The rollback
+covers *database* writes only — a hook that deleted an object from storage and
+then failed cannot put it back, so a hook should do its most fragile work first.
+And a hook only fails loudly if the code it calls raises: a teardown that
+delegates to something which logs-and-continues (a CDN purge, typically) reports
+success to the finalizer whatever happened underneath.
+
+Deletion routes through the finalizer from **every** entrance: the zero-hour
+path, the purge task, and both admin deletes (`delete_model` and
+`delete_queryset` — the bulk action never calls `Model.delete()`, so without the
+override it skipped the subscription rule too).
+
 ## Webhook Extension Guide
 
 This section explains how to add a new webhook event type to SpeedPy. The
