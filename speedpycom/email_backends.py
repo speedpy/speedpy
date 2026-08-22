@@ -1,4 +1,4 @@
-"""Email backend that refuses to send to suppressed addresses.
+"""Email backend that refuses to send to addresses we must not mail.
 
 **Provider-agnostic.** This half of bounce handling works with any ESP, because
 it wraps whatever ``EMAIL_PROVIDER`` resolves to and only consults the
@@ -17,9 +17,21 @@ production). This wraps whatever that resolves to, so the guard is identical in
 every environment and is exercised by the test suite rather than only in
 production.
 
-**This is the thing that stops a bounce loop.** SES throttles and eventually
-freezes an account that keeps hard-bouncing, so a message to a known-bad address
-must not be attempted at all — not attempted-and-failed.
+Two reasons an address is refused here, and they answer the same question —
+"may we send to this?" — so they belong in one place:
+
+* **It is on the suppression list.** It hard-bounced or someone complained. This
+  is what stops a bounce loop: ESPs throttle and eventually suspend an account
+  that keeps hard-bouncing, so a known-bad address must not be *attempted* at
+  all, rather than attempted-and-failed.
+* **Its domain is on a blocklist.** A throwaway-mail provider, or a domain this
+  project decided not to mail. Blocking at signup keeps such addresses out of the
+  database, but signup is not the only way one arrives — a hand-typed team
+  invitation, a CSV import, an address changed after the fact. Enforcing it here
+  as well means the rule holds however the address got in.
+
+Neither check knows anything about your ESP, so both work unchanged on SES,
+Mailgun, Postmark or the console backend.
 """
 
 import structlog
@@ -52,24 +64,29 @@ class SuppressionAwareEmailBackend(BaseEmailBackend):
         return self._inner.close()
 
     def send_messages(self, email_messages):
+        from speedpycom.services.email_domains import is_blocked
         from speedpycom.services.email_events import suppressed_among
 
         if not email_messages:
             return 0
 
         # One query for every recipient across the batch, rather than one per
-        # message — post_office can hand us a batch.
+        # message — post_office can hand us a batch. The domain check needs no
+        # query at all: both blocklists are already in memory.
         every_recipient = []
         for message in email_messages:
             every_recipient.extend(self._all_recipients(message))
-        blocked = suppressed_among(every_recipient)
+        suppressed = suppressed_among(every_recipient)
 
-        if not blocked:
+        def refused(address):
+            return (address or "").strip().lower() in suppressed or is_blocked(address)
+
+        if not any(refused(a) for a in every_recipient):
             return self._inner.send_messages(email_messages)
 
         sendable = []
         for message in email_messages:
-            kept = self._strip(message, blocked)
+            kept = self._strip(message, refused)
             if kept:
                 sendable.append(message)
 
@@ -95,18 +112,26 @@ class SuppressionAwareEmailBackend(BaseEmailBackend):
             *(getattr(message, "bcc", None) or []),
         ]
 
-    def _strip(self, message, blocked):
-        """Remove blocked addresses from a message; return whether any remain."""
+    def _strip(self, message, refused):
+        """Remove refused addresses from a message; return whether any remain.
+
+        ``refused`` is a predicate rather than a set because the two reasons are
+        answered differently: suppression is a set membership test on data
+        already fetched, and the domain check is a lookup against the blocklists.
+        """
         removed = []
         for field in ("to", "cc", "bcc"):
             addresses = getattr(message, field, None) or []
             if not addresses:
                 continue
-            kept = [a for a in addresses if a.strip().lower() not in blocked]
+            kept = [a for a in addresses if not refused(a)]
             if len(kept) != len(addresses):
                 removed.extend(a for a in addresses if a not in kept)
                 setattr(message, field, kept)
         if removed:
+            # Logged, not silent: this is the only record that a specific message
+            # was withheld, and support needs to be able to answer "why did they
+            # never get it?".
             logger.warning(
                 "email_recipients_suppressed",
                 removed=len(removed),

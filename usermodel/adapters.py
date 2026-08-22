@@ -6,6 +6,9 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.shortcuts import redirect
 
+from django.contrib import messages
+
+from speedpycom.services.email_domains import BLOCKED_EMAIL_MESSAGE, is_blocked
 from usermodel.validators import validate_no_url
 
 
@@ -77,6 +80,54 @@ class CustomAccountAdapter(DefaultAccountAdapter):
 
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    def pre_social_login(self, request, sociallogin):
+        """Apply the email-domain blocklist to social sign-ups too.
+
+        Without this, the blocklist covers only the password signup form, and
+        "Continue with Google" walks straight past it. A Google Workspace domain
+        is exactly the kind of domain a project blocks on purpose, so the gap
+        matters: the one thing you meant to refuse is the one thing that gets in.
+
+        **New accounts only.** An existing customer is never refused here, even
+        if their domain is added to the blocklist later. Three guards, each for
+        its own reason:
+
+        * ``sociallogin.is_existing`` — this social account is already linked, so
+          this is a returning person signing in. Refusing them would lock a
+          paying customer out of their own account because of a list edit.
+        * ``request.user.is_authenticated`` — they are connecting a provider from
+          account settings, having already proved who they are.
+        * an existing ``EmailAddress`` — they already have an account by some
+          other route. Blocking their signup is pointless, and any refusal here
+          would be the wrong message anyway.
+
+        That mirrors the password path, where the check lives on the signup form
+        and the login form does not re-validate the domain. Blocking a domain
+        stops new people joining; it is not a way to evict the customers you
+        already have.
+        """
+        super().pre_social_login(request, sociallogin)
+
+        email = (getattr(sociallogin.user, "email", "") or "").strip().lower()
+        if not email:
+            return
+        if sociallogin.is_existing:
+            return
+        if getattr(request.user, "is_authenticated", False):
+            return
+
+        from allauth.account.models import EmailAddress
+
+        if EmailAddress.objects.filter(email__iexact=email).exists():
+            return
+
+        if is_blocked(email):
+            # The same vague message the signup form uses, deliberately. A
+            # wording specific to social sign-in would tell somebody probing the
+            # filter which route they got caught on.
+            messages.error(request, BLOCKED_EMAIL_MESSAGE)
+            raise ImmediateHttpResponse(redirect(reverse("account_login")))
+
     def populate_user(self, request, sociallogin, data):
         """
         Names coming from social providers (Google, GitHub, GitLab) are

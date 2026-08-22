@@ -24,9 +24,12 @@ address.
 
 import functools
 import pathlib
+from email.utils import parseaddr
 
 import structlog
 from django.conf import settings
+from django.core.signals import setting_changed
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 logger = structlog.get_logger(__name__)
@@ -43,79 +46,161 @@ BLOCKED_EMAIL_MESSAGE = _(
 )
 
 
+def _canonical(domain):
+    """One spelling per domain, so two spellings cannot disagree.
+
+    Lowercased, trailing root dot removed, and converted to IDNA/punycode. That
+    last step matters: the bundled list contains punycode entries (`xn--...`),
+    and Django converts a Unicode domain to punycode on its way out. Comparing
+    the two forms literally would let `user@bücher.example` past a list holding
+    `xn--bcher-kva.example` — and it would then be delivered.
+
+    Anything IDNA refuses (an over-long label, an empty one) falls back to the
+    lowercased text. A domain that cannot be encoded cannot be delivered to
+    either, so the fallback only has to be consistent, not correct.
+    """
+    value = (domain or "").strip().lower().rstrip(".")
+    if not value or value.isascii():
+        return value
+    try:
+        return value.encode("idna").decode("ascii")
+    except (UnicodeError, ValueError):
+        return value
+
+
 def _parse(text):
-    """Domains from a blocklist file: one per line, `#` comments, blank lines."""
-    found = set()
+    """Split a blocklist into exact entries and subtree entries.
+
+    Two sets rather than one so a miss costs a handful of set lookups instead of
+    a scan. With 8,335 bundled domains the old single-set version walked every
+    entry on every miss looking for leading dots — measured at ~135us per
+    address, so ~135ms for a thousand recipients, all of it to find nothing.
+
+    Returns ``(exact, subtree)``. ``subtree`` holds ".example.com" entries with
+    the dot stripped; they match the domain itself and anything under it.
+    """
+    exact = set()
+    subtree = set()
     for raw in text.splitlines():
         line = raw.split("#", 1)[0].strip().lower().lstrip("@")
-        if line:
-            found.add(line)
-    return found
+        if not line:
+            continue
+        if line.startswith("."):
+            canonical = _canonical(line[1:])
+            if canonical:
+                subtree.add(canonical)
+        else:
+            canonical = _canonical(line)
+            if canonical:
+                exact.add(canonical)
+    return frozenset(exact), frozenset(subtree)
+
+
+def _read(path):
+    """Parse a blocklist file. A file we cannot use is treated as empty.
+
+    ``UnicodeDecodeError`` is caught alongside ``OSError`` on purpose: it is a
+    ``ValueError``, not an ``OSError``, so a file with one bad byte used to
+    escape from here and turn every signup into a 500 while making queued mail
+    retry until it gave up. Failing open is the documented choice — an
+    unreadable blocklist is our problem, and refusing all mail over it is worse
+    than missing a block.
+    """
+    try:
+        return _parse(pathlib.Path(path).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return frozenset(), frozenset()
+    except (OSError, UnicodeError, ValueError):
+        logger.exception("blocklist_unreadable", path=str(path))
+        return frozenset(), frozenset()
 
 
 @functools.lru_cache(maxsize=1)
 def bundled_domains():
     """The throwaway-provider list that ships with the boilerplate."""
-    try:
-        return frozenset(_parse(BUNDLED_LIST.read_text(encoding="utf-8")))
-    except OSError:
-        # Missing file must not break signup. An unreadable blocklist is our
-        # problem, and refusing every signup over it would be a worse outcome
-        # than accepting a throwaway address.
-        logger.exception("disposable_blocklist_unreadable", path=str(BUNDLED_LIST))
-        return frozenset()
+    return _read(BUNDLED_LIST)
 
 
 @functools.lru_cache(maxsize=1)
 def project_domains():
     """The project's own list: the file, plus anything set in settings."""
-    domains = set()
-
     path = getattr(settings, "SPEEDPY_BLOCKED_EMAIL_DOMAINS_FILE", "") or ""
-    if path:
-        try:
-            domains |= _parse(pathlib.Path(path).read_text(encoding="utf-8"))
-        except FileNotFoundError:
-            # Absent is normal — a project with nothing to add never creates it.
-            pass
-        except OSError:
-            logger.exception("project_blocklist_unreadable", path=str(path))
+    exact, subtree = _read(path) if path else (frozenset(), frozenset())
+    exact = set(exact)
+    subtree = set(subtree)
 
     for entry in getattr(settings, "SPEEDPY_BLOCKED_EMAIL_DOMAINS", None) or []:
-        cleaned = str(entry).strip().lower().lstrip("@")
-        if cleaned:
-            domains.add(cleaned)
-    return frozenset(domains)
+        line = str(entry).strip().lower().lstrip("@")
+        if not line:
+            continue
+        if line.startswith("."):
+            subtree.add(_canonical(line[1:]))
+        else:
+            exact.add(_canonical(line))
+    return frozenset(e for e in exact if e), frozenset(e for e in subtree if e)
 
 
-def clear_cache():
-    """Forget both lists. For tests, and after editing a list at runtime."""
+def clear_cache(**kwargs):
+    """Forget both lists.
+
+    Wired to ``setting_changed`` below, so ``override_settings`` in a test takes
+    effect without the test remembering to call this. Note that the cache is
+    per-process: editing a list file does NOT reach a running web or Celery
+    worker, and is not meant to — a deploy is when a list change takes effect.
+    """
     bundled_domains.cache_clear()
     project_domains.cache_clear()
 
 
+@receiver(setting_changed)
+def _clear_cache_on_setting_change(sender, setting, **kwargs):
+    if setting in (
+        "SPEEDPY_BLOCKED_EMAIL_DOMAINS",
+        "SPEEDPY_BLOCKED_EMAIL_DOMAINS_FILE",
+        "SPEEDPY_BLOCK_DISPOSABLE_EMAIL_DOMAINS",
+    ):
+        clear_cache()
+
+
 def _domain_of(email_or_domain):
-    value = (email_or_domain or "").strip().lower().rstrip(".")
-    if "@" in value:
-        value = value.rsplit("@", 1)[-1]
-    return value
+    """The domain part, from an address in any form Django accepts.
 
-
-def _matches(domain, blocklist):
-    """Exact match, plus `.example.com` entries covering subdomains.
-
-    A bare `example.com` entry matches only that domain — deliberately. Blocking
-    every subdomain of a bare entry would be a surprise, and some products live
-    on a subdomain of a domain they do not control.
+    ``parseaddr`` rather than a bare split, because Django happily sends
+    ``"Customer <user@example.com>"`` and splitting at the last ``@`` yields
+    ``example.com>`` — which matches nothing, so a display-name recipient walked
+    straight past this whole feature. A bare domain is passed through unchanged
+    so ``is_blocked("example.com")`` still works.
     """
+    value = (email_or_domain or "").strip()
+    if not value:
+        return ""
+    _, addr_spec = parseaddr(value)
+    candidate = addr_spec or value
+    if "@" in candidate:
+        candidate = candidate.rsplit("@", 1)[-1]
+    return _canonical(candidate)
+
+
+def _matches(domain, lists):
+    """Whether a canonical domain is covered by ``(exact, subtree)``.
+
+    Exact entries match only themselves. Subtree entries match the domain and
+    everything under it. The asymmetry is deliberate: silently blocking every
+    subdomain of a bare entry would surprise people, and plenty of products live
+    on a subdomain of a domain they do not control.
+
+    Costs one set lookup plus one per label, rather than a walk of the list.
+    """
+    exact, subtree = lists
     if not domain:
         return False
-    if domain in blocklist:
+    if domain in exact:
         return True
-    for entry in blocklist:
-        if entry.startswith(".") and (
-            domain == entry[1:] or domain.endswith(entry)
-        ):
+    if not subtree:
+        return False
+    parts = domain.split(".")
+    for i in range(len(parts)):
+        if ".".join(parts[i:]) in subtree:
             return True
     return False
 

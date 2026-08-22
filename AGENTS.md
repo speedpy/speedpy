@@ -1034,9 +1034,30 @@ refreshed, so the edit disappears without a trace. Project domains go in
 `blocked_email_domains.txt`, or in `SPEEDPY_BLOCKED_EMAIL_DOMAINS` for a one-off
 block with no deploy. Both sources are merged, not one-or-the-other.
 
-Checked by `speedpycom/services/email_domains.py::is_blocked`, called from
-`usermodel/forms.py::clean_email` before the MX lookup — two in-memory set
-lookups cost nothing next to a DNS call with a five-second budget.
+**The purpose is narrow: these are domains we do not send email to.** Not access
+control, not authorization. So it is enforced at both points where mail would
+otherwise leave:
+
+| Where | Effect |
+|---|---|
+| `usermodel/forms.py::clean_email` | signup refused, address never stored |
+| `speedpycom/email_backends.py` | recipient dropped before the ESP sees it |
+
+Signup alone is not enough: a hand-typed invitation, a CSV import or a later
+address change all bypass the form. Both call
+`speedpycom/services/email_domains.py::is_blocked`. At signup it runs before the
+MX lookup, because two in-memory set lookups cost nothing next to a DNS call with
+a five-second budget.
+
+Direct backend construction (`get_connection(...)`) bypasses the send-time guard
+and nothing here can prevent that — catch it in review.
+
+**Two address spellings used to slip past, both fixed, both worth knowing if you
+write a similar check:** a display-name recipient (`"Name <user@blocked>"`, where
+splitting at the last `@` yields `blocked>`), and a Unicode domain against a
+punycode list entry (the bundled list has `xn--` entries, and Django punycodes on
+the way out). Addresses go through `parseaddr`, and every domain is canonicalised
+to one IDNA form.
 
 Format: one domain per line, `#` comments, blank lines ignored, matching is
 case-insensitive. A **leading dot** covers subdomains: `.corp.example` blocks
