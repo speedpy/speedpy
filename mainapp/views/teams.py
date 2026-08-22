@@ -285,6 +285,17 @@ class TeamDeleteView(TeamOwnerRequiredMixin, View):
             messages.success(request, f"Team “{self.team.name}” has been deleted.")
             return HttpResponseRedirect(reverse("dashboard"))
 
+        if outcome == "deleting":
+            # Marked, its billing shut, but the last step could not finish (a
+            # cleanup hook failed, or a subscription reappeared mid-flight). The
+            # hourly task retries, so this is progress, not an error.
+            messages.warning(
+                request,
+                "This team is being deleted. Something is holding the last step "
+                "up, so it will finish shortly — contact support if it does not.",
+            )
+            return HttpResponseRedirect(reverse("dashboard"))
+
         if outcome == "already_scheduled":
             messages.info(request, "This team is already scheduled for deletion.")
         else:

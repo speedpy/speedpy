@@ -2,9 +2,25 @@
 Shared billing overview body. Expects context from
 _BillingActionsMixin.get_billing_context: plan_rows, current_plan,
 current_plan_key, subscription, billing_state, has_active_subscription,
-over_limit, portal_url, overview_url, activation_url, activating.
+over_limit, portal_url, overview_url, activation_url, activating,
+deletion_scheduled, deletion_scheduled_at.
 {% endcomment %}
 <div x-data="{ yearly: false }">
+
+    {% comment %}
+    A billable on its way out has its billing closed: every button that could
+    start, resume or change a subscription is gone, and the views refuse the
+    same actions if somebody posts to them anyway. A subscription appearing
+    while the deletion runs is the one case the purge cannot finish cleanly,
+    because by then the stored objects are gone.
+    {% endcomment %}
+    {% if deletion_scheduled %}
+        <div class="alert alert-warning mb-6">
+            This team is scheduled for deletion{% if deletion_scheduled_at %} on
+            <strong>{{ deletion_scheduled_at }}</strong>{% endif %}, so its billing is
+            closed. Undo the deletion in team settings if you want to keep it.
+        </div>
+    {% endif %}
 
     {% comment %}---- Current plan & status ----{% endcomment %}
     <div class="card">
@@ -51,7 +67,7 @@ over_limit, portal_url, overview_url, activation_url, activating.
                     {% endif %}
                 </div>
 
-                {% if has_active_subscription %}
+                {% if has_active_subscription and not deletion_scheduled %}
                     <form method="post" action="{{ portal_url }}">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-outlined btn-primary">
@@ -117,6 +133,8 @@ over_limit, portal_url, overview_url, activation_url, activating.
                         {% elif not plan.is_paid %}
                             {% comment %}Free tier — downgrade is handled via the portal/cancellation{% endcomment %}
                             <span class="text-xs text-fg-secondary">Default plan</span>
+                        {% elif deletion_scheduled %}
+                            <span class="text-xs text-fg-secondary">Billing closed</span>
                         {% elif has_active_subscription %}
                             <form method="post" action="{{ portal_url }}">
                                 {% csrf_token %}
@@ -124,6 +142,8 @@ over_limit, portal_url, overview_url, activation_url, activating.
                                     Change in portal
                                 </button>
                             </form>
+                        {% elif deletion_scheduled %}
+                            <span class="text-xs text-fg-secondary">Billing closed</span>
                         {% else %}
                             <a x-show="!yearly" href="{{ row.checkout_monthly_url }}"
                                class="btn btn-contained btn-primary w-full">

@@ -166,6 +166,13 @@ class _BillingActionsMixin:
             "over_limit": state.over_limit_report(billable),
             "billing_provider": getattr(settings, "SPEEDPY_BILLING_PROVIDER", ""),
             "portal_url": self._portal_url(),
+            # Both the notice and the reason the buttons are gone.
+            "deletion_scheduled": getattr(
+                self.billable, "is_deletion_scheduled", False
+            ),
+            "deletion_scheduled_at": getattr(
+                self.billable, "deletion_scheduled_at", None
+            ),
             "overview_url": self._overview_url(),
             "activation_url": self._activation_url(),
             # Rendered server-side so the pending notice appears on first paint
@@ -178,6 +185,26 @@ class _BillingActionsMixin:
             ),
         }
 
+    #: Shown when the billable is on its way out.
+    DELETION_SCHEDULED_MESSAGE = (
+        "This team is scheduled for deletion, so its billing is closed. Undo the "
+        "deletion first if you want to keep it."
+    )
+
+    def _refuse_if_deletion_scheduled(self, request):
+        """Close every billing door while a deletion is pending, or None.
+
+        Both doors, not just checkout. A provider's own portal can start a new
+        subscription or resume a paused one, and a subscription that appears
+        while the deletion is running is the one case the purge cannot finish
+        cleanly — by then the team's stored objects are already gone. Shutting
+        the doors is what makes that race rare enough to accept.
+        """
+        if not getattr(self.billable, "is_deletion_scheduled", False):
+            return None
+        messages.error(request, self.DELETION_SCHEDULED_MESSAGE)
+        return redirect(self._overview_url())
+
     def start_checkout(self, request, plan_key, interval):
         """Validate and start checkout; returns an HttpResponse."""
         plan = SUBSCRIPTION_PLANS.get(plan_key)
@@ -186,17 +213,12 @@ class _BillingActionsMixin:
         if interval not in ("monthly", "yearly"):
             raise Http404("Unknown billing interval")
 
-        # A team on its way out must not be given a subscription: the team
-        # deletion is refused while one is live, so the person would end up
-        # paying for a team they had already asked us to delete, and the purge
-        # task would keep refusing to finish. Undo the deletion first.
-        if getattr(self.billable, "is_deletion_scheduled", False):
-            messages.error(
-                request,
-                "This team is scheduled for deletion. Undo the deletion before "
-                "starting a subscription.",
-            )
-            return redirect(self._overview_url())
+        # A team on its way out must not be given a subscription: the deletion
+        # is refused while one is live, so the person would end up paying for a
+        # team they had already asked us to delete.
+        refusal = self._refuse_if_deletion_scheduled(request)
+        if refusal:
+            return refusal
 
         # Plan changes go through the customer portal, not a second checkout.
         if state.has_active_ish_subscription(self.billable):
@@ -266,6 +288,13 @@ class _BillingActionsMixin:
         return render(request, "mainapp/billing/checkout.html", context)
 
     def open_portal(self, request):
+        # The portal is a second door to the same place: both Stripe's and
+        # Paddle's let somebody start or resume a subscription from outside our
+        # UI, and we would only learn about it from a webhook.
+        refusal = self._refuse_if_deletion_scheduled(request)
+        if refusal:
+            return refusal
+
         sub = state.get_current_subscription(self.billable)
         if not sub or not sub.provider_customer_id:
             messages.error(request, "No subscription found to manage.")

@@ -3,6 +3,19 @@
 This file is the source of truth for AI Coding Agents working in this repository.
 `CLAUDE.md` and `.cursorrules` exist only as pointers to this file — keep guidance here.
 
+## Additional case-specific instructions
+
+Read the matching file **before** you start, if your task is one of these. They
+live outside this file so that a capability most projects never touch does not
+cost every reader the tokens to scroll past it.
+
+- video manipulation, transcoding, compression, video upload, ffmpeg: `agents_docs/working_with_video_files.md`
+
+Adding one: keep the file in `agents_docs/`, name it for the task rather than the
+technology (`working_with_<thing>.md`), and add exactly one bullet here —
+searchable words first, path last. Anything a project would only sometimes need
+belongs there, not in this file.
+
 ## Project Overview
 
 SpeedPy Standard is a Django-based web application starter template featuring a single-app architecture with custom
@@ -1299,6 +1312,66 @@ Deletion routes through the finalizer from **every** entrance: the zero-hour
 path, the purge task, and both admin deletes (`delete_model` and
 `delete_queryset` — the bulk action never calls `Model.delete()`, so without the
 override it skipped the subscription rule too).
+
+## Purging unconfirmed signups
+
+Email verification is mandatory, so a signup that never confirms leaves a row
+nobody can ever use: the person cannot sign in, and if their address is on the
+suppression list they cannot even be sent another confirmation — the mail is
+dropped before it reaches the provider. The account exists, holds a team, and
+does nothing.
+
+The other option — refusing such an address at the signup form and saying why —
+was considered and rejected: telling somebody which addresses are refused teaches
+a throwaway-mail user which providers still work, and the blocklist exists
+precisely so that conversation never happens. So the signup succeeds, and this
+removes it later.
+
+**Off by default.** A boilerplate that deletes user accounts on a timer without
+being asked would be a nasty surprise.
+
+```python
+SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_DAYS = 7    # 0 = off
+```
+
+Preview before switching it on — this is what `--dry-run` is for:
+
+```bash
+uv run python manage.py purge_unconfirmed_accounts --dry-run
+```
+
+| Piece | Where |
+|---|---|
+| The service | `speedpycom/services/account_purge.py::UnconfirmedAccountPurge` |
+| Daily task | `speedpycom/tasks.py::purge_unconfirmed_accounts` (beat at 04:30) |
+| Command | `speedpycom/management/commands/purge_unconfirmed_accounts.py` |
+| The team half | `mainapp/models/teams.py::delete_sole_member_teams`, registered as a hook |
+| Tests | `speedpycom/tests/test_account_purge.py` (23) + `mainapp/tests/test_team_deletion.py::PurgedAccountTeamTests` |
+
+**The predicate is deliberately narrow.** Every exclusion is somebody's real
+account: it must be active, neither staff nor superuser, have **never logged in**,
+have **at least one** `EmailAddress` row with **none** verified, and be older than
+the window. The "at least one" is what protects a user created by hand in the
+admin — such a row often has no `EmailAddress` at all and would match a bare
+"has no verified address" test.
+
+**The window must exceed `ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS`** (allauth's
+default is 3), or the purge races the last valid click on a confirmation link. 7
+is the recommended value for a 3-day link.
+
+**The team is not optional.** `Team` has no foreign key to a user — membership is
+the only link, and that cascades — so without the hook every purged signup leaves
+its auto-provisioned team behind for good. Only teams where the purged user was
+the **last** member are deleted; a shared team belongs to whoever is left. It goes
+through `finalize_team_deletion`, so the project's storage teardown runs and a
+team that is still being charged raises instead — which keeps the account too,
+because a paid team is not something to remove on a timer.
+
+**Change it by subclassing, not by editing.** Point
+`SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_CLASS` at your own subclass and override
+`queryset()` or `purge_user()`. Same reasoning as everywhere else in
+`speedpycom/`: a project that edits the package inherits a merge conflict on
+every update.
 
 ## Webhook Extension Guide
 

@@ -10,6 +10,7 @@ from .teams import (
     teams_due_for_deletion,
     finalize_team_deletion,
     run_team_cleanup_hooks,
+    delete_sole_member_teams,
 )
 from .tours import UserTourCompletion
 from .webhooks import WebhookEndpoint, WebhookDelivery
@@ -32,6 +33,7 @@ __all__ = [
     'teams_due_for_deletion',
     'finalize_team_deletion',
     'run_team_cleanup_hooks',
+    'delete_sole_member_teams',
     'UserTourCompletion',
     'WebhookEndpoint',
     'WebhookDelivery',

@@ -640,6 +640,30 @@ SPEEDPY_TEAM_DELETION_DELAY_HOURS = max(
 SPEEDPY_TEAM_DELETION_CLEANUP_HOOKS = env.list(
     "SPEEDPY_TEAM_DELETION_CLEANUP_HOOKS", default=[]
 )
+
+# Signups that never confirmed an email address. Verification is mandatory, so
+# such a row can never be used — and if the address is suppressed, no further
+# confirmation can even be sent. OFF by default: a boilerplate that deletes user
+# accounts on a timer without being asked would be a nasty surprise. 7 is the
+# recommended value, and the window MUST exceed
+# ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS (allauth's default is 3) or the purge
+# races the last valid click on a confirmation link. Preview with
+# `manage.py purge_unconfirmed_accounts --dry-run` before switching it on.
+SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_DAYS = max(
+    0, env.int("SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_DAYS", default=0)
+)
+# Called with the user before the row goes, for what the cascade cannot reach.
+# The team entry is not optional in a teams project: Team has no FK to a user,
+# so without it every purged signup leaves its auto-provisioned team behind.
+SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_HOOKS = env.list(
+    "SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_HOOKS",
+    default=["mainapp.models.teams.delete_sole_member_teams"],
+)
+# Subclass this rather than editing the service (see speedpycom/services/account_purge.py).
+SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_CLASS = env.str(
+    "SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_CLASS",
+    default="speedpycom.services.account_purge.UnconfirmedAccountPurge",
+)
 SPEEDPY_MFA_BACKEND = env.str("SPEEDPY_MFA_BACKEND", default="allauth_mfa")  # "django_otp" or "allauth_mfa"
 
 # Token issuance gates — all on by default (conservative).

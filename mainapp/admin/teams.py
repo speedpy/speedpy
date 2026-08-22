@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from mainapp.models import Team, TeamMembership, TeamInvitation
 
 
@@ -16,18 +16,31 @@ class TeamAdmin(admin.ModelAdmin):
 
     prepopulated_fields = {'slug': ('name',)}
 
-    def delete_model(self, request, obj):
-        from mainapp.models.teams import finalize_team_deletion
+    def _delete(self, request, team):
+        """Delete one team, reporting a refusal instead of raising a 500."""
+        from mainapp.models.teams import (
+            TeamCleanupFailed,
+            TeamDeletionBlocked,
+            finalize_team_deletion,
+        )
 
-        finalize_team_deletion(obj, require_due=False)
+        try:
+            finalize_team_deletion(team, require_due=False)
+        except (TeamDeletionBlocked, TeamCleanupFailed) as exc:
+            self.message_user(
+                request, f"{team.name}: {exc}", level=messages.ERROR
+            )
+            return False
+        return True
+
+    def delete_model(self, request, obj):
+        self._delete(request, obj)
 
     def delete_queryset(self, request, queryset):
-        from mainapp.models.teams import finalize_team_deletion
-
         # One at a time on purpose: a bulk delete cannot run per-team cleanup,
         # and it would skip the subscription check.
         for team in queryset:
-            finalize_team_deletion(team, require_due=False)
+            self._delete(request, team)
 
 
 admin.site.register(Team, TeamAdmin)

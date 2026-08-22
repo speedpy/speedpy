@@ -77,6 +77,16 @@ app.conf.beat_schedule = {
             "queue": "default",
         },
     },
+    "purge-unconfirmed-accounts": {
+        "task": "purge_unconfirmed_accounts",
+        # Daily. A no-op unless SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_DAYS is set,
+        # so shipping it enabled deletes nobody by surprise.
+        "schedule": crontab(hour=4, minute=30),
+        "options": {
+            "ignore_result": True,
+            "queue": "default",
+        },
+    },
     "purge-scheduled-team-deletions": {
         "task": "purge_scheduled_team_deletions",
         # Hourly: the undo window is configured in whole hours, so a finer

@@ -425,3 +425,135 @@ class SettingsPageTests(TestCase):
         response = self.client.get(self.url)
 
         self.assertNotContains(response, "Delete this team")
+
+
+@override_settings(
+    SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_DAYS=7,
+    SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_HOOKS=[
+        "mainapp.models.teams.delete_sole_member_teams"
+    ],
+)
+class PurgedAccountTeamTests(TestCase):
+    """The team side of an unconfirmed-account purge.
+
+    Team has no foreign key to a user — membership is the only link, and that
+    cascades — so without this hook every purged signup would leave its
+    auto-provisioned team behind for good, with nobody able to reach it.
+    """
+
+    def _an_unconfirmed_signup(self, email, days_ago=30):
+        from allauth.account.models import EmailAddress
+
+        user = User.objects.create_user(email=email, password="pass123")
+        User.objects.filter(pk=user.pk).update(
+            date_joined=timezone.now() - timezone.timedelta(days=days_ago)
+        )
+        EmailAddress.objects.create(user=user, email=email, verified=False)
+        return User.objects.get(pk=user.pk)
+
+    def test_the_signups_own_team_goes_with_it(self):
+        from speedpycom.services.account_purge import UnconfirmedAccountPurge
+
+        user = self._an_unconfirmed_signup("never@example.com")
+        team = a_team("theirs")
+        TeamMembership.objects.create(team=team, user=user, role="owner")
+
+        UnconfirmedAccountPurge().run()
+
+        self.assertFalse(Team.objects.filter(pk=team.pk).exists())
+        self.assertFalse(User.objects.filter(pk=user.pk).exists())
+
+    def test_a_shared_team_survives_and_keeps_its_other_members(self):
+        """It is somebody else's team now. Losing the membership is all that
+        should happen to it."""
+        from speedpycom.services.account_purge import UnconfirmedAccountPurge
+
+        user = self._an_unconfirmed_signup("never@example.com")
+        team = a_team("shared")
+        TeamMembership.objects.create(team=team, user=user, role="owner")
+        colleague = a_member(team, "real@example.com", "owner")
+
+        UnconfirmedAccountPurge().run()
+
+        self.assertTrue(Team.objects.filter(pk=team.pk).exists())
+        self.assertTrue(
+            TeamMembership.objects.filter(team=team, user=colleague).exists()
+        )
+
+    def test_a_still_billed_team_keeps_the_account_too(self):
+        """A paid team is not something to remove on a timer, so the whole
+        account is left for a human to look at."""
+        from speedpycom.services.account_purge import UnconfirmedAccountPurge
+
+        user = self._an_unconfirmed_signup("never@example.com")
+        team = a_team("paid")
+        TeamMembership.objects.create(team=team, user=user, role="owner")
+        a_subscription(team, BillingSubscription.STATUS_ACTIVE)
+
+        report = UnconfirmedAccountPurge().run()
+
+        self.assertEqual(report["failed"], 1)
+        self.assertTrue(Team.objects.filter(pk=team.pk).exists())
+        self.assertTrue(User.objects.filter(pk=user.pk).exists())
+
+    def test_the_teams_cleanup_hooks_run(self):
+        """It goes through the finalizer, so a project's storage teardown is not
+        skipped just because the trigger was an account purge."""
+        from speedpycom.services.account_purge import UnconfirmedAccountPurge
+
+        user = self._an_unconfirmed_signup("never@example.com")
+        team = a_team("theirs")
+        TeamMembership.objects.create(team=team, user=user, role="owner")
+        _RECORD.clear()
+
+        with override_settings(
+            SPEEDPY_TEAM_DELETION_CLEANUP_HOOKS=[
+                "mainapp.tests.test_team_deletion.a_hook_that_records"
+            ]
+        ):
+            UnconfirmedAccountPurge().run()
+
+        self.assertEqual(_RECORD, [str(team.pk)])
+
+
+@override_settings(SPEEDPY_TEAM_DELETION_DELAY_HOURS=0)
+class ImmediateDeletionIsStillDurableTests(TestCase):
+    """With no delay the team is still MARKED before it is deleted.
+
+    The mark is what shuts the billing doors and what lets the hourly task
+    finish the job if this attempt cannot. Without it, a zero-hour deletion that
+    failed part way left no record that anybody had asked for it.
+    """
+
+    def setUp(self):
+        self.team = a_team()
+        self.owner = a_member(self.team, "owner@example.com", "owner")
+
+    def test_a_failed_last_step_leaves_the_team_marked_not_untouched(self):
+        with override_settings(
+            SPEEDPY_TEAM_DELETION_CLEANUP_HOOKS=[
+                "mainapp.tests.test_team_deletion.a_hook_that_fails"
+            ]
+        ):
+            self.assertEqual(
+                self.team.request_deletion(by_user=self.owner), "deleting"
+            )
+
+        team = Team.objects.get(pk=self.team.pk)
+        self.assertTrue(team.is_deletion_scheduled)
+
+    def test_the_hourly_task_then_finishes_it(self):
+        with override_settings(
+            SPEEDPY_TEAM_DELETION_CLEANUP_HOOKS=[
+                "mainapp.tests.test_team_deletion.a_hook_that_fails"
+            ]
+        ):
+            self.team.request_deletion(by_user=self.owner)
+
+        purge_scheduled_team_deletions()  # hook no longer failing
+
+        self.assertFalse(Team.objects.filter(pk=self.team.pk).exists())
+
+    def test_a_happy_path_still_deletes_at_once(self):
+        self.assertEqual(self.team.request_deletion(by_user=self.owner), "deleted")
+        self.assertFalse(Team.objects.filter(pk=self.team.pk).exists())

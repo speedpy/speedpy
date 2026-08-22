@@ -193,19 +193,13 @@ class Team(BaseModel):
 
         hours = self.deletion_delay_hours()
         now = now or timezone.now()
-        if hours == 0:
-            logger.warning(
-                "team_deleted_immediately",
-                team_id=str(self.pk),
-                team_slug=self.slug,
-                requested_by_id=str(by_user.pk) if by_user else None,
-            )
-            # Through the finalizer, NOT self.delete(): the cleanup hooks are
-            # what remove the objects the cascade cannot see, and a zero-hour
-            # delay must not mean a team is deleted without them.
-            finalize_team_deletion(self, require_due=False)
-            return "deleted"
 
+        # Mark FIRST, delete second — even with no delay. The mark is what shuts
+        # the billing doors (checkout and the provider portal both refuse a
+        # scheduled team), and it is what lets the hourly task finish the job if
+        # this attempt cannot. Without it, a zero-hour deletion that failed part
+        # way left no record that anybody had asked for it.
+        #
         # Compare-and-set, so two simultaneous first requests cannot each write
         # their own deadline with the later one winning.
         scheduled_at = now + timezone.timedelta(hours=hours)
@@ -235,7 +229,21 @@ class Team(BaseModel):
             deletion_scheduled_at=self.deletion_scheduled_at.isoformat(),
             delay_hours=hours,
         )
-        return "scheduled"
+
+        if hours:
+            return "scheduled"
+
+        # No delay: finish it now. Through the finalizer, never self.delete() —
+        # the cleanup hooks are what remove the objects the cascade cannot see.
+        try:
+            finalize_team_deletion(self)
+            return "deleted"
+        except (TeamCleanupFailed, TeamDeletionBlocked):
+            # Both are already logged with their reason. The team stays marked,
+            # so its billing is shut and the hourly task retries until it goes.
+            # Reported as "deleting" rather than as an error: from the owner's
+            # side the decision is made and acted on, just not finished yet.
+            return "deleting"
 
     def cancel_scheduled_deletion(self, by_user=None):
         """Undo a scheduled deletion. Idempotent; returns True if one was undone."""
@@ -313,10 +321,16 @@ def finalize_team_deletion(team, require_due=True):
     hours long, and a webhook can revive a subscription inside it.
 
     ``require_due`` is the guard against being called on the wrong team: the
-    name says "finalize", so anything but the zero-delay path (which never
-    schedules, by definition) must prove the undo window has actually run out.
-    Raises ``TeamCleanupFailed`` when a cleanup hook fails, so the caller's
-    transaction rolls back rather than committing half a teardown.
+    name says "finalize", so a caller that is not finishing a scheduled deletion
+    has to say so.
+
+    Returns True, or raises. ``TeamCleanupFailed`` when a cleanup hook fails and
+    ``TeamDeletionBlocked`` when a subscription has reappeared — both so the
+    caller's transaction rolls back rather than committing half a teardown, and
+    so a caller that is deleting something ELSE (an account purge deleting the
+    team that hangs off it) is stopped rather than left to carry on and orphan
+    the team. Never returns False: "it did not happen" and "it happened" must
+    not look the same to a caller that has more work queued behind it.
     """
     if require_due:
         if not team.is_deletion_scheduled:
@@ -334,7 +348,7 @@ def finalize_team_deletion(team, require_due=True):
             if team.deletion_scheduled_at
             else None,
         )
-        return False
+        raise TeamDeletionBlocked(reason)
 
     try:
         run_team_cleanup_hooks(team)
@@ -358,6 +372,47 @@ def finalize_team_deletion(team, require_due=True):
     team.delete()
     logger.warning("team_deleted", team_id=team_id, team_slug=team_slug)
     return True
+
+
+def delete_sole_member_teams(user):
+    """Delete the teams that exist only because this user signed up.
+
+    Registered as a ``SPEEDPY_UNCONFIRMED_ACCOUNT_PURGE_HOOKS`` entry. Without
+    it, purging a signup leaves its auto-provisioned team behind for good:
+    ``Team`` has no foreign key to a user — membership is the only link, and
+    that cascades — so the team, its projects and its uploaded objects would
+    survive with nobody able to reach them.
+
+    Only teams where this user is the **last** member are deleted. A team they
+    shared with somebody else is that somebody's team now, and losing their
+    membership is the whole of what should happen to it.
+
+    Goes through ``finalize_team_deletion`` rather than ``Team.delete()``, so the
+    project's cleanup hooks run and the live-subscription rule is enforced. A
+    team that is still being charged therefore raises, which keeps the account
+    too — deliberately: a paid team is not something to remove on a timer.
+    """
+    team_ids = list(
+        TeamMembership.objects.filter(user=user).values_list("team_id", flat=True)
+    )
+    for team_id in team_ids:
+        others = (
+            TeamMembership.objects.filter(team_id=team_id)
+            .exclude(user=user)
+            .exists()
+        )
+        if others:
+            continue
+        team = Team.objects.filter(pk=team_id).first()
+        if team is None:
+            continue
+        logger.warning(
+            "team_deleted_with_purged_account",
+            team_id=str(team.pk),
+            team_slug=team.slug,
+            user_id=str(user.pk),
+        )
+        finalize_team_deletion(team, require_due=False)
 
 
 def get_default_team_for_user(user):
