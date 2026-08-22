@@ -47,7 +47,6 @@ class ContactForm(forms.ModelForm):
             Submit(
                 "submit",
                 _("Let's Talk"),
-                css_class="w-full mt-6 px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
-                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
+                css_class="mt-6 w-full btn btn-contained btn-primary btn-lg",
             ),
         )

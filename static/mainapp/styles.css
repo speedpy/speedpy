@@ -971,6 +971,12 @@ select {
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
+/* Hover LIGHTENS in dark mode instead of darkening. The contained variants use
+     --color-*-contrast for their text, which is dark in the dark theme, so a
+     darker hover collapses the contrast: primary went 5.19:1 -> 2.86:1, below
+     WCAG AA for the 15px semibold text these buttons use. Lightening gives
+     6.86:1. Light theme keeps darkening, where the text is white. */
+
 .btn-contained.btn-primary {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--color-primary-main) / var(--tw-bg-opacity));
@@ -986,6 +992,11 @@ select {
 .btn-contained.btn-primary:focus-visible {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(var(--color-primary-main) / var(--tw-ring-opacity));
+}
+
+:is(:where(.dark) .btn-contained.btn-primary:hover) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--color-primary-light) / var(--tw-bg-opacity));
 }
 
 .btn-contained.btn-secondary {
@@ -1005,6 +1016,11 @@ select {
   --tw-ring-color: rgb(var(--color-secondary-main) / var(--tw-ring-opacity));
 }
 
+:is(:where(.dark) .btn-contained.btn-secondary:hover) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--color-secondary-light) / var(--tw-bg-opacity));
+}
+
 .btn-contained.btn-success {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--color-success-main) / var(--tw-bg-opacity));
@@ -1020,6 +1036,11 @@ select {
 .btn-contained.btn-success:focus-visible {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(var(--color-success-main) / var(--tw-ring-opacity));
+}
+
+:is(:where(.dark) .btn-contained.btn-success:hover) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--color-success-light) / var(--tw-bg-opacity));
 }
 
 .btn-contained.btn-info {
@@ -1039,6 +1060,11 @@ select {
   --tw-ring-color: rgb(var(--color-info-main) / var(--tw-ring-opacity));
 }
 
+:is(:where(.dark) .btn-contained.btn-info:hover) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--color-info-light) / var(--tw-bg-opacity));
+}
+
 .btn-contained.btn-warning {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--color-warning-main) / var(--tw-bg-opacity));
@@ -1056,6 +1082,11 @@ select {
   --tw-ring-color: rgb(var(--color-warning-main) / var(--tw-ring-opacity));
 }
 
+:is(:where(.dark) .btn-contained.btn-warning:hover) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--color-warning-light) / var(--tw-bg-opacity));
+}
+
 .btn-contained.btn-error {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--color-error-main) / var(--tw-bg-opacity));
@@ -1071,6 +1102,11 @@ select {
 .btn-contained.btn-error:focus-visible {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(var(--color-error-main) / var(--tw-ring-opacity));
+}
+
+:is(:where(.dark) .btn-contained.btn-error:hover) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--color-error-light) / var(--tw-bg-opacity));
 }
 
 .btn-contained.btn-inherit {
@@ -2667,10 +2703,35 @@ html,
   color: rgb(var(--color-text-primary) / var(--tw-text-opacity));
 }
 
+.alert-light {
+  --tw-border-opacity: 1;
+  border-color: rgb(var(--color-divider) / var(--tw-border-opacity));
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--color-background-paper) / var(--tw-bg-opacity));
+  --tw-text-opacity: 1;
+  color: rgb(var(--color-text-primary) / var(--tw-text-opacity));
+}
+
 .alert-danger,
   .alert-error {
   border-color: rgb(var(--color-error-main) / 0.3);
   background-color: rgb(var(--color-error-main) / 0.1);
+  --tw-text-opacity: 1;
+  color: rgb(var(--color-text-primary) / var(--tw-text-opacity));
+}
+
+.alert-neutral {
+  --tw-border-opacity: 1;
+  border-color: rgb(var(--color-divider) / var(--tw-border-opacity));
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--color-background-default) / var(--tw-bg-opacity));
+  --tw-text-opacity: 1;
+  color: rgb(var(--color-text-primary) / var(--tw-text-opacity));
+}
+
+.alert-primary {
+  border-color: rgb(var(--color-primary-main) / 0.3);
+  background-color: rgb(var(--color-primary-main) / 0.1);
   --tw-text-opacity: 1;
   color: rgb(var(--color-text-primary) / var(--tw-text-opacity));
 }
@@ -2685,6 +2746,20 @@ html,
 .alert-warning {
   border-color: rgb(var(--color-warning-main) / 0.3);
   background-color: rgb(var(--color-warning-main) / 0.1);
+  --tw-text-opacity: 1;
+  color: rgb(var(--color-text-primary) / var(--tw-text-opacity));
+}
+
+.alert-tertiary {
+  border-color: rgb(var(--color-secondary-main) / 0.3);
+  background-color: rgb(var(--color-secondary-main) / 0.1);
+  --tw-text-opacity: 1;
+  color: rgb(var(--color-text-primary) / var(--tw-text-opacity));
+}
+
+.alert-secondary {
+  border-color: rgb(var(--color-secondary-main) / 0.3);
+  background-color: rgb(var(--color-secondary-main) / 0.1);
   --tw-text-opacity: 1;
   color: rgb(var(--color-text-primary) / var(--tw-text-opacity));
 }
@@ -4589,11 +4664,6 @@ h1, h2, h3, h4, h5, p {
   border-color: rgb(191 219 254 / var(--tw-border-opacity));
 }
 
-.border-blue-300 {
-  --tw-border-opacity: 1;
-  border-color: rgb(147 197 253 / var(--tw-border-opacity));
-}
-
 .border-blue-600 {
   --tw-border-opacity: 1;
   border-color: rgb(37 99 235 / var(--tw-border-opacity));
@@ -4639,11 +4709,6 @@ h1, h2, h3, h4, h5, p {
   border-color: rgb(254 202 202 / var(--tw-border-opacity));
 }
 
-.border-red-300 {
-  --tw-border-opacity: 1;
-  border-color: rgb(252 165 165 / var(--tw-border-opacity));
-}
-
 .border-red-400 {
   --tw-border-opacity: 1;
   border-color: rgb(248 113 113 / var(--tw-border-opacity));
@@ -4659,16 +4724,6 @@ h1, h2, h3, h4, h5, p {
   border-color: rgb(254 240 138 / var(--tw-border-opacity));
 }
 
-.border-yellow-300 {
-  --tw-border-opacity: 1;
-  border-color: rgb(253 224 71 / var(--tw-border-opacity));
-}
-
-.bg-\[\#7582EB\] {
-  --tw-bg-opacity: 1;
-  background-color: rgb(117 130 235 / var(--tw-bg-opacity));
-}
-
 .bg-background {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--color-background-default) / var(--tw-bg-opacity));
@@ -4677,11 +4732,6 @@ h1, h2, h3, h4, h5, p {
 .bg-background-paper {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--color-background-paper) / var(--tw-bg-opacity));
-}
-
-.bg-blue-100 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(219 234 254 / var(--tw-bg-opacity));
 }
 
 .bg-blue-50 {
@@ -4699,13 +4749,12 @@ h1, h2, h3, h4, h5, p {
   background-color: rgb(var(--color-error-main) / var(--tw-bg-opacity));
 }
 
-.bg-fg-secondary\/10 {
-  background-color: rgb(var(--color-text-secondary) / 0.1);
+.bg-error\/10 {
+  background-color: rgb(var(--color-error-main) / 0.1);
 }
 
-.bg-gray-100 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(243 244 246 / var(--tw-bg-opacity));
+.bg-fg-secondary\/10 {
+  background-color: rgb(var(--color-text-secondary) / 0.1);
 }
 
 .bg-gray-200 {
@@ -4831,11 +4880,6 @@ h1, h2, h3, h4, h5, p {
 .bg-white {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
-}
-
-.bg-yellow-100 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(254 249 195 / var(--tw-bg-opacity));
 }
 
 .bg-yellow-50 {
@@ -4988,11 +5032,6 @@ h1, h2, h3, h4, h5, p {
   padding-bottom: 2rem;
 }
 
-.py-\[11px\] {
-  padding-top: 11px;
-  padding-bottom: 11px;
-}
-
 .pb-10 {
   padding-bottom: 2.5rem;
 }
@@ -5062,10 +5101,6 @@ h1, h2, h3, h4, h5, p {
 
 .text-\[0\.65rem\] {
   font-size: 0.65rem;
-}
-
-.text-\[15px\] {
-  font-size: 15px;
 }
 
 .text-base {
@@ -5139,10 +5174,6 @@ h1, h2, h3, h4, h5, p {
 
 .leading-9 {
   line-height: 2.25rem;
-}
-
-.leading-\[26px\] {
-  line-height: 26px;
 }
 
 .leading-normal {
@@ -5339,11 +5370,6 @@ h1, h2, h3, h4, h5, p {
   color: rgb(161 98 7 / var(--tw-text-opacity));
 }
 
-.text-yellow-800 {
-  --tw-text-opacity: 1;
-  color: rgb(133 77 14 / var(--tw-text-opacity));
-}
-
 .underline {
   text-decoration-line: underline;
 }
@@ -5390,6 +5416,10 @@ h1, h2, h3, h4, h5, p {
   --tw-shadow: 0px 2px 4px rgba(31, 41, 55, 0.06), 0px 4px 6px rgba(100, 116, 139, 0.12);
   --tw-shadow-colored: 0px 2px 4px var(--tw-shadow-color), 0px 4px 6px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+.outline {
+  outline-style: solid;
 }
 
 .filter {
@@ -5615,11 +5645,6 @@ h1, h2, h3, h4, h5, p {
 
 .driver-popover-arrow-side-bottom {
   border-bottom-color: rgb(var(--color-background-paper));
-}
-
-.hover\:bg-\[\#646fd4\]:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgb(100 111 212 / var(--tw-bg-opacity));
 }
 
 .hover\:bg-blue-50:hover {

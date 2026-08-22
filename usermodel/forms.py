@@ -86,8 +86,7 @@ class UsermodelSignupForm(SignupForm):
             Submit(
                 "action",
                 _("Sign up"),
-                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
-                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
+                css_class="w-full btn btn-contained btn-primary btn-lg",
             ),
         )
 
@@ -142,8 +141,7 @@ class UsermodelLoginForm(LoginForm):
             Submit(
                 "action",
                 _("Sign in"),
-                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
-                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
+                css_class="w-full btn btn-contained btn-primary btn-lg",
             ),
         )
 
@@ -159,8 +157,7 @@ class UsermodelResetPasswordForm(ResetPasswordForm):
             Submit(
                 "action",
                 _("Reset password"),
-                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
-                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
+                css_class="w-full btn btn-contained btn-primary btn-lg",
             ),
         )
 
@@ -176,8 +173,7 @@ class UsermodelResetPasswordKeyForm(ResetPasswordKeyForm):
             Submit(
                 "action",
                 _("Reset password"),
-                css_class="w-full px-6 py-[11px] text-[15px] font-semibold leading-[26px] text-gray-900 "
-                "bg-[#7582EB] hover:bg-[#646fd4] rounded-lg cursor-pointer focus:outline-offset-2",
+                css_class="w-full btn btn-contained btn-primary btn-lg",
             ),
         )
 

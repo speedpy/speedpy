@@ -1,9 +1,54 @@
 {% load allauth %}
-{% comment %} djlint:off {% endcomment %}
+{% comment %} djlint:off
+
+allauth's button element, mapped onto the design system.
+
+Two bugs this replaces. It used `bg-blue-600 text-white`, which is not the
+design system's primary in either theme — so every allauth button was a
+different colour from every other button in the product. And the `href` branch
+emitted no class at all, so allauth's link-buttons ("Cancel", "Back") rendered as
+bare unstyled links.
+
+It also ignored `tags`, which allauth already passes — `secondary`,
+`link,cancel`, `outline`, `danger`. Every button therefore looked equally
+primary, including the ones meant to be quiet. Mapping them is what makes a
+Cancel next to a Confirm read correctly.
+
+It also forwards `form`, `id` and `value`, which upstream allauth forwards and
+this override used to drop. That was a functional break, not a cosmetic one:
+passkey and WebAuthn buttons are found by id, OIDC consent distinguishes grant
+from cancel by value, and logout-from-stage submits via `form=`.
+
+Variants come from static/mainapp/input.css: btn-contained | btn-outlined |
+btn-text, crossed with btn-primary | btn-secondary | btn-error.
+{% endcomment %}
+{% comment %}
+Precedence matters. allauth emits "outline,cancel" for confirmation-cancel and
+MFA-trust-cancel, so testing `cancel` before `outline` turned an explicitly
+requested outlined button into a flat text one. Order: destructive, then link,
+then an explicit outline, then cancel, then secondary.
+{% endcomment %}
+{% if "danger" in attrs.tags or "delete" in attrs.tags %}
+    {% firstof "btn btn-contained btn-error" as button_class %}
+{% elif "link" in attrs.tags %}
+    {% firstof "btn btn-text btn-primary" as button_class %}
+{% elif "outline" in attrs.tags %}
+    {% firstof "btn btn-outlined btn-primary" as button_class %}
+{% elif "cancel" in attrs.tags %}
+    {% comment %} quiet: no fill, so it does not compete with the real action {% endcomment %}
+    {% firstof "btn btn-text btn-primary" as button_class %}
+{% elif "secondary" in attrs.tags %}
+    {% firstof "btn btn-contained btn-secondary" as button_class %}
+{% else %}
+    {% firstof "btn btn-contained btn-primary" as button_class %}
+{% endif %}
 <{% if attrs.href %}a href="{{ attrs.href }}"{% else %}button{% endif %}
+{% if attrs.form %}form="{{ attrs.form }}"{% endif %}
+{% if attrs.id %}id="{{ attrs.id }}"{% endif %}
 {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
 {% if attrs.type %}type="{{ attrs.type }}"{% endif %}
-{% if attrs.href %}{% else %}class="py-2 px-4 mr-2 text-sm font-medium leading-5 text-white bg-blue-600 rounded-lg cursor-pointer lg:px-5 lg:py-2 focus:outline-offset-2"{% endif %}
+{% if attrs.value %}value="{{ attrs.value }}"{% endif %}
+class="{{ button_class }} mr-2"
 >
 {% slot %}
 {% endslot %}

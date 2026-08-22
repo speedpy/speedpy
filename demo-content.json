@@ -19,7 +19,11 @@
       "removal_action": "safe_remove",
       "fresh_clone_notes": "Delete demoapp/ directory, templates/demoapp/, remove from INSTALLED_APPS, and remove the URL include from project/urls.py.",
       "existing_db_notes": "Drop the demoapp_product table or write a removal migration before deleting the app code.",
-      "verification_terms": ["demoapp", "demo_product", "/demo/products/"]
+      "verification_terms": [
+        "demoapp",
+        "demo_product",
+        "/demo/products/"
+      ]
     },
     {
       "id": "product_api",
@@ -39,8 +43,13 @@
       ],
       "removal_action": "safe_remove",
       "fresh_clone_notes": "Delete mainapp/api/products.py, remove imports and URL patterns from project/api_urls.py, remove product views from mainapp/api/__init__.py, remove read:products scope from OAUTH2_PROVIDER and SPECTACULAR_SETTINGS in settings.py, remove the products tag from SPECTACULAR_SETTINGS['TAGS'].",
-      "existing_db_notes": "No database changes needed — Product API reads from demoapp.Product.",
-      "verification_terms": ["/api/v1/products/", "ProductListAPIView", "ProductDetailAPIView", "read:products"]
+      "existing_db_notes": "No database changes needed \u2014 Product API reads from demoapp.Product.",
+      "verification_terms": [
+        "/api/v1/products/",
+        "ProductListAPIView",
+        "ProductDetailAPIView",
+        "read:products"
+      ]
     },
     {
       "id": "demo_job_entrypoint",
@@ -49,15 +58,21 @@
       "paths": [
         "mainapp/api/jobs.py"
       ],
-      "symbols": ["DemoJobCreateView"],
+      "symbols": [
+        "DemoJobCreateView"
+      ],
       "settings": [],
       "routes": [
         "/api/v1/jobs/demo/ -> DemoJobCreateView"
       ],
       "removal_action": "safe_remove",
       "fresh_clone_notes": "Remove DemoJobCreateView from mainapp/api/jobs.py (keep JobStatusView if using async jobs). Remove the /api/v1/jobs/demo/ URL from project/api_urls.py. Remove the DemoJobCreateView import from api_urls.py.",
-      "existing_db_notes": "No schema changes needed — the endpoint creates AsyncJob rows but the model may be retained.",
-      "verification_terms": ["DemoJobCreateView", "/api/v1/jobs/demo/", "createDemoJob"]
+      "existing_db_notes": "No schema changes needed \u2014 the endpoint creates AsyncJob rows but the model may be retained.",
+      "verification_terms": [
+        "DemoJobCreateView",
+        "/api/v1/jobs/demo/",
+        "createDemoJob"
+      ]
     },
     {
       "id": "demo_job_task",
@@ -66,13 +81,19 @@
       "paths": [
         "mainapp/tasks/jobs.py"
       ],
-      "symbols": ["run_demo_job"],
+      "symbols": [
+        "run_demo_job"
+      ],
       "settings": [],
       "routes": [],
       "removal_action": "safe_remove",
       "fresh_clone_notes": "Remove run_demo_job from mainapp/tasks/jobs.py (keep the file if adding real tasks). Remove run_demo_job from mainapp/tasks/__init__.py __all__ and import.",
       "existing_db_notes": "No changes needed.",
-      "verification_terms": ["run_demo_job", "DEMO_STEPS", "DEMO_STEP_DELAY"]
+      "verification_terms": [
+        "run_demo_job",
+        "DEMO_STEPS",
+        "DEMO_STEP_DELAY"
+      ]
     },
     {
       "id": "async_job_infrastructure",
@@ -82,7 +103,10 @@
         "mainapp/models/jobs.py",
         "mainapp/api/jobs.py"
       ],
-      "symbols": ["AsyncJob", "JobStatusView"],
+      "symbols": [
+        "AsyncJob",
+        "JobStatusView"
+      ],
       "settings": [
         "OAUTH2_PROVIDER.SCOPES: \"read:jobs\", \"write:jobs\"",
         "SPECTACULAR_SETTINGS.TAGS: \"jobs\"",
@@ -94,7 +118,12 @@
       "removal_action": "review",
       "fresh_clone_notes": "Keep if your app needs async job tracking (the 202 + status URL pattern). Remove only if you have no background tasks that need status polling. If removing: delete mainapp/models/jobs.py, remove from mainapp/models/__init__.py, remove JobStatusView and its URL, remove read:jobs/write:jobs scopes, remove the jobs tag.",
       "existing_db_notes": "Removing the AsyncJob model requires a removal migration or database reset.",
-      "verification_terms": ["AsyncJob", "JobStatusView", "read:jobs", "write:jobs"]
+      "verification_terms": [
+        "AsyncJob",
+        "JobStatusView",
+        "read:jobs",
+        "write:jobs"
+      ]
     },
     {
       "id": "product_api_scopes",
@@ -111,7 +140,9 @@
       "removal_action": "safe_remove",
       "fresh_clone_notes": "Remove the read:products entry from both OAUTH2_PROVIDER['SCOPES'] and the oauth2 flows in SPECTACULAR_SETTINGS['APPEND_COMPONENTS'].",
       "existing_db_notes": "Revoke any OAuth tokens that include read:products before removing the scope.",
-      "verification_terms": ["read:products"]
+      "verification_terms": [
+        "read:products"
+      ]
     },
     {
       "id": "demo_mode_setting",
@@ -129,7 +160,10 @@
       "removal_action": "review",
       "fresh_clone_notes": "Remove the DEMO_MODE setting from settings.py, remove demo_mode from context_processors.py, remove 'project.context_processors.demo_mode' from TEMPLATES. Then remove {% if DEMO_MODE %} blocks from templates.",
       "existing_db_notes": "No database changes needed.",
-      "verification_terms": ["DEMO_MODE", "demo_mode"]
+      "verification_terms": [
+        "DEMO_MODE",
+        "demo_mode"
+      ]
     },
     {
       "id": "login_demo_credentials",
@@ -143,7 +177,11 @@
       "removal_action": "safe_remove",
       "fresh_clone_notes": "Remove the {% if DEMO_MODE %} block that displays admin@example.com / adminadmin credentials.",
       "existing_db_notes": "No changes needed.",
-      "verification_terms": ["DEMO_MODE", "admin@example.com", "adminadmin"]
+      "verification_terms": [
+        "DEMO_MODE",
+        "admin@example.com",
+        "adminadmin"
+      ]
     },
     {
       "id": "speedpyui_demo_links",
@@ -157,7 +195,35 @@
       "removal_action": "safe_remove",
       "fresh_clone_notes": "Remove the 'Demo App / CRUD Screens' section that links to demo_product_list and demo_product_create URLs.",
       "existing_db_notes": "No changes needed.",
-      "verification_terms": ["demo_product_list", "demo_product_create", "Demo App"]
+      "verification_terms": [
+        "demo_product_list",
+        "demo_product_create",
+        "Demo App"
+      ]
+    },
+    {
+      "id": "speedpyui_preview_routes",
+      "category": "route",
+      "label": "SpeedPy UI preview pages (component gallery) \u2014 publicly reachable",
+      "paths": [
+        "project/urls.py",
+        "mainapp/views/speedpyui_preview.py",
+        "templates/mainapp/speedpyui_preview.html",
+        "templates/mainapp/speedpyui_form_view.html"
+      ],
+      "settings": [],
+      "routes": [
+        "speedpyui-preview/",
+        "speedpyui-preview/FormView"
+      ],
+      "removal_action": "unroute",
+      "fresh_clone_notes": "Remove the two speedpyui-preview path() entries from project/urls.py. KEEP the views and templates: the gallery is what forces every design-system class into the Tailwind build, so deleting the templates silently drops those classes from styles.css. Re-add the routes locally while working on the design system.",
+      "existing_db_notes": "No changes needed.",
+      "verification_terms": [
+        "speedpyui-preview",
+        "speedpyui_preview",
+        "SpeedpyuiPreviewView"
+      ]
     },
     {
       "id": "placeholder_pages",
@@ -174,7 +240,7 @@
         "/pricing -> PricingView"
       ],
       "removal_action": "replace",
-      "fresh_clone_notes": "Replace with your own landing page, pricing page, etc. Do not delete without providing replacements — the root URL must resolve.",
+      "fresh_clone_notes": "Replace with your own landing page, pricing page, etc. Do not delete without providing replacements \u2014 the root URL must resolve.",
       "existing_db_notes": "No changes needed.",
       "verification_terms": []
     },
@@ -193,7 +259,9 @@
       "removal_action": "safe_remove",
       "fresh_clone_notes": "Delete appliku_demo.yml. Keep appliku.yml for production deployment.",
       "existing_db_notes": "No changes needed.",
-      "verification_terms": ["appliku_demo"]
+      "verification_terms": [
+        "appliku_demo"
+      ]
     },
     {
       "id": "example_cli_mcp_product_refs",
@@ -210,7 +278,11 @@
       "removal_action": "review",
       "fresh_clone_notes": "After removing the Product API, regenerate MCP tools and remove product-specific CLI subcommands and MCP tools. Replace with your own domain resources. The generated_tools.py file should be regenerated from the updated OpenAPI schema.",
       "existing_db_notes": "No changes needed.",
-      "verification_terms": ["products", "product_list", "product_detail"]
+      "verification_terms": [
+        "products",
+        "product_list",
+        "product_detail"
+      ]
     },
     {
       "id": "test_product_api_deps",
@@ -229,7 +301,15 @@
       "removal_action": "review",
       "fresh_clone_notes": "Before removing the Product API or demo job endpoint, move pagination/throttle/request-ID tests to use a non-demo endpoint from your domain. Delete test_api_jobs.py only after removing the demo job. Keep tests that exercise reusable infrastructure (AsyncJob status polling).",
       "existing_db_notes": "No changes needed.",
-      "verification_terms": ["demoapp.models", "Product", "/api/v1/products/", "DemoJobCreateView", "run_demo_job", "listProducts", "getProduct"]
+      "verification_terms": [
+        "demoapp.models",
+        "Product",
+        "/api/v1/products/",
+        "DemoJobCreateView",
+        "run_demo_job",
+        "listProducts",
+        "getProduct"
+      ]
     },
     {
       "id": "readme_demo_refs",
@@ -243,7 +323,11 @@
       "removal_action": "review",
       "fresh_clone_notes": "Update README to remove /api/v1/products/ and read:products references. Replace with your own domain API examples.",
       "existing_db_notes": "No changes needed.",
-      "verification_terms": ["/api/v1/products/", "read:products", "(demo)"]
+      "verification_terms": [
+        "/api/v1/products/",
+        "read:products",
+        "(demo)"
+      ]
     }
   ]
 }

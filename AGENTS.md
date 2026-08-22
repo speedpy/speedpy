@@ -1020,6 +1020,51 @@ To restrict open registration, set `DCR_ENABLED = False` in settings (default:
 must be registered via Django admin or the `create_oauth2_app` management
 command.
 
+## Use the design system, do not re-create it
+
+`static/mainapp/input.css` defines the components — buttons, alerts, badges,
+cards, inputs, papers, progress. Reach for those before writing raw utilities.
+The gallery at `/speedpyui-preview/` shows every one, and
+`speedpycom/tests/test_design_system.py` guards the rules below.
+
+**Never hardcode a theme colour.** `bg-[#7582EB]` was the signup button for a
+long time. That hex is the DARK theme's `--color-primary-main` inlined, paired
+with `text-gray-900`, which is the dark theme's `--color-primary-contrast`. So in
+LIGHT mode the button was the wrong colour with near-black text, and nobody
+noticed. `btn btn-contained btn-primary btn-lg` is identical in dark and correct
+in light. A test now fails on any `bg-[#...]` in Python or in a template.
+
+**A class that appears nowhere does not exist.** Tailwind compiles only what it
+can see, so a variant declared in `input.css` and used in no template is absent
+from `styles.css` — and using it later renders *nothing*, with no error.
+`alert-neutral` sat in exactly that state until it was added to the gallery.
+**50 of 243 component classes still are** (blockquotes, displays, modal,
+tooltip, tabs, several progress and paper variants). If you need one, add it to
+the gallery in the same commit and run `npm run tailwind:build`.
+
+Audit the gap:
+
+```bash
+python -c "
+import re, pathlib;
+inp=pathlib.Path('static/mainapp/input.css').read_text();
+out=pathlib.Path('static/mainapp/styles.css').read_text();
+d=set();
+[d.update(re.findall(r'\.([\w-]+)', m.group(1))) for m in re.finditer(r'^\s*((?:\.[\w-]+)(?:[.\s,]+\.[\w-]+)*)\s*\{', inp, re.M)];
+print(sorted(c for c in d if f'.{c}' not in out))
+"
+```
+
+**Missing a component that every Tailwind kit ships?** Build it in `input.css`,
+show it in the gallery, and it is available everywhere. The gallery does double
+duty on purpose: it forces classes into the build AND documents them for the
+next person or agent.
+
+**Contained buttons lighten on hover in dark mode.** Not a preference — the
+contained variants take their text from `--color-*-contrast`, which is dark in
+the dark theme, so darkening the background on hover collapsed primary from
+5.19:1 to 2.86:1, under WCAG AA. Lightening gives 6.86:1.
+
 ## Blocked email domains
 
 Two lists, and the split is the whole point.
@@ -1357,6 +1402,23 @@ production.
 
 **Quick audit:** `rg SPEEDPY_DEMO` finds all marked demo artifacts. Every
 marker corresponds to an entry in `demo-content.json`.
+
+**Unroute every preview and example page before production.** The SpeedPy UI
+preview (`/speedpyui-preview/` and `/speedpyui-preview/FormView`) is a component
+gallery for development, and it is routed by default — so a fresh deploy serves
+it publicly to anyone who guesses the URL. It leaks no secrets, but it is an
+internal tool on a customer-facing domain and it widens the attack surface for
+no benefit. Found live on a real deployment, returning 200.
+
+**Keep the views and templates; remove only the `path()` entries.** The gallery
+is what forces every design-system class into the Tailwind build — Tailwind
+compiles only the classes it can see, so deleting those templates silently drops
+`btn-outlined`, `alert-warning` and friends out of `styles.css`, and the failure
+shows up later as a component that renders unstyled. Re-add the routes locally
+whenever you work on the design system.
+
+The same rule applies to anything else that exists to demonstrate rather than to
+serve: sample dashboards, fixture browsers, mail previews, API playgrounds.
 
 **Key decisions for fork owners:**
 

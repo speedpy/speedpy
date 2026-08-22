@@ -111,6 +111,7 @@ These pages are functional placeholders — replace them with your own content r
 
 ## 7. Clean Up SpeedPy UI Preview Demo Links
 
+- [ ] **Unroute the SpeedPy UI preview**: delete the two `speedpyui-preview` `path()` entries from `project/urls.py`. They are routed by default, so a fresh deploy serves the component gallery publicly. **Keep the views and templates** — they are what forces every design-system class into the Tailwind build, and deleting them silently drops those classes from `styles.css`.
 - [ ] Remove the "Demo App / CRUD Screens" section from `templates/mainapp/speedpyui_preview.html` (the section between `{# ---------- CRUD screens ---------- #}` and `{# ---------- Surfaces ---------- #}`)
 
 ---

@@ -627,6 +627,12 @@ class ProductCreateView(CreateView):
                         <div class="alert alert-success">Your account settings were saved.</div>
                         <div class="alert alert-warning">Two-factor authentication is not enabled.</div>
                         <div class="alert alert-error">This destructive action needs confirmation.</div>
+                        <div class="alert alert-info">Your trial ends in three days.</div>
+                        <div class="alert alert-neutral">Nothing to report right now.</div>
+                        <div class="alert alert-primary">A new version is available.</div>
+                        <div class="alert alert-secondary">Draft saved locally.</div>
+                        <div class="alert alert-tertiary">Linked to your other workspace.</div>
+                        <div class="alert alert-light">A quiet aside.</div>
                     </div>
                 </div>
 
@@ -634,7 +640,21 @@ class ProductCreateView(CreateView):
                     <p class="eyebrow">Code</p>
                     <pre class="overflow-x-auto rounded-lg bg-background p-4 text-xs text-fg-secondary"><code>&lt;div class="alert alert-success"&gt;Saved successfully.&lt;/div&gt;
 &lt;div class="alert alert-warning"&gt;Review this setting.&lt;/div&gt;
-&lt;div class="alert alert-error"&gt;Action failed.&lt;/div&gt;</code></pre>
+&lt;div class="alert alert-error"&gt;Action failed.&lt;/div&gt;
+&lt;div class="alert alert-info"&gt;For your information.&lt;/div&gt;
+&lt;div class="alert alert-neutral"&gt;No strong signal either way.&lt;/div&gt;</code></pre>
+                    <p class="mt-3 text-xs text-fg-secondary">
+                        Variants: <code>alert-success</code> <code>alert-error</code>
+                        <code>alert-warning</code> <code>alert-info</code>
+                        <code>alert-primary</code> <code>alert-secondary</code>
+                        <code>alert-tertiary</code> <code>alert-neutral</code>
+                        <code>alert-light</code>.
+                        Every one is listed here on purpose: Tailwind compiles only the
+                        classes it can see, so a variant that appears nowhere is absent
+                        from <code>styles.css</code> and does nothing when you use it.
+                        <code>alert-neutral</code> was in exactly that state until it was
+                        added to this gallery.
+                    </p>
                 </div>
             </div>
         </section>

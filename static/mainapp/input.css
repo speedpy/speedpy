@@ -112,12 +112,17 @@
 
   /* ----- Variant: contained (solid fill) ----- */
   .btn-contained { @apply shadow-none; }
-  .btn-contained.btn-primary   { @apply bg-primary   text-primary-contrast   hover:bg-primary-dark   focus-visible:ring-primary; }
-  .btn-contained.btn-secondary { @apply bg-secondary text-secondary-contrast hover:bg-secondary-dark focus-visible:ring-secondary; }
-  .btn-contained.btn-success   { @apply bg-success   text-success-contrast   hover:bg-success-dark   focus-visible:ring-success; }
-  .btn-contained.btn-info      { @apply bg-info      text-info-contrast      hover:bg-info-dark      focus-visible:ring-info; }
-  .btn-contained.btn-warning   { @apply bg-warning   text-warning-contrast   hover:bg-warning-dark   focus-visible:ring-warning; }
-  .btn-contained.btn-error     { @apply bg-error     text-error-contrast     hover:bg-error-dark     focus-visible:ring-error; }
+  /* Hover LIGHTENS in dark mode instead of darkening. The contained variants use
+     --color-*-contrast for their text, which is dark in the dark theme, so a
+     darker hover collapses the contrast: primary went 5.19:1 -> 2.86:1, below
+     WCAG AA for the 15px semibold text these buttons use. Lightening gives
+     6.86:1. Light theme keeps darkening, where the text is white. */
+  .btn-contained.btn-primary   { @apply bg-primary   text-primary-contrast   hover:bg-primary-dark dark:hover:bg-primary-light   focus-visible:ring-primary; }
+  .btn-contained.btn-secondary { @apply bg-secondary text-secondary-contrast hover:bg-secondary-dark dark:hover:bg-secondary-light focus-visible:ring-secondary; }
+  .btn-contained.btn-success   { @apply bg-success   text-success-contrast   hover:bg-success-dark dark:hover:bg-success-light   focus-visible:ring-success; }
+  .btn-contained.btn-info      { @apply bg-info      text-info-contrast      hover:bg-info-dark dark:hover:bg-info-light      focus-visible:ring-info; }
+  .btn-contained.btn-warning   { @apply bg-warning   text-warning-contrast   hover:bg-warning-dark dark:hover:bg-warning-light   focus-visible:ring-warning; }
+  .btn-contained.btn-error     { @apply bg-error     text-error-contrast     hover:bg-error-dark dark:hover:bg-error-light     focus-visible:ring-error; }
   .btn-contained.btn-inherit   { @apply bg-neutral-800 text-white hover:bg-neutral-900 focus-visible:ring-neutral-800
                                         dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-neutral-100; }
 
