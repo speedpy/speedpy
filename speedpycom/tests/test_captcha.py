@@ -13,6 +13,7 @@ direction and useless in the other:
 
 from unittest import mock
 
+from django.conf import settings
 from django.test import SimpleTestCase, override_settings
 
 from speedpycom.services import captcha
@@ -150,7 +151,7 @@ class OutcomeTests(SimpleTestCase):
         """A token minted for the cheap 'submit' action must not be replayable
         against the expensive one that starts a video transcode."""
         result = self.verify(
-            verdict(ok=True, score=0.9, action="submit"),
+            verdict(ok=True, score=0.9, action="submit", supports_action=True),
             expected_action="video_reserve",
         )
         self.assertEqual(result.outcome, captcha.OUTCOME_FAILED)
@@ -158,35 +159,66 @@ class OutcomeTests(SimpleTestCase):
 
     def test_a_matching_action_passes(self):
         result = self.verify(
-            verdict(ok=True, score=0.9, action="video_reserve"),
+            verdict(
+                ok=True, score=0.9, action="video_reserve", supports_action=True
+            ),
             expected_action="video_reserve",
         )
         self.assertEqual(result.outcome, captcha.OUTCOME_OK)
 
     def test_no_expected_action_skips_the_check(self):
-        result = self.verify(verdict(ok=True, score=0.9, action="whatever"))
-        self.assertEqual(result.outcome, captcha.OUTCOME_OK)
-
-    def test_a_provider_that_reports_no_action_is_not_punished(self):
-        """Turnstile has no action concept; demanding one would refuse
-        everybody the moment somebody swapped provider."""
         result = self.verify(
-            verdict(ok=True, score=0.9, action=""), expected_action="submit"
+            verdict(ok=True, score=0.9, action="whatever", supports_action=True)
         )
         self.assertEqual(result.outcome, captcha.OUTCOME_OK)
 
-    def test_a_provider_that_raises_is_not_papered_over(self):
-        """Where the fail-open boundary sits. A provider is responsible for
-        turning ITS transport errors into `unavailable` (recaptcha_v3 does);
-        verify() deliberately does not catch, because swallowing a coding error
-        as "fail open" would hide a permanently broken provider forever."""
+    def test_an_EMPTY_action_from_an_action_provider_refuses(self):
+        """Found by review, and it was a real hole. v3 always returns the action
+        for a valid token, so an empty one means the token was not minted the
+        way we think — which is precisely the replay `expected_action` exists to
+        stop. Skipping the check on an empty action defeated it entirely."""
+        result = self.verify(
+            verdict(ok=True, score=0.9, action="", supports_action=True),
+            expected_action="video_reserve",
+        )
+        self.assertEqual(result.outcome, captcha.OUTCOME_FAILED)
+        self.assertTrue(result.refuses)
+
+    def test_a_provider_with_no_ACTION_CONCEPT_is_not_punished(self):
+        """The distinction that makes the test above safe: Turnstile has no
+        action at all, so `supports_action=False` skips the check rather than
+        refusing every visitor the moment somebody swaps provider. "No action
+        came back" and "this provider has no actions" look identical on the
+        wire and mean opposite things, so it is a provider CAPABILITY, not an
+        inference from the response."""
+        result = self.verify(
+            verdict(ok=True, score=0.9, action="", supports_action=False),
+            expected_action="submit",
+        )
+        self.assertEqual(result.outcome, captcha.OUTCOME_OK)
+
+    def test_a_provider_that_raises_becomes_unavailable_not_a_500(self):
+        """Found by review. A provider is *supposed* to turn its own transport
+        errors into `unavailable`, but if it does not — an unresolvable dotted
+        path, a signature change, a bug in a custom provider — the exception
+        used to propagate, and every submission on a CAPTCHA-enabled project
+        became a 500. That is the opposite of failing open, and it happened on
+        the signal-only paths too, where the CAPTCHA has no authority to break
+        anything at all."""
 
         def boom(token, *, remote_ip=""):
             raise RuntimeError("provider is broken")
 
         with mock.patch.object(captcha, "provider", return_value=boom):
-            with self.assertRaises(RuntimeError):
-                captcha.verify("token")
+            result = captcha.verify("token")
+        self.assertEqual(result.outcome, captcha.OUTCOME_UNAVAILABLE)
+        self.assertFalse(result.refuses)
+
+    def test_an_unresolvable_provider_path_also_fails_open(self):
+        with override_settings(CAPTCHA_PROVIDER="nope.nothing.here"):
+            self.assertEqual(
+                captcha.verify("token").outcome, captcha.OUTCOME_UNAVAILABLE
+            )
 
 
 @override_settings(**KEYS_ON)
@@ -201,6 +233,11 @@ class RecaptchaProviderTests(SimpleTestCase):
     def test_it_passes_the_secret_and_the_ip(self):
         _, m = self.submit(extra_data={"score": 0.9})
         m.assert_called_once_with("token", "secret", "1.2.3.4")
+
+    def test_it_declares_that_it_binds_actions(self):
+        """Without this the action check silently becomes a no-op for v3."""
+        result, _ = self.submit(extra_data={"score": 0.9}, action="submit")
+        self.assertTrue(result.supports_action)
 
     def test_a_valid_response_carries_the_score_and_hostname(self):
         result, _ = self.submit(
@@ -237,11 +274,21 @@ class RecaptchaProviderTests(SimpleTestCase):
         """The important one. A wrong secret rejects every visitor identically,
         so classifying it as a bad token would silently stop all collection —
         and the logs would read like a bot flood, not a misconfiguration."""
-        for code in ("invalid-input-secret", "missing-input-secret", "bad-request"):
+        for code in ("invalid-input-secret", "missing-input-secret", "invalid-keys"):
             with self.subTest(code=code):
                 result, _ = self.submit(is_valid=False, error_codes=[code])
                 self.assertTrue(result.unavailable)
                 self.assertFalse(result.ok)
+
+    def test_bad_request_is_the_VISITOR_s_problem_not_ours(self):
+        """Found by review. `bad-request` was on the site-error list, which made
+        it fail open — but Google documents it as "the request is invalid or
+        malformed", and a malformed TOKEN produces it. Treating it as our own
+        misconfiguration handed an attacker a way to open the gate by sending
+        rubbish. Only codes attacker input cannot cause belong on that list."""
+        result, _ = self.submit(is_valid=False, error_codes=["bad-request"])
+        self.assertFalse(result.unavailable)
+        self.assertFalse(result.ok)
 
     def test_a_site_error_reaching_verify_fails_open(self):
         with mock.patch(
@@ -336,3 +383,26 @@ STUB_VERDICT = captcha.ProviderVerdict(ok=True, score=0.9)
 
 def stub(token, *, remote_ip=""):
     return STUB_VERDICT
+
+
+class GateFloorTests(SimpleTestCase):
+    """The second, lower floor: "do not spend money on this".
+
+    Separate from CAPTCHA_MIN_SCORE because the two questions have opposite
+    error costs. Nothing in the module applies it — a caller guarding a cost has
+    to ask for it — so the test is about the number and the default, which is
+    what a deployment will actually tune.
+    """
+
+    def test_the_default_is_lower_than_the_flag_threshold(self):
+        with override_settings(CAPTCHA_MIN_SCORE=0.5, CAPTCHA_GATE_MIN_SCORE=0.3):
+            self.assertLess(captcha.gate_min_score(), captcha.min_score())
+
+    def test_it_is_configurable(self):
+        with override_settings(CAPTCHA_GATE_MIN_SCORE=0.1):
+            self.assertEqual(captcha.gate_min_score(), 0.1)
+
+    def test_it_has_a_default_when_the_setting_is_absent(self):
+        with override_settings():
+            del settings.CAPTCHA_GATE_MIN_SCORE
+            self.assertEqual(captcha.gate_min_score(), 0.3)

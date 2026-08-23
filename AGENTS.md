@@ -664,6 +664,12 @@ if result.suspicious:
   could not have produced. **`low_score` is deliberately not a refusal**:
   discarding a real submission because somebody browses with a strict privacy
   extension is worse than one more item in a queue a human already reviews.
+- A caller that guards **a cost** rather than a queue should also refuse a
+  clearly-bot score, using the second, lower floor:
+  `if result.score is not None and result.score < captcha.gate_min_score()`.
+  Two floors because the two questions have opposite error costs —
+  `CAPTCHA_MIN_SCORE` (0.5) is "should a human look?", `CAPTCHA_GATE_MIN_SCORE`
+  (0.3) is "should we spend money?".
 - `unavailable` fails **open**, logged loudly. That covers both a provider
   outage and, importantly, *our own* bad secret — a wrong secret refuses every
   visitor identically, so it must never be read as a bad token.
@@ -673,12 +679,17 @@ if result.suspicious:
   blocklist and the rate caps. It is a blocking HTTP call
   (`RECAPTCHA_VERIFY_REQUEST_TIMEOUT`, 5s) and a flood must not reach it.
 - Pass `expected_action` on any endpoint with a real cost, so a token minted
-  for a cheap action cannot be replayed against an expensive one.
+  for a cheap action cannot be replayed against an expensive one. A provider
+  declares `supports_action`; when it does, an EMPTY action fails closed — v3
+  always returns one, so a missing action is a token that was not minted the way
+  you think.
 
 Swapping provider is a setting: `CAPTCHA_PROVIDER` names a callable taking
 `(token, *, remote_ip)` and returning a `ProviderVerdict`. A provider with no
 score (reCAPTCHA v2, Turnstile) returns `score=None` and can never produce
-`low_score`.
+`low_score`; one with no action concept leaves `supports_action` False and is
+never asked for one. A provider that raises is caught and becomes `unavailable`,
+logged with its stack trace — a broken provider must not 500 every public form.
 
 **The trap worth knowing:** `RECAPTCHA_PUBLIC_KEY` + `RECAPTCHA_PRIVATE_KEY`
 are a pair whose mere presence switches reCAPTCHA on across the whole auth

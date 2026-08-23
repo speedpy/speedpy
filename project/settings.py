@@ -740,6 +740,9 @@ CAPTCHA_PROVIDER = env(
 # from RECAPTCHA_REQUIRED_SCORE on purpose: that one rejects a login, this one
 # only annotates a public submission for whoever reviews it.
 CAPTCHA_MIN_SCORE = env.float("CAPTCHA_MIN_SCORE", default=0.5)
+# The floor for a caller that guards a COST rather than a queue — lower on
+# purpose. See speedpycom/services/captcha.py::gate_min_score.
+CAPTCHA_GATE_MIN_SCORE = env.float("CAPTCHA_GATE_MIN_SCORE", default=0.3)
 SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
 
 LOGO_PATH = "static/mainapp/speedpy_logo.png"

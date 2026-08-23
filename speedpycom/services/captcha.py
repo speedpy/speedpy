@@ -68,11 +68,15 @@ OUTCOME_DISABLED = "disabled"
 #: Error codes that mean the SITE is misconfigured rather than the visitor being
 #: suspect. A wrong secret refuses every single visitor, so treating these as a
 #: failed token would take collection down site-wide and look like an attack.
+#:
+#: Only codes that CANNOT be caused by attacker input belong here. ``bad-request``
+#: was in this list and was removed after review: Google documents it as "the
+#: request is invalid or malformed", which a malformed *token* can produce — so
+#: treating it as our fault would hand an attacker a way to fail the check open.
 SITE_ERROR_CODES = frozenset(
     {
         "invalid-input-secret",
         "missing-input-secret",
-        "bad-request",
         "invalid-keys",
     }
 )
@@ -92,6 +96,16 @@ class ProviderVerdict:
     error_codes: tuple = ()
     #: True when we never got an answer, or the answer blames our own config.
     unavailable: bool = False
+    #: Does this provider bind an action name into its tokens at all?
+    #:
+    #: This has to be a provider CAPABILITY rather than "did an action come
+    #: back", because the two look identical and mean opposite things. reCAPTCHA
+    #: v3 always returns the action for a valid token, so an empty one is a
+    #: token that was not minted the way we think — which is exactly the replay
+    #: a caller passing ``expected_action`` is trying to stop. Turnstile has no
+    #: action concept at all, and demanding one there would refuse everybody.
+    #: So: capability True + empty action ⇒ refuse; capability False ⇒ skip.
+    supports_action: bool = False
 
 
 @dataclasses.dataclass(frozen=True)
@@ -157,6 +171,22 @@ def min_score():
     return float(getattr(settings, "CAPTCHA_MIN_SCORE", 0.5))
 
 
+def gate_min_score():
+    """The floor below which a caller GUARDING A COST should refuse.
+
+    Deliberately lower than :func:`min_score`, and the two answer different
+    questions. ``CAPTCHA_MIN_SCORE`` (0.5) is "should a human look at this?" —
+    generous, because the cost of being wrong is one extra queue item.
+    ``CAPTCHA_GATE_MIN_SCORE`` (0.3) is "should we spend money on this?" — the
+    cost of being wrong there is a real visitor told to type instead of record,
+    which is recoverable, while the cost of being too permissive is somebody
+    else's quota and CPU.
+
+    Nothing in this module applies it; a caller that guards a cost has to ask.
+    """
+    return float(getattr(settings, "CAPTCHA_GATE_MIN_SCORE", 0.3))
+
+
 _provider_cache = {}
 
 
@@ -220,11 +250,13 @@ def recaptcha_v3(token, *, remote_ip=""):
         hostname=str(extra.get("hostname", ""))[:255],
         action=str(response.action or "")[:64],
         error_codes=codes,
+        supports_action=True,
     )
 
 
 def verify(token, *, remote_ip="", expected_action="", floor=None):
-    """Check one token and classify the answer. Never raises.
+    """Check one token and classify the answer. Never raises — a provider that
+    blows up becomes ``unavailable``, logged with its stack trace.
 
     ``expected_action`` guards against a token minted for a cheap action being
     replayed against an expensive one: reCAPTCHA v3 signs the action name into
@@ -236,8 +268,23 @@ def verify(token, *, remote_ip="", expected_action="", floor=None):
     if not (token or "").strip():
         return CaptchaResult(outcome=OUTCOME_ABSENT, provider=_provider_name())
 
-    verdict = provider()(token, remote_ip=remote_ip)
     name = _provider_name()
+    try:
+        verdict = provider()(token, remote_ip=remote_ip)
+    except Exception:
+        # A provider is SUPPOSED to turn its own transport errors into
+        # `unavailable` (recaptcha_v3 does). This catch is for the case it does
+        # not: an unresolvable dotted path, a signature change, a bug in a
+        # custom provider. Letting that propagate would turn every submission
+        # on a CAPTCHA-enabled project into a 500 — the exact opposite of the
+        # fail-open posture — and would do it on the signal-only paths too,
+        # where the CAPTCHA has no authority to break anything.
+        #
+        # `exception` not `warning`: the stack trace is the whole point, so a
+        # broken provider is loud in the logs instead of quietly failing open
+        # forever.
+        logger.exception("captcha_provider_error", provider=name)
+        return CaptchaResult(outcome=OUTCOME_UNAVAILABLE, provider=name)
 
     if verdict.unavailable:
         return CaptchaResult(
@@ -252,12 +299,19 @@ def verify(token, *, remote_ip="", expected_action="", floor=None):
         return CaptchaResult(
             outcome=OUTCOME_FAILED, provider=name, error_codes=verdict.error_codes
         )
-    if expected_action and verdict.action and verdict.action != expected_action:
+    if (
+        expected_action
+        and verdict.supports_action
+        and verdict.action != expected_action
+    ):
+        # Includes the empty case: a v3 token with no action is not a token our
+        # page minted for this endpoint. Fail closed — the whole reason a caller
+        # passes expected_action is that this endpoint costs something.
         logger.warning(
             "captcha_action_mismatch",
             provider=name,
             expected=expected_action,
-            got=verdict.action,
+            got=verdict.action or "(none)",
         )
         return CaptchaResult(
             outcome=OUTCOME_FAILED,
