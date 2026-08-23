@@ -3,8 +3,8 @@ name = "speedupgrade"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
-    "Django==6.0.3",
-    "Pillow==12.1.1",
+    "Django==6.0.8",
+    "Pillow==12.3.0",
     "black==26.3.1",
     "celery-redbeat==2.3.3",
     "celery[redis]==5.6.2",
@@ -19,8 +19,8 @@ dependencies = [
     "djangoql==0.19.1",
     "gunicorn==25.1.0",
     "psycopg[binary]==3.3.3",
-    "pyjwt[crypto]==2.12.1",
-    "requests==2.32.5",
+    "pyjwt[crypto]==2.13.0",
+    "requests==2.33.0",
     "whitenoise==6.12.0",
     "django-structlog[commands,celery]==10.0.0",
     "django-recaptcha==4.1.0",
@@ -38,6 +38,12 @@ dependencies = [
     "django-oauth-toolkit>=3.3.0",
     "django-cors-headers>=4.7.0",
     "django-anymail[amazon-ses]==13.1",
+    # A TRANSITIVE dependency, pinned directly on purpose: it is where the
+    # security advisories land (a vulnerable OpenSSL shipped inside the wheels,
+    # a Bleichenbacher oracle in PKCS#7, exponential cert-path building), and
+    # nothing that depends on it asks for a new enough version. Pinned here so
+    # the floor is explicit rather than whatever the resolver happens to pick.
+    "cryptography==50.0.0",
 ]
 
 # Object storage is opt-in: boto3 and botocore are large, and most projects start
