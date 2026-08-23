@@ -2,6 +2,7 @@ from datetime import timedelta
 from pathlib import Path
 import environ
 import os
+import sys
 import structlog
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
@@ -494,6 +495,33 @@ TOS_LINK = env("TOS_LINK", default="/")
 DPA_LINK = env("DPA_LINK", default="/")
 
 SIGNUP_EMAIL_MX_CHECK = env.bool("SIGNUP_EMAIL_MX_CHECK", default=True)
+# Email deliverability (speedpycom/services/email_deliverability.py). One
+# validator for every door an address comes through: signup, invitations, public
+# forms, imports. A bounce costs SES reputation, and above ~5% SES suspends the
+# account, so refusing a typo while the person is still looking at the form is
+# the cheapest moment to catch it.
+# Off while the test suite runs, unless a test asks for it. This is a real DNS
+# call: leaving it on makes every test that touches an email address depend on
+# the network and on whatever example.com's zone happens to say today, which is
+# a flaky-test factory. Tests that want it use
+# @override_settings(EMAIL_DELIVERABILITY_CHECK=True) and mock the resolver.
+_RUNNING_TESTS = "test" in sys.argv or "PYTEST_CURRENT_TEST" in os.environ
+EMAIL_DELIVERABILITY_CHECK = env.bool(
+    "EMAIL_DELIVERABILITY_CHECK", default=not DEBUG and not _RUNNING_TESTS
+)
+# 2s, not the 5s the inline signup check used: this now runs on public forms, and
+# five seconds of a worker per submission is a denial-of-service assist.
+EMAIL_MX_TIMEOUT_SECONDS = env.float("EMAIL_MX_TIMEOUT_SECONDS", default=2.0)
+EMAIL_MX_CACHE_SECONDS = env.int("EMAIL_MX_CACHE_SECONDS", default=86400)
+# Shorter than the positive TTL on purpose, so a domain that has just fixed its
+# DNS is not refused for the rest of the day.
+EMAIL_MX_NEGATIVE_CACHE_SECONDS = env.int(
+    "EMAIL_MX_NEGATIVE_CACHE_SECONDS", default=3600
+)
+# RFC 5321 says a domain with only an A record is deliverable. Off by default,
+# deliberately: the strict default refuses a few technically-valid domains, and
+# that is the cheaper mistake than a bounce.
+EMAIL_MX_ALLOW_IMPLICIT_MX = env.bool("EMAIL_MX_ALLOW_IMPLICIT_MX", default=False)
 
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG,

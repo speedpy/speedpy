@@ -1,4 +1,6 @@
 from django import forms
+
+from speedpycom.services import email_deliverability
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Div
 from crispy_tailwind.layout import Submit
@@ -82,6 +84,13 @@ class InviteMemberForm(forms.Form):
         from django.utils import timezone
 
         email = self.cleaned_data['email'].strip().lower()
+
+        # Deliverability BEFORE the membership lookups: an invitation is a piece
+        # of mail, so an address we cannot deliver to is not an invitation, it is
+        # a bounce charged against the SES account. Same validator signup uses
+        # (speedpycom.services.email_deliverability), which is the whole point —
+        # the check used to exist on signup alone.
+        email_deliverability.validate(email)
 
         # Check if user already has membership
         User = get_user_model()

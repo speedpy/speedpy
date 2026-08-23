@@ -638,6 +638,57 @@ class HttpMonitorForm(forms.ModelForm):
 
 ```
 
+## Email addresses: blocklists and deliverability
+
+**Every door that takes an email address calls the same validator.** Signup,
+team invitations, public forms, CSV imports. It used to live inline in
+`usermodel/forms.py`, which meant it covered signup and nothing else — a strange
+place to draw the line, because signup was never the only door.
+
+```python
+from speedpycom.services import email_deliverability
+
+email_deliverability.validate(email)          # raises ValidationError
+verdict = email_deliverability.check(email)   # never raises, inspect .outcome
+```
+
+**Why it matters more than it looks.** SES tracks a bounce rate per account and
+suspends sending above roughly 5%. So a handful of undeliverable addresses
+collected through a public form can cost the ability to send *any* mail —
+including password resets to paying customers. Refusing a typo while the person
+is still looking at the form is the cheapest possible moment to catch it.
+
+Rules, each of which was a defect in the inline version:
+
+- **Cached per DOMAIN.** A lookup per submission is fine; a lookup per CSV row is
+  not. Five thousand gmail addresses cost one question. Positive answers cache
+  for a day, negative for an hour — a domain that just fixed its DNS should not
+  stay refused all day.
+- **Fails OPEN on a non-answer.** Timeout, SERVFAIL, no resolver: we learned
+  nothing, so we refuse nobody. `NXDOMAIN` and `NoAnswer` are different — those
+  *are* answers and they say no. Getting this backwards turns one broken
+  resolver into a signup outage.
+- **2s timeout**, not the inline version's 5s. This runs on public forms now.
+- **MX-only by default.** RFC 5321's implicit-MX rule means an A-record-only
+  domain is technically deliverable, so strict MX-only refuses a few valid ones.
+  Accepted on purpose: a bounce costs reputation, the strict default costs a
+  support message. `EMAIL_MX_ALLOW_IMPLICIT_MX` turns the fallback on.
+- **Blocklists first**, because they are set lookups against data already in
+  memory and there is no reason to pay for DNS to reject mailinator.com. They are
+  enforced even when the DNS half is switched off: a blocklist is a policy, not a
+  probe.
+- **Two messages, and do not merge them.** A blocklist refusal must not say
+  "check for typos" — that tells somebody probing the filter that their domain is
+  fine and the problem is elsewhere.
+
+**It does NOT catch a typo with a valid MX.** `gmail.co` resolves perfectly well.
+Suggesting a correction for near-misses is a separate idea.
+
+**Off during tests** (`_RUNNING_TESTS` in settings), because a real DNS call in a
+test suite is a flaky-test factory. A test that wants it uses
+`@override_settings(EMAIL_DELIVERABILITY_CHECK=True)` and mocks
+`dns.resolver.resolve`.
+
 ## CAPTCHA
 
 Two different jobs, two different tools. Do not use one for the other.

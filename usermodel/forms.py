@@ -1,5 +1,3 @@
-import dns.exception
-import dns.resolver
 from allauth.account.forms import (
     SignupForm,
     PasswordField,
@@ -21,10 +19,7 @@ from django.utils.translation import gettext_lazy as _
 
 from speedpycom.widgets import ImageUploadInput
 from usermodel.models import User
-from speedpycom.services.email_domains import (
-    BLOCKED_EMAIL_MESSAGE,
-    is_blocked,
-)
+from speedpycom.services import email_deliverability
 
 
 def recaptcha_enabled():
@@ -91,33 +86,19 @@ class UsermodelSignupForm(SignupForm):
         )
 
     def clean_email(self):
+        """Blocklists and deliverability, both from the shared validator.
+
+        This used to be an inline blocklist check plus an inline MX lookup, which
+        meant signup was the ONLY door either one covered — a strange place to
+        draw the line, since an address can also arrive through an invitation, a
+        public form or a CSV import. The logic now lives in
+        ``speedpycom.services.email_deliverability`` and every door calls the
+        same thing. See that module for why it fails open on a timeout, why it
+        caches per domain, and why MX-only is the default.
+        """
         email = super().clean_email()
-
-        # Domain blocklists run BEFORE the MX lookup: they are two set lookups
-        # against data already in memory, where the MX check is a network call
-        # with a 5-second budget. No reason to pay for DNS to reject
-        # mailinator.com.
-        #
-        # The message is deliberately the same whichever list matched, and says
-        # nothing about which. A wording per reason would tell somebody probing
-        # the filter what to try next.
-        if email and is_blocked(email):
-            raise forms.ValidationError(BLOCKED_EMAIL_MESSAGE)
-
-        if email and not settings.DEBUG and getattr(settings, "SIGNUP_EMAIL_MX_CHECK", True):
-            domain = email.rsplit("@", 1)[-1]
-            try:
-                answers = dns.resolver.resolve(domain, "MX", lifetime=5)
-            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers):
-                raise forms.ValidationError(
-                    _("The email domain does not appear to accept mail. Please check for typos.")
-                )
-            except dns.exception.DNSException:
-                return email
-            if not list(answers):
-                raise forms.ValidationError(
-                    _("The email domain does not appear to accept mail. Please check for typos.")
-                )
+        if email:
+            email_deliverability.validate(email)
         return email
 
     def clean(self):

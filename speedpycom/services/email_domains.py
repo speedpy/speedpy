@@ -181,6 +181,16 @@ def _domain_of(email_or_domain):
     return _canonical(candidate)
 
 
+def domain_of(email_or_domain):
+    """Public alias for :func:`_domain_of`.
+
+    Exposed because ``email_deliverability`` needs exactly this parsing and must
+    not reimplement it — the display-name and punycode handling below were both
+    live bypasses once, and a second copy is a second chance to get them wrong.
+    """
+    return _domain_of(email_or_domain)
+
+
 def _matches(domain, lists):
     """Whether a canonical domain is covered by ``(exact, subtree)``.
 
