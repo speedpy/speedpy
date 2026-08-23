@@ -726,6 +726,20 @@ if SPEEDPY_MFA_BACKEND == "django_otp":
 RECAPTCHA_PUBLIC_KEY = env("RECAPTCHA_PUBLIC_KEY", default="")
 RECAPTCHA_PRIVATE_KEY = env("RECAPTCHA_PRIVATE_KEY", default="")
 RECAPTCHA_REQUIRED_SCORE = env.float("RECAPTCHA_REQUIRED_SCORE", default=0.5)
+# Applies to BOTH the auth forms and speedpycom.services.captcha, so the two
+# cannot drift onto different timeouts. 10s (django-recaptcha's default) is a
+# long time to hold a worker on a public POST path.
+RECAPTCHA_VERIFY_REQUEST_TIMEOUT = env.int("RECAPTCHA_VERIFY_REQUEST_TIMEOUT", default=5)
+# CAPTCHA on PUBLIC (unauthenticated) forms — see speedpycom/services/captcha.py.
+# Swapping provider is a setting, not a rewrite. Both these are inert until
+# RECAPTCHA_PUBLIC_KEY and RECAPTCHA_PRIVATE_KEY are set.
+CAPTCHA_PROVIDER = env(
+    "CAPTCHA_PROVIDER", default="speedpycom.services.captcha.recaptcha_v3"
+)
+# The score below which a verified visitor is FLAGGED (never refused). Separate
+# from RECAPTCHA_REQUIRED_SCORE on purpose: that one rejects a login, this one
+# only annotates a public submission for whoever reviews it.
+CAPTCHA_MIN_SCORE = env.float("CAPTCHA_MIN_SCORE", default=0.5)
 SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
 
 LOGO_PATH = "static/mainapp/speedpy_logo.png"

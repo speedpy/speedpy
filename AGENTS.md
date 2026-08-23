@@ -638,6 +638,53 @@ class HttpMonitorForm(forms.ModelForm):
 
 ```
 
+## CAPTCHA
+
+Two different jobs, two different tools. Do not use one for the other.
+
+**Auth forms** (signup, login, password reset) use `django-recaptcha`'s form
+field via `usermodel/forms.py::attach_recaptcha`. A login either passes or it
+does not, so a field that raises a validation error is exactly right.
+
+**Public, unauthenticated forms** use `speedpycom/services/captcha.py`, because
+a public form needs a distinction the form field cannot make: reCAPTCHA v3
+returns a *probability*, not a verdict.
+
+```python
+from speedpycom.services import captcha
+
+result = captcha.verify(token, remote_ip=ip, expected_action="submit")
+if result.refuses:
+    ...  # no token, or the provider rejected it — this request is malformed
+if result.suspicious:
+    ...  # verified, low score. ACCEPT and record result.as_metadata()
+```
+
+- `refuses` is true only for `absent` and `failed` — a request our own page
+  could not have produced. **`low_score` is deliberately not a refusal**:
+  discarding a real submission because somebody browses with a strict privacy
+  extension is worse than one more item in a queue a human already reviews.
+- `unavailable` fails **open**, logged loudly. That covers both a provider
+  outage and, importantly, *our own* bad secret — a wrong secret refuses every
+  visitor identically, so it must never be read as a bad token.
+- Both keys empty ⇒ `disabled`, which never refuses. A fresh checkout runs with
+  no CAPTCHA and nothing to remember.
+- Run it **last**, after the honeypot, the minimum-fill-time check, the IP
+  blocklist and the rate caps. It is a blocking HTTP call
+  (`RECAPTCHA_VERIFY_REQUEST_TIMEOUT`, 5s) and a flood must not reach it.
+- Pass `expected_action` on any endpoint with a real cost, so a token minted
+  for a cheap action cannot be replayed against an expensive one.
+
+Swapping provider is a setting: `CAPTCHA_PROVIDER` names a callable taking
+`(token, *, remote_ip)` and returning a `ProviderVerdict`. A provider with no
+score (reCAPTCHA v2, Turnstile) returns `score=None` and can never produce
+`low_score`.
+
+**The trap worth knowing:** `RECAPTCHA_PUBLIC_KEY` + `RECAPTCHA_PRIVATE_KEY`
+are a pair whose mere presence switches reCAPTCHA on across the whole auth
+path. If the site key does not have the currently serving host registered,
+**nobody can sign in.** Register every host you serve before setting them.
+
 ## Environment Setup
 
 The project uses environment variables for configuration. Key variables:
