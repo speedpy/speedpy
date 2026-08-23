@@ -638,6 +638,39 @@ class HttpMonitorForm(forms.ModelForm):
 
 ```
 
+## Dependency vulnerabilities
+
+```bash
+manage.py audit_dependencies                  # what is in the lockfile
+manage.py audit_dependencies --fail-on high   # for CI
+```
+
+Checks `uv.lock` against **OSV.dev**, whose query API is public. Three reasons it
+exists rather than "read the Dependabot tab":
+
+- **No credentials**, so it runs in CI, on a laptop, or from an agent with no
+  GitHub token.
+- It prints the **fixed-in version** per advisory, which is the part you need in
+  order to act, and which the alert list does not give you.
+- It reads the **lockfile**, so it audits what will be installed rather than what
+  the version range permits.
+
+**It refuses to report a clean bill when it cannot reach the database.** A command
+that printed "no known vulnerabilities" during a network outage would launder the
+outage into reassurance, so that path is a `CommandError`.
+
+**Read the package names, not just the severity labels.** OSV reports what the
+upstream database says, and the ranking that matters is exposure: HIGH in a
+library that only ever sees your own input matters less than MODERATE in the one
+that decodes images an anonymous visitor uploaded. When this was first run against
+this repo it found nine vulnerable packages, and the most urgent was **Pillow** —
+four HIGH advisories in the one library fed directly by public uploads — not the
+package with the longest advisory list.
+
+This is a **public template**. Anybody who starts a project from it inherits the
+lockfile, so an untriaged advisory here is not the same kind of debt it would be
+in a private app.
+
 ## Email addresses: blocklists and deliverability
 
 **Every door that takes an email address calls the same validator.** Signup,
