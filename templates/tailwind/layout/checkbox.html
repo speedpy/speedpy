@@ -1,8 +1,26 @@
 {% load crispy_forms_field %}
 
-<div class="form-field flex-row items-center gap-2" id="div_{{ field.auto_id }}">
-    {% crispy_field field 'class' 'checkbox' %}
-    <label for="{{ field.id_for_label }}" class="input-label !mb-0 {% if field.field.required %} requiredField{% endif %}">
-        {{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
-    </label>
+{% comment %}
+A checkbox is the one field whose label sits to the RIGHT of the input, so it
+gets its own row and cannot reuse field.html's label-above layout.
+
+That is also how it lost its help text and its errors for a long time: this
+template rendered the input and the label and stopped. The input still carried
+`aria-describedby="<id>_helptext"` pointing at an element that was never
+emitted, so a screen reader announced a description that did not exist, and —
+worse — a checkbox whose help text is a privacy disclosure showed the visitor
+nothing at all. Errors vanished the same way, which makes a failed required
+checkbox look like a form that simply refuses to submit.
+
+The help text and errors go BELOW the row, not beside the label: beside it they
+push the label away from its own checkbox and the pairing stops being readable.
+{% endcomment %}
+<div class="form-field" id="div_{{ field.auto_id }}">
+    <div class="flex flex-row items-center gap-2">
+        {% crispy_field field 'class' 'checkbox' %}
+        <label for="{{ field.id_for_label }}" class="input-label !mb-0 {% if field.field.required %} requiredField{% endif %}">
+            {{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
+        </label>
+    </div>
+    {% include 'tailwind/layout/help_text_and_errors.html' %}
 </div>
