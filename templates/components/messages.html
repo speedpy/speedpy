@@ -14,13 +14,25 @@ extra_tags="toast")` yields `"toast success"` — and an equality test against
 icon. `level_tag` is the level on its own, so it matches exactly rather than by
 substring.
 
-The `.alert` class is kept deliberately: the timer at the bottom of this file
-selects `.alert` to dismiss these after ten seconds, and these ARE flash
-messages, so that is correct here. Anything that is a standing condition rather
-than a flash must NOT carry the class, or it disappears mid-sentence.
+The `.alert` class is kept deliberately — these ARE flash messages and they get
+the flash styling.
+
+**The dismissal timer used to be a global.** It ran
+`document.querySelectorAll('.alert')` from OUTSIDE the `{% if messages %}`
+block, so it fired on every page that extends `base.html` and removed every
+`.alert` on it after ten seconds — whether or not any flash message existed.
+`.alert` is the design system's standing-notice class too, so what actually
+disappeared mid-sentence was things like the suppressed-email warning that
+explains why somebody's mail is not arriving, a webhook's failure banner, and a
+billing notice. The advice "anything that is a standing condition must not carry
+the class" was the wrong way round: a component must not reach outside itself.
+
+The timer is now inside the block and scoped to this container, so a page with no
+flash messages ships no timer at all and a standing `.alert` elsewhere is never
+touched.
 {% endcomment %}
 {% if messages %}
-    <div class="fixed top-20 right-5 z-50 space-y-3">
+    <div class="fixed top-20 right-5 z-50 space-y-3" data-flash-messages>
         {% for message in messages %}
             {% if message.level_tag == "success" %}
                 {% firstof "alert-success" as alert_class %}
@@ -58,7 +70,6 @@ than a flash must NOT carry the class, or it disappears mid-sentence.
             </div>
         {% endfor %}
     </div>
-{% endif %}
 
 <style>
     @keyframes slide-in {
@@ -78,8 +89,12 @@ than a flash must NOT carry the class, or it disappears mid-sentence.
 </style>
 
 <script>
+    /* Scoped to THIS container. A bare '.alert' selector here removed standing
+       notices all over the product — see the comment at the top of this file. */
     setTimeout(function () {
-        document.querySelectorAll('.alert').forEach(function (alert) {
+        var flash = document.querySelector('[data-flash-messages]');
+        if (!flash) return;
+        flash.querySelectorAll('.alert').forEach(function (alert) {
             alert.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
             alert.style.opacity = '0';
             alert.style.transform = 'translateX(100%)';
@@ -89,3 +104,4 @@ than a flash must NOT carry the class, or it disappears mid-sentence.
         });
     }, 10000);
 </script>
+{% endif %}
