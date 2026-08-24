@@ -36,11 +36,21 @@ if command -v docker &> /dev/null; then
     echo "✓ Docker is installed"
     if ! docker info &> /dev/null; then
       echo "Error: Docker daemon is not running"
-      if grep -qi microsoft /proc/version; then
-        echo "Start Docker Desktop and ensure integration with WSL 2 is enabled"
-      else
-        echo "Start with: sudo service docker start"
-      fi
+      case "$(uname -s)" in
+        Darwin*)
+          echo "Open Docker Desktop and wait until it finishes starting"
+          ;;
+        Linux*)
+          if grep -qi microsoft /proc/version 2>/dev/null; then
+            echo "Start Docker Desktop and ensure integration with WSL 2 is enabled"
+          else
+            echo "Start the Docker service for your Linux distribution (usually: sudo systemctl start docker)"
+          fi
+          ;;
+        *)
+          echo "Start Docker and try again"
+          ;;
+      esac
       exit 1
     fi
 else
@@ -58,5 +68,4 @@ else
 fi
 
 echo "✓ All required tools are installed"
-
 
