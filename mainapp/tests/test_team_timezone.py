@@ -19,8 +19,16 @@ from mainapp.timezones import (
 
 
 class TeamTimezoneModelTests(TestCase):
-    def test_defaults_to_utc_fallback(self):
+    def test_defaults_to_configured_default(self):
+        # Whatever the project configures (or the built-in fallback), a new team
+        # gets it via the callable default. Setting-independent so it holds in
+        # both the boilerplate and any project that overrides the default.
         team = Team.objects.create(name="Acme", slug="acme")
+        self.assertEqual(team.timezone, get_default_team_timezone())
+
+    @override_settings(DEFAULT_TEAM_TIMEZONE=None)
+    def test_falls_back_to_utc_when_unset(self):
+        team = Team.objects.create(name="Acme2", slug="acme2")
         self.assertEqual(team.timezone, FALLBACK_TEAM_TIMEZONE)
 
     @override_settings(DEFAULT_TEAM_TIMEZONE="Europe/Berlin")
