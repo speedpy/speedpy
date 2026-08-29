@@ -218,3 +218,15 @@ class TeamSettingsForm(forms.ModelForm):
         value = self.cleaned_data['timezone']
         validate_timezone(value)
         return value
+
+    def clean_logo(self):
+        """Downscale the logo to 256px and convert it to a web-native format:
+        HEIC/HEIF photos otherwise do not render in Firefox/Chrome, and a
+        full-resolution upload is wasteful for something shown at a few dozen
+        pixels. See speedpycom.images."""
+        logo = self.cleaned_data.get('logo')
+        if not logo or not hasattr(logo, 'read'):
+            return logo  # unchanged / cleared / existing stored file
+        from speedpycom.images import prepare_image
+
+        return prepare_image(logo, 256)

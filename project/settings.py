@@ -329,6 +329,18 @@ STORAGES = {
 }
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_AUTOREFRESH = DEBUG
+
+# Accept HEIC/HEIF image uploads (the default format of iPhone/Mac photos).
+# Pillow has no native HEIF support, so a .heic upload is otherwise rejected by
+# ImageField as "not a valid image". Register pillow-heif's opener once at
+# startup. Guarded so a missing/broken wheel degrades to "no HEIC" rather than
+# breaking boot. See speedpycom/images.py, which converts non-web-native uploads.
+try:
+    import pillow_heif
+
+    pillow_heif.register_heif_opener()
+except Exception:  # pragma: no cover - HEIC support is best-effort
+    pass
 STATICFILES_DIRS = [
     BASE_DIR / "static",
     ("floating-core", BASE_DIR / "node_modules" / "@floating-ui" / "core" / "dist"),

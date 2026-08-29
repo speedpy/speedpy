@@ -2,9 +2,7 @@ import hashlib
 import os
 import secrets
 import uuid
-from io import BytesIO
 
-from django.core.files.base import ContentFile
 from django.db import models
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
@@ -12,11 +10,13 @@ from django.core.mail import send_mail
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.conf import settings
-from PIL import Image
 
 from usermodel.managers import UserManager
 from usermodel.validators import validate_no_url
 
+# The stored profile picture is downscaled to this box (the original is never
+# kept); the thumbnail is derived from it. Both are re-encoded web-native.
+PROFILE_PICTURE_SIZE = (512, 512)
 PROFILE_THUMBNAIL_SIZE = (96, 96)
 
 
@@ -93,46 +93,51 @@ class User(AbstractBaseUser, PermissionsMixin):
         send_mail(subject, message, from_email, recipient_list=[self.email], **kwargs)
 
     def save(self, *args, **kwargs):
-        regenerate_thumbnail = False
+        process_picture = False
         if self.profile_picture:
             if self.pk:
                 previous = type(self).objects.filter(pk=self.pk).first()
                 previous_name = previous.profile_picture.name if previous and previous.profile_picture else ''
                 if previous_name != self.profile_picture.name:
-                    regenerate_thumbnail = True
+                    process_picture = True
             else:
-                regenerate_thumbnail = True
+                process_picture = True
         elif self.profile_picture_thumbnail:
             self.profile_picture_thumbnail.delete(save=False)
 
-        if regenerate_thumbnail:
-            self._generate_profile_picture_thumbnail()
+        if process_picture:
+            self._process_profile_picture()
+            # Both derived fields must persist even when the caller restricts
+            # update_fields — the profile API saves update_fields=['profile_picture'].
+            update_fields = kwargs.get('update_fields')
+            if update_fields is not None:
+                kwargs['update_fields'] = set(update_fields) | {
+                    'profile_picture', 'profile_picture_thumbnail'
+                }
 
         super().save(*args, **kwargs)
 
-    def _generate_profile_picture_thumbnail(self):
-        self.profile_picture.seek(0)
-        image = Image.open(self.profile_picture)
-        has_alpha = image.mode in ('RGBA', 'LA') or (
-            image.mode == 'P' and 'transparency' in image.info
-        )
-        image = image.convert('RGBA' if has_alpha else 'RGB')
-        image.thumbnail(PROFILE_THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
+    def _process_profile_picture(self):
+        """Downscale + convert the uploaded picture to a web-native format and
+        derive the thumbnail from it. The full-resolution original is never
+        stored (avatars display small — no need to waste space), and HEIC is
+        converted so it renders in every browser. See speedpycom.images."""
+        from speedpycom.images import prepare_image
 
-        buffer = BytesIO()
-        if has_alpha:
-            image.save(buffer, format='PNG', optimize=True)
-            extension = 'png'
-        else:
-            image.save(buffer, format='JPEG', quality=85, optimize=True)
-            extension = 'jpg'
+        source = self.profile_picture
+        main = prepare_image(source, max(PROFILE_PICTURE_SIZE))
+        source.seek(0)
+        thumbnail = prepare_image(source, max(PROFILE_THUMBNAIL_SIZE))
 
-        self.profile_picture.seek(0)
+        # Replace the upload with the processed image before the row is written,
+        # so the original bytes are never committed to storage.
+        self.profile_picture.save(main.name, main, save=False)
 
         base_name, _ext = os.path.splitext(os.path.basename(self.profile_picture.name))
+        thumb_ext = os.path.splitext(thumbnail.name)[1] or '.jpg'
         self.profile_picture_thumbnail.save(
-            f"{base_name}_thumb.{extension}",
-            ContentFile(buffer.getvalue()),
+            f"{base_name}_thumb{thumb_ext}",
+            thumbnail,
             save=False,
         )
 

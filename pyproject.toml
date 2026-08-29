@@ -44,6 +44,7 @@ dependencies = [
     # nothing that depends on it asks for a new enough version. Pinned here so
     # the floor is explicit rather than whatever the resolver happens to pick.
     "cryptography==50.0.0",
+    "pillow-heif>=1.5.0",
 ]
 
 # Object storage is opt-in: boto3 and botocore are large, and most projects start
