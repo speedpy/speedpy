@@ -1,6 +1,7 @@
 import uuid
 import secrets
 import structlog
+from zoneinfo import ZoneInfo
 from django.db import models
 from django.conf import settings
 from django.db.models import Q
@@ -11,6 +12,11 @@ from speedpycom.models import BaseModel
 from mainapp.subscription_plans import (
     SUBSCRIPTION_PLANS_CHOICES,
     get_plan_config as get_plan_config_for_key,
+)
+from mainapp.timezones import (
+    FALLBACK_TEAM_TIMEZONE,
+    get_default_team_timezone,
+    validate_timezone,
 )
 
 logger = structlog.get_logger(__name__)
@@ -38,6 +44,18 @@ class Team(BaseModel):
     )
 
     is_active = models.BooleanField(default=True)
+
+    # Team-local time zone (IANA name). TIME_ZONE is UTC, so "send Tuesday at
+    # 9am" and "today's cap" are undefined without a per-team zone. The default
+    # is a CALLABLE (reads settings.DEFAULT_TEAM_TIMEZONE, else UTC) so the
+    # migration freezes the callable, not the value — a project changes its
+    # default with a setting, no migration. See mainapp/timezones.py.
+    timezone = models.CharField(
+        max_length=64,
+        default=get_default_team_timezone,
+        validators=[validate_timezone],
+        help_text="IANA time zone used for scheduling and daily caps.",
+    )
 
     # team limits
     # extend this to match your application needs
@@ -69,6 +87,20 @@ class Team(BaseModel):
 
     def __str__(self):
         return self.name
+
+    def tzinfo(self):
+        """The team's ``ZoneInfo``, falling back to the default/UTC if a stored
+        value is empty or invalid (a row can slip past validation — this must
+        never crash the send path)."""
+        try:
+            return ZoneInfo(self.timezone or get_default_team_timezone())
+        except Exception:
+            return ZoneInfo(FALLBACK_TEAM_TIMEZONE)
+
+    def local_today(self, now=None):
+        """Today's date in the team's time zone — the window for a daily cap."""
+        now = now or timezone.now()
+        return now.astimezone(self.tzinfo()).date()
 
     def get_members(self):
         return (

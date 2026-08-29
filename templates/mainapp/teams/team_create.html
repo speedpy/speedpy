@@ -49,6 +49,16 @@
                       if (slugField) {
                           slugField.addEventListener('input', () => { this.slugTouched = true; });
                       }
+
+                      // Auto-detect the browser time zone into the hidden field.
+                      // Exception-safe: a detection failure must not disrupt the
+                      // slug wiring above. Server falls back to the default if
+                      // this stays blank (JS off / unknown zone).
+                      try {
+                          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                          const tzField = document.getElementById('id_timezone');
+                          if (tz && tzField) { tzField.value = tz; }
+                      } catch (e) { /* leave blank; server uses the default */ }
                   }
               }">
             {% csrf_token %}

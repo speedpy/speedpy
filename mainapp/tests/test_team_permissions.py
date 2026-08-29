@@ -59,7 +59,7 @@ class TeamSettingsPermissionTests(TeamPermissionTestBase):
         self.client.force_login(user)
         return self.client.post(
             reverse("team_settings", kwargs={"team_id": self.team.pk}),
-            {"name": "Hacked Name", "slug": "hacked-slug"},
+            {"name": "Hacked Name", "slug": "hacked-slug", "timezone": "UTC"},
         )
 
     def test_member_post_returns_403_and_saves_nothing(self):

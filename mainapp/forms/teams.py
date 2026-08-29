@@ -6,13 +6,26 @@ from crispy_forms.layout import Layout, Field, Div
 from crispy_tailwind.layout import Submit
 
 from mainapp.models import Team
+from mainapp.timezones import (
+    get_default_team_timezone,
+    is_valid_timezone,
+    tz_choices,
+    validate_timezone,
+)
 from speedpycom.widgets import ImageUploadInput
 
 
 class TeamCreateForm(forms.ModelForm):
+    # Auto-detected from the browser (Intl API) into a hidden field; the server
+    # is the authority. LENIENT: blank or invalid falls back to the default,
+    # because detection is fallible and must never block team creation.
+    timezone = forms.CharField(
+        required=False, max_length=64, widget=forms.HiddenInput
+    )
+
     class Meta:
         model = Team
-        fields = ('name', 'slug',)
+        fields = ('name', 'slug', 'timezone')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -21,7 +34,12 @@ class TeamCreateForm(forms.ModelForm):
         self.helper.layout = Layout(
             Field('name', placeholder='My Team'),
             Field('slug', placeholder='my-team'),
+            Field('timezone'),  # hidden; filled by the create page's Intl script
         )
+
+    def clean_timezone(self):
+        value = (self.cleaned_data.get('timezone') or '').strip()
+        return value if is_valid_timezone(value) else get_default_team_timezone()
 
 
 class InviteMemberForm(forms.Form):
@@ -150,17 +168,28 @@ class UpdateMemberRoleForm(forms.Form):
 
 
 class TeamSettingsForm(forms.ModelForm):
-    """Form for updating team settings (name, slug, logo)."""
+    """Form for updating team settings (name, slug, logo, timezone)."""
 
     class Meta:
         model = Team
-        fields = ('name', 'slug', 'logo')
+        fields = ('name', 'slug', 'logo', 'timezone')
         widgets = {
             'logo': ImageUploadInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # An explicit dropdown from the shortlist. STRICT: the value comes from
+        # our own menu, so ChoiceField already rejects anything not offered; an
+        # invalid value is a tampered POST. `include` keeps the team's current
+        # value selectable even if it is off the shortlist.
+        current = getattr(self.instance, 'timezone', '') or ''
+        self.fields['timezone'] = forms.ChoiceField(
+            choices=tz_choices(include=current),
+            required=True,
+            initial=current or None,
+            help_text='Used for send scheduling and daily send caps.',
+        )
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -170,6 +199,7 @@ class TeamSettingsForm(forms.ModelForm):
                       css_class='font-mono',
                       help_text='URL-friendly identifier for your team'),
                 Field('logo'),
+                Field('timezone'),
                 css_class='space-y-4'
             )
         )
@@ -181,3 +211,10 @@ class TeamSettingsForm(forms.ModelForm):
         if existing.exists():
             raise forms.ValidationError("This slug is already taken. Please choose another.")
         return slug
+
+    def clean_timezone(self):
+        """Strict: reject a value that is not a resolvable IANA zone (a tampered
+        POST, or a bad value the team had stored)."""
+        value = self.cleaned_data['timezone']
+        validate_timezone(value)
+        return value
