@@ -11,10 +11,7 @@ from mainapp.models import ContactSubmission
 
 VALID = {
     "name": "Jane Doe",
-    "company": "Acme Inc.",
     "email": "jane@acme.com",
-    "phone": "+1 555 0100",
-    "project_budget": "20000",
     "message": "Please get in touch about a refund.",
 }
 

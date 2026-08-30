@@ -13,27 +13,25 @@ HONEYPOT_FIELD = "website"
 
 
 class ContactForm(forms.ModelForm):
+    """A general "get in touch" form: name, email, and a message.
+
+    The ``ContactSubmission`` model still carries optional sales fields (company,
+    budget, ...) for forks that want a lead-capture form; they are simply left off
+    this form and saved empty.
+    """
+
     class Meta:
         model = ContactSubmission
-        fields = (
-            "name",
-            "company",
-            "email",
-            "phone",
-            "company_size",
-            "team",
-            "project_budget",
-            "message",
-        )
+        fields = ("name", "email", "message")
         widgets = {
             "message": forms.Textarea(attrs={"rows": 6}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["project_budget"].required = True
-        self.fields["company_size"].required = False
-        self.fields["team"].required = False
+        self.fields["name"].label = _("Name")
+        self.fields["email"].label = _("Email")
+        self.fields["message"].label = _("Message")
 
         # Honeypot: a plausible-looking field real users never see or fill.
         self.fields[HONEYPOT_FIELD] = forms.CharField(
@@ -50,22 +48,14 @@ class ContactForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Div(
-                Div(Field("name", placeholder="Jane Doe"), css_class="sm:col-span-1"),
-                Div(Field("company", placeholder="Acme Inc."), css_class="sm:col-span-1"),
-                Div(Field("email", placeholder="jane@acme.com"), css_class="sm:col-span-1"),
-                Div(Field("phone", placeholder="+1 555 0100"), css_class="sm:col-span-1"),
-                Div(Field("company_size"), css_class="sm:col-span-1"),
-                Div(Field("team"), css_class="sm:col-span-1"),
-                Div(Field("project_budget"), css_class="sm:col-span-2"),
-                Div(Field("message", placeholder="Tell us about your project…"), css_class="sm:col-span-2"),
-                css_class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2",
-            ),
+            Field("name", placeholder="Jane Doe"),
+            Field("email", placeholder="jane@example.com"),
+            Field("message", placeholder="How can we help?"),
             Div(Field(HONEYPOT_FIELD), css_class="hidden"),
             *captcha,
             Submit(
                 "submit",
-                _("Let's Talk"),
+                _("Send message"),
                 css_class="mt-6 w-full btn btn-contained btn-primary btn-lg",
             ),
         )
