@@ -53,8 +53,10 @@ class ContactForm(forms.ModelForm):
             Field("message", placeholder="How can we help?"),
             Div(Field(HONEYPOT_FIELD), css_class="hidden"),
             *captcha,
+            # Name must NOT be "submit": a field named "submit" shadows the form's
+            # native form.submit(), which reCAPTCHA v3 calls after validating.
             Submit(
-                "submit",
+                "action",
                 _("Send message"),
                 css_class="mt-6 w-full btn btn-contained btn-primary btn-lg",
             ),
