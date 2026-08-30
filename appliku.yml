@@ -22,6 +22,10 @@ build_settings:
       source: manual
     - name: DEFAULT_FROM_EMAIL
       value: manual
+    - name: TELEGRAM_OPS_BOT_TOKEN
+      source: manual
+    - name: TELEGRAM_OPS_CHAT_ID
+      source: manual
   expose_web_port: false
   is_static_site: false
   output_directory: ''

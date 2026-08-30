@@ -5,6 +5,11 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from mainapp.models import ContactSubmission
+from usermodel.forms import attach_recaptcha
+
+#: Name of the honeypot field. Must stay empty; a bot that fills it is dropped by
+#: the view. Kept out of the visible layout via a display:none wrapper.
+HONEYPOT_FIELD = "website"
 
 
 class ContactForm(forms.ModelForm):
@@ -30,6 +35,18 @@ class ContactForm(forms.ModelForm):
         self.fields["company_size"].required = False
         self.fields["team"].required = False
 
+        # Honeypot: a plausible-looking field real users never see or fill.
+        self.fields[HONEYPOT_FIELD] = forms.CharField(
+            required=False,
+            label="",
+            widget=forms.TextInput(
+                attrs={"autocomplete": "off", "tabindex": "-1", "aria-hidden": "true"}
+            ),
+        )
+
+        # reCAPTCHA v3, only when keys are configured (returns [] otherwise).
+        captcha = attach_recaptcha(self)
+
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -44,6 +61,8 @@ class ContactForm(forms.ModelForm):
                 Div(Field("message", placeholder="Tell us about your project…"), css_class="sm:col-span-2"),
                 css_class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2",
             ),
+            Div(Field(HONEYPOT_FIELD), css_class="hidden"),
+            *captcha,
             Submit(
                 "submit",
                 _("Let's Talk"),

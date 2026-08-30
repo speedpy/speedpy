@@ -2,6 +2,8 @@ from .jobs import *
 from .teams import *
 from .webhooks import *
 from .billing import *
+from .contact import *
+from .ops import *
 
 __all__ = [
     "run_demo_job",  # SPEEDPY_DEMO: remove before production
@@ -13,4 +15,6 @@ __all__ = [
     "process_billing_subscriptions",
     "send_billing_grace_started_email",
     "send_billing_disabled_email",
+    "send_contact_notification_email",
+    "send_ops_telegram_notification",
 ]

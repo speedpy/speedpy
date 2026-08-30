@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New contact submission</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #f4f4f4; border-radius: 10px; padding: 30px; margin: 20px 0;">
+        <h1 style="color: #4F46E5; margin-top: 0;">New contact submission</h1>
+
+        <div style="background-color: white; border-radius: 5px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>Name:</strong> {{ submission.name }}</p>
+            <p style="margin: 0 0 10px 0;"><strong>Email:</strong>
+                <a href="mailto:{{ submission.email }}" style="color: #4F46E5;">{{ submission.email }}</a>
+            </p>
+            {% if submission.company %}<p style="margin: 0 0 10px 0;"><strong>Company:</strong> {{ submission.company }}</p>{% endif %}
+            {% if submission.phone %}<p style="margin: 0 0 10px 0;"><strong>Phone:</strong> {{ submission.phone }}</p>{% endif %}
+            {% if submission.company_size %}<p style="margin: 0 0 10px 0;"><strong>Company size:</strong> {{ submission.get_company_size_display }}</p>{% endif %}
+            {% if submission.team %}<p style="margin: 0 0 10px 0;"><strong>Team:</strong> {{ submission.get_team_display }}</p>{% endif %}
+            {% if submission.project_budget %}<p style="margin: 0;"><strong>Budget:</strong> {{ submission.get_project_budget_display }}</p>{% endif %}
+        </div>
+
+        <div style="background-color: #EEF2FF; border-left: 4px solid #4F46E5; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; white-space: pre-line;">{{ submission.message }}</p>
+        </div>
+
+        <p style="color: #666; font-size: 14px; margin-bottom: 0;">
+            Reply directly to this email to respond to {{ submission.name }}.
+        </p>
+    </div>
+
+    <p style="text-align: center; color: #999; font-size: 12px;">
+        Received {{ submission.created_at|date:"F j, Y, g:i a" }}.
+    </p>
+</body>
+</html>

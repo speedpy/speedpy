@@ -636,6 +636,19 @@ SPEEDPY_BLOCKED_EMAIL_DOMAINS = env.list(
 #: Shown to people whose address we stopped emailing, on the account email page.
 SUPPORT_EMAIL = env.str("SUPPORT_EMAIL", default="")
 
+#: Where contact-form submissions are emailed. Defaults to SUPPORT_EMAIL; set a
+#: dedicated inbox here to route them elsewhere. When empty, the notification
+#: email is skipped (the submission is still saved to the database).
+CONTACT_NOTIFICATION_EMAIL = env.str("CONTACT_NOTIFICATION_EMAIL", default=SUPPORT_EMAIL)
+
+# Telegram ops notifications
+# ---------------------------------------------------------------------------
+# Bot token (from @BotFather) and the chat id of the admin/user to notify about
+# ops events (new sign-ups, contact submissions, ...). When either is empty,
+# ops notifications are silently disabled — safe to leave unset everywhere.
+TELEGRAM_OPS_BOT_TOKEN = env.str("TELEGRAM_OPS_BOT_TOKEN", default="")
+TELEGRAM_OPS_CHAT_ID = env.str("TELEGRAM_OPS_CHAT_ID", default="")
+
 # SES goes through Anymail's boto3 session params rather than django-ses globals.
 # Only pass explicit AWS keys when provided so that, when they are omitted, boto3
 # falls back to its standard credential chain (IAM role, ~/.aws/credentials, etc.).
