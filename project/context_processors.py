@@ -64,7 +64,12 @@ def billing(request):
     if not enabled:
         return {"SPEEDPY_BILLING_ENABLED": False}
 
-    ctx = {"SPEEDPY_BILLING_ENABLED": True}
+    # Provider is exposed even for anonymous users so public pages (e.g. the
+    # pricing page's Merchant-of-Record / refund notice) can gate on it.
+    ctx = {
+        "SPEEDPY_BILLING_ENABLED": True,
+        "SPEEDPY_BILLING_PROVIDER": getattr(settings, "SPEEDPY_BILLING_PROVIDER", "") or "",
+    }
 
     user = getattr(request, "user", None)
     if user is None or not user.is_authenticated:

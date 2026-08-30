@@ -103,6 +103,45 @@
             </div>
         </section>
 
+        {% comment %}
+            Billing & refunds. When Paddle is the provider it acts as your Merchant
+            of Record, and Paddle requires that the MoR statement, a tax note and a
+            refund policy are shown on your site. This block renders only for the
+            Paddle provider; tune the refund wording to your own policy. Stripe is
+            not a Merchant of Record, so it is intentionally excluded.
+        {% endcomment %}
+        {% if SPEEDPY_BILLING_PROVIDER == 'paddle' %}
+        <section class="section-paper">
+            <div class="page-container max-w-3xl py-12 space-y-8">
+                <div>
+                    <h2 class="h4">Billing &amp; taxes</h2>
+                    <p class="text-fg-secondary mt-3">
+                        Our order process is conducted by our online reseller
+                        Paddle.com. Paddle.com is the Merchant of Record for all our
+                        orders. Paddle handles billing, invoicing and customer service
+                        inquiries, and processes returns.
+                    </p>
+                    <p class="text-fg-secondary mt-3">
+                        Prices do not include taxes. Applicable tax is calculated and
+                        added at checkout.
+                    </p>
+                </div>
+
+                <div id="refund-policy">
+                    <h2 class="h4">Refund policy</h2>
+                    <p class="text-fg-secondary mt-3">
+                        We offer a no-questions-asked refund within 30 days of your
+                        purchase. If you are not satisfied within 30 days of any payment
+                        &mdash; your initial subscription or a renewal &mdash;
+                        <a href="{% url 'contact' %}" class="underline">contact us</a>
+                        and we will issue a full refund. Refunds are processed by
+                        Paddle, our Merchant of Record.
+                    </p>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
         <p class="text-center text-xs text-fg-secondary pb-10">
             Taxes and provider fees may apply at checkout.
         </p>
