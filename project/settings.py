@@ -63,6 +63,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Host isolation for the hosted MCP plane. Above WhiteNoise so a static file
+    # on the MCP host is refused too. Removes itself unless MCP_ENABLED.
+    "speedpycom.api.mcp_host.MCPHostMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -421,6 +424,25 @@ OAUTH2_PROVIDER = {
 }
 
 DCR_ENABLED = env.bool("DCR_ENABLED", default=DEBUG)
+
+# --- Hosted MCP (inert until MCP_ENABLED) ---
+# The remote MCP endpoint is served on its own host and is the OAuth `resource`
+# (RFC 8707) of every connector URL. Everything here is inert until a project
+# sets MCP_ENABLED=True and MCP_BASE_URL — the host-isolation middleware removes
+# itself, the deploy checks return nothing, and no MCP route is mounted. See
+# agents_docs/working_with_hosted_mcp.md for the full recipe.
+MCP_ENABLED = env.bool("MCP_ENABLED", default=False)
+# Bare HTTPS origin of the MCP host (no path, query, or fragment), e.g.
+# https://mcp.example.com. A deploy check enforces the shape when MCP_ENABLED.
+MCP_BASE_URL = env("MCP_BASE_URL", default="").rstrip("/")
+# Path prefixes the MCP host is allowed to serve; everything else 404s there.
+# Extend it for a store domain-verification file (e.g.
+# "/.well-known/openai-apps-challenge"). Empty and "/" entries are ignored so a
+# misconfiguration cannot re-expose the whole app on the MCP host.
+MCP_HOST_ALLOWED_PREFIXES = env.list(
+    "MCP_HOST_ALLOWED_PREFIXES",
+    default=["/mcp", "/.well-known/oauth-protected-resource", "/health/"],
+)
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])

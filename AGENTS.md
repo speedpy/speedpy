@@ -10,6 +10,7 @@ live outside this file so that a capability most projects never touch does not
 cost every reader the tokens to scroll past it.
 
 - video manipulation, transcoding, compression, video upload, ffmpeg: `agents_docs/working_with_video_files.md`
+- hosted remote MCP, MCP endpoint, MCP connector, OAuth for AI agents, streamable HTTP, mcp.<domain>, RFC 8707 audience, CIMD: `agents_docs/working_with_hosted_mcp.md`
 
 Adding one: keep the file in `agents_docs/`, name it for the task rather than the
 technology (`working_with_<thing>.md`), and add exactly one bullet here —
