@@ -35,7 +35,7 @@ dependencies = [
     "stripe==12.5.1",
     "python-slugify==8.0.4",
     "djangorestframework-simplejwt>=5.5.1",
-    "django-oauth-toolkit>=3.3.0",
+    "django-oauth-toolkit>=3.4.1,<4.0",
     "django-cors-headers>=4.7.0",
     "django-anymail[amazon-ses]==13.1",
     # A TRANSITIVE dependency, pinned directly on purpose: it is where the

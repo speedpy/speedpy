@@ -11,6 +11,11 @@ from drf_spectacular.views import (
 )
 from mainapp import views
 import speedpycom.views
+from oauth2_provider.urls import (
+    base_urlpatterns as oauth2_base_urlpatterns,
+    management_urlpatterns as oauth2_management_urlpatterns,
+    oidc_urlpatterns as oauth2_oidc_urlpatterns,
+)
 from speedpycom.api.dcr import DynamicClientRegistrationView
 from speedpycom.api.health import RootHealthCheckView
 from speedpycom.api.manifest import WellKnownManifestView
@@ -57,7 +62,28 @@ urlpatterns = [
     path("", include("speedpycom.urls_email_events")),
     path("og-image.png", speedpycom.views.default_og_image, name="default-og-image"),
     path("o/register/", DynamicClientRegistrationView.as_view(), name="dcr-register"),
-    path("o/", include("oauth2_provider.urls", namespace="oauth2_provider")),
+    # Mount django-oauth-toolkit route by route, not wholesale. DOT 3.4's
+    # aggregate ``oauth2_provider.urls`` also carries ``metadata_urlpatterns``
+    # (RFC 8414 + RFC 9728) and ``dcr_urlpatterns`` (its own DCR). Both stay off
+    # by default. The metadata documents belong on their own hosts (RFC 8414 on
+    # the app/issuer host, RFC 9728 on the MCP host) and are mounted there with
+    # the MCP transport when MCP_ENABLED — not wholesale under ``/o/`` — so we do
+    # not open them prematurely here. DCR stays shut: the project's own gated
+    # ``/o/register/`` above is the single registration door, and mounting DOT's
+    # DCR would only shadow it while exposing its RFC 7592 management route. See
+    # agents_docs/working_with_hosted_mcp.md.
+    path(
+        "o/",
+        include(
+            (
+                oauth2_base_urlpatterns
+                + oauth2_management_urlpatterns
+                + oauth2_oidc_urlpatterns,
+                "oauth2_provider",
+            ),
+            namespace="oauth2_provider",
+        ),
+    ),
     path("__debug__/", include("debug_toolbar.urls")),
     path("health/", RootHealthCheckView.as_view(), name="root_health_check"),
     path(".well-known/speedpy.json", WellKnownManifestView.as_view(), name="well_known_manifest"),
