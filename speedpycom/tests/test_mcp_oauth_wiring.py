@@ -10,8 +10,9 @@ and prove:
   that resource onto the tokens, a refresh preserves it, and replay of a rotated
   refresh token is refused (RFC 9700 reuse protection).
 
-CIMD is intentionally still off here (it ships with the hardened consent screen);
-this covers the resource-binding and reuse-protection half of the unit.
+The CIMD downgrade and the hardened consent screen (which ships with it) are
+covered in test_mcp_consent; this covers the resource-binding and
+reuse-protection half of the unit with an ordinary public client.
 """
 
 import base64
@@ -50,8 +51,8 @@ class OverridesShapeTests(SimpleTestCase):
         )
         self.assertTrue(o["REFRESH_TOKEN_REUSE_PROTECTION"])
         self.assertIn("none", o["OAUTH2_TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED"])
-        # CIMD is NOT enabled by the overrides yet (needs the consent screen).
-        self.assertNotIn("CIMD_ENABLED", o)
+        # CIMD is enabled — it ships together with the hardened consent screen.
+        self.assertTrue(o["CIMD_ENABLED"])
 
 
 @override_settings(MCP_ENABLED=True, OAUTH2_PROVIDER=HARDENED_OAUTH2_PROVIDER)

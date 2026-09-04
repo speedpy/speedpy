@@ -853,16 +853,18 @@ if not SITE_URL:
 # and testable, but merged into OAUTH2_PROVIDER only when MCP is enabled — a fork
 # that never runs MCP keeps DOT's stock validator and default flags unchanged.
 #
-# NOTE: CIMD_ENABLED is deliberately NOT here yet. A CIMD client's self-asserted
-# client_name is rendered by DOT's stock consent screen as the page heading, so
-# CIMD is safe only alongside the hardened consent view. It is switched on with
-# that view in a later step (see agents_docs/working_with_hosted_mcp.md).
 MCP_OAUTH2_PROVIDER_OVERRIDES = {
     # RFC 8707 audience matching by equality (never a prefix), and the CIMD
-    # public-downgrade validator. The validator's downgrade path is itself inert
-    # until CIMD_ENABLED, so wiring the class now changes nothing for stock flows.
+    # public-downgrade validator.
     "OAUTH2_VALIDATOR_CLASS": "speedpycom.api.oauth_validator.SpeedPyOAuth2Validator",
     "RESOURCE_SERVER_TOKEN_RESOURCE_VALIDATOR": "speedpycom.api.mcp_audience.validate_resource_exact",
+    # Client ID Metadata Documents — both directories prefer them for one-click
+    # connect. Safe ONLY because MCP_ENABLED also mounts the hardened consent
+    # screen (speedpycom.api.oauth_consent), which names a CIMD client by the
+    # host of its client_id URL rather than its self-asserted client_name. Never
+    # turn this on without that view. See project/urls.py and
+    # agents_docs/working_with_hosted_mcp.md.
+    "CIMD_ENABLED": True,
     # RFC 9700 refresh-token replay protection for the public connector client
     # (pairs with ROTATE_REFRESH_TOKEN, already on).
     "REFRESH_TOKEN_REUSE_PROTECTION": True,

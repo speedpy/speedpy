@@ -1,7 +1,26 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n %}{% comment %}
+The OAuth consent screen. When MCP is enabled it is served by
+speedpycom.api.oauth_consent.ConsentAuthorizationView, which sets the extra
+context this template uses; otherwise DOT's stock AuthorizationView renders it and
+the extra blocks simply fall away (client_display defaults to application.name).
 
-{% block head_title %}{% trans "Authorize Application" %}{% endblock %}
+Two details that look like style and are not:
+
+The heading is `client_display` — for a Client ID Metadata Document client that is
+the HOST of its client_id URL, the one thing it cannot forge. Its self-asserted
+`client_name` appears below, labelled as a claim. Rendering that name as the
+heading (which DOT's own template does) would let a hostile document put "Acme
+Official" at the top of a consent page on your own domain.
+
+Only the form's HIDDEN fields are rendered. `{{ form }}` would also draw its
+`allow` checkbox, redundant beside two submit buttons already named `allow` — and
+a checked box plus a button would both post that name. The buttons carry the
+decision; the form carries the state, including the `resource` field that binds
+the token to its audience.
+{% endcomment %}
+
+{% block head_title %}{% trans "Authorize" %} {% firstof client_display application.name %}{% endblock %}
 
 {% block content %}
 <main class="section">
@@ -9,44 +28,79 @@
         <div class="mx-auto max-w-lg py-12">
             <div class="card shadow-speedpyui-16">
                 <div class="card-header">
-                    <h2 class="h3 mb-0">{% trans "Authorize" %} {{ application.name }}</h2>
+                    <h2 class="h3 mb-0">{% trans "Authorize" %} {% firstof client_display application.name %}</h2>
                 </div>
                 <div class="card-body">
-                    <p class="text-fg-secondary mb-4">
-                        {% blocktrans with name=application.name %}
-                            <strong>{{ name }}</strong> is requesting access to your account.
-                        {% endblocktrans %}
-                    </p>
+                    {% if consent_blocked or error %}
+                        {% comment %}
+                        Fail closed. `consent_blocked` is the hardened MCP consent
+                        view refusing (missing client/scopes, a foreign/multiple
+                        resource, or an unvalidatable request); `error` covers DOT's
+                        stock view rendering this template on an unredirectable
+                        error. Both refuse here rather than drawing an Authorize
+                        button over blanks.
+                        {% endcomment %}
+                        <div class="alert alert-danger mb-4">
+                            <p class="font-medium mb-0">{% trans "This authorization request cannot be shown safely, so it was refused." %}</p>
+                            {% if consent_reasons %}
+                                <p class="text-sm mt-2 mb-2">{% trans "Because:" %}</p>
+                                <ul class="list-group mb-0">
+                                    {% for item in consent_reasons %}
+                                        <li class="list-group-item text-fg">{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                        <p class="text-fg-secondary text-sm mb-0">
+                            {% trans "Close this page and start the connection again from your application. If it keeps happening, the connection is misconfigured." %}
+                        </p>
+                    {% else %}
+                    {% if client_is_self_asserted and client_claimed_name %}
+                        <p class="text-fg-secondary text-sm mb-4">
+                            {% blocktrans with claimed=client_claimed_name %}It calls itself “{{ claimed }}”. That name is its own claim; the address above is not.{% endblocktrans %}
+                        </p>
+                    {% else %}
+                        <p class="text-fg-secondary mb-4">
+                            {% blocktrans with name=client_display|default:application.name %}<strong>{{ name }}</strong> is requesting access to your account.{% endblocktrans %}
+                        </p>
+                    {% endif %}
 
-                    {% if scopes %}
-                        <p class="text-fg font-medium mb-2">{% trans "This application will be able to:" %}</p>
+                    {% if resource_label %}
+                        <div class="alert alert-info mb-4">
+                            <span>{% blocktrans %}This grant covers <strong>{{ resource_label }}</strong>.{% endblocktrans %}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if redirect_is_loopback %}
+                        <div class="alert alert-warning mb-4">
+                            <span>{% blocktrans %}It will be sent back to software running on your own computer. Approve only if you started this yourself, just now.{% endblocktrans %}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if scopes_descriptions %}
+                        <p class="text-fg font-medium mb-2">{% trans "It will be able to:" %}</p>
                         <ul class="list-group mb-6">
-                            {% for scope in scopes %}
-                                <li class="list-group-item text-fg">{{ scope.description }}</li>
+                            {% for description in scopes_descriptions %}
+                                <li class="list-group-item text-fg">{{ description }}</li>
                             {% endfor %}
                         </ul>
                     {% endif %}
 
-                    <form method="post" class="flex gap-3">
+                    <form method="post">
                         {% csrf_token %}
-                        {{ form.as_p }}
-                        <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}" />
-                        <input type="hidden" name="scope" value="{{ scope }}" />
-                        <input type="hidden" name="nonce" value="{{ nonce }}" />
-                        <input type="hidden" name="client_id" value="{{ client_id }}" />
-                        <input type="hidden" name="state" value="{{ state }}" />
-                        <input type="hidden" name="response_type" value="{{ response_type }}" />
-                        <input type="hidden" name="code_challenge" value="{{ code_challenge }}" />
-                        <input type="hidden" name="code_challenge_method" value="{{ code_challenge_method }}" />
-                        <button type="submit" name="allow" value="true"
-                                class="btn btn-contained btn-primary">
-                            {% trans "Authorize" %}
-                        </button>
-                        <button type="submit" name="allow" value="false"
-                                class="btn btn-outlined btn-secondary">
-                            {% trans "Deny" %}
-                        </button>
+                        {% for field in form %}{% if field.is_hidden %}{{ field }}{% endif %}{% endfor %}
+                        <div class="flex items-center gap-3">
+                            <button type="submit" name="allow" value="true"
+                                    class="btn btn-contained btn-primary">
+                                {% trans "Authorize" %}
+                            </button>
+                            <button type="submit" name="allow" value=""
+                                    class="btn btn-outlined btn-secondary">
+                                {% trans "Deny" %}
+                            </button>
+                        </div>
                     </form>
+                    {% endif %}
                 </div>
             </div>
         </div>

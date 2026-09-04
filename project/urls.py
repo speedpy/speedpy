@@ -102,5 +102,17 @@ urlpatterns = [
     path("", include("mainapp.urls")),
 ]
 
+# The hardened MCP consent screen. Mounted only when MCP is enabled, and inserted
+# ahead of the "o/" include above so it shadows DOT's stock /o/authorize/. CIMD is
+# on with MCP (settings), and CIMD is safe only with this view — the two are
+# mounted together on purpose. See speedpycom/api/oauth_consent.py.
+if settings.MCP_ENABLED:
+    from speedpycom.api.oauth_consent import ConsentAuthorizationView
+
+    urlpatterns.insert(
+        0,
+        path("o/authorize/", ConsentAuthorizationView.as_view(), name="mcp_authorize"),
+    )
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
