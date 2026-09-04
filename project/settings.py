@@ -443,6 +443,17 @@ MCP_HOST_ALLOWED_PREFIXES = env.list(
     "MCP_HOST_ALLOWED_PREFIXES",
     default=["/mcp", "/.well-known/oauth-protected-resource", "/health/"],
 )
+# CIMD client_id URLs allowed to connect one-click as a public PKCE client (the
+# two directory clients). Consulted only when MCP is enabled AND CIMD is on (see
+# the OAuth hardening block near the end of this file). Empty disables the
+# downgrade entirely. See speedpycom/api/oauth_validator.py.
+MCP_CIMD_PUBLIC_DOWNGRADE_CLIENT_IDS = env.list(
+    "MCP_CIMD_PUBLIC_DOWNGRADE_CLIENT_IDS",
+    default=[
+        "https://chatgpt.com/connectors/oauth/client_metadata.json",
+        "https://claude.ai/.well-known/oauth-client-metadata.json",
+    ],
+)
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
@@ -836,6 +847,53 @@ if not SITE_URL:
 
 if not SITE_URL:
     logger.warning("SITE_URL not set")
+
+# --- Hosted MCP: OAuth hardening (applied only when MCP_ENABLED) ---
+# The MCP-specific OAuth behaviour. Defined unconditionally so it is inspectable
+# and testable, but merged into OAUTH2_PROVIDER only when MCP is enabled — a fork
+# that never runs MCP keeps DOT's stock validator and default flags unchanged.
+#
+# NOTE: CIMD_ENABLED is deliberately NOT here yet. A CIMD client's self-asserted
+# client_name is rendered by DOT's stock consent screen as the page heading, so
+# CIMD is safe only alongside the hardened consent view. It is switched on with
+# that view in a later step (see agents_docs/working_with_hosted_mcp.md).
+MCP_OAUTH2_PROVIDER_OVERRIDES = {
+    # RFC 8707 audience matching by equality (never a prefix), and the CIMD
+    # public-downgrade validator. The validator's downgrade path is itself inert
+    # until CIMD_ENABLED, so wiring the class now changes nothing for stock flows.
+    "OAUTH2_VALIDATOR_CLASS": "speedpycom.api.oauth_validator.SpeedPyOAuth2Validator",
+    "RESOURCE_SERVER_TOKEN_RESOURCE_VALIDATOR": "speedpycom.api.mcp_audience.validate_resource_exact",
+    # RFC 9700 refresh-token replay protection for the public connector client
+    # (pairs with ROTATE_REFRESH_TOKEN, already on).
+    "REFRESH_TOKEN_REUSE_PROTECTION": True,
+    # RFC 9700 refusals of grants/params we never want, plus the S256 requirement
+    # both stores always send.
+    "COMPLIANT_BCP_RFC9700_IMPLICIT_GRANT": True,
+    "COMPLIANT_BCP_RFC9700_PASSWORD_GRANT": True,
+    "COMPLIANT_BCP_RFC9700_PKCE_METHOD": True,
+    "COMPLIANT_BCP_RFC9700_ACCESS_TOKEN_TRANSPORT": True,
+    # RFC 9207 `iss` on authorization responses — earns ChatGPT's fixed connector
+    # redirect URI and defends the client against a mix-up attack.
+    "COMPLIANT_BCP_RFC9700_AUTHZ_RESPONSE_ISS": True,
+    # Advertise "none" (public PKCE) in the authorization-server metadata
+    # alongside the confidential methods. This is a discovery signal, not the
+    # authentication decision (that follows Application.client_type); a CIMD
+    # client that does not see "none" advertised falls through to looking for a
+    # registration endpoint we do not offer.
+    "OAUTH2_TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED": [
+        "client_secret_basic",
+        "client_secret_post",
+        "none",
+    ],
+    # Native clients (Claude Code, Cursor) bind a loopback port at runtime;
+    # `localhost` loopback matching needs this.
+    "ALLOW_LOCALHOST_LOOPBACK": True,
+}
+if MCP_ENABLED:
+    OAUTH2_PROVIDER.update(MCP_OAUTH2_PROVIDER_OVERRIDES)
+    if SITE_URL:
+        # RFC 9207 issuer; DOT emits `iss` from this.
+        OAUTH2_PROVIDER["OIDC_ISS_ENDPOINT"] = SITE_URL.rstrip("/")
 
 # MFA / TOTP Configuration
 TOTP_ISSUER = env.str("TOTP_ISSUER", default="")
