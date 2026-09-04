@@ -102,17 +102,38 @@ urlpatterns = [
     path("", include("mainapp.urls")),
 ]
 
-# The hardened MCP consent screen. Mounted only when MCP is enabled, and inserted
-# ahead of the "o/" include above so it shadows DOT's stock /o/authorize/. CIMD is
-# on with MCP (settings), and CIMD is safe only with this view — the two are
-# mounted together on purpose. See speedpycom/api/oauth_consent.py.
+# The hosted MCP plane. Mounted only when MCP is enabled. Host separation (which
+# routes answer on the mcp. host vs the app host) is enforced by
+# speedpycom.api.mcp_host.MCPHostMiddleware and the metadata view's own host check.
 if settings.MCP_ENABLED:
+    from django.utils.module_loading import import_string
+    from oauth2_provider.views import OAuthServerMetadataView
+    from speedpycom.api.mcp_metadata import mcp_metadata_urlpatterns
     from speedpycom.api.oauth_consent import ConsentAuthorizationView
 
+    endpoint_view = import_string(settings.MCP_ENDPOINT_VIEW).as_view()
+    metadata_view = import_string(settings.MCP_METADATA_VIEW).as_view()
+
+    # The hardened consent screen shadows DOT's /o/authorize/ (inserted ahead of
+    # the "o/" include). CIMD is on with MCP and is safe only with this view.
     urlpatterns.insert(
         0,
         path("o/authorize/", ConsentAuthorizationView.as_view(), name="mcp_authorize"),
     )
+    urlpatterns += [
+        # RFC 8414 authorization-server metadata — the app/issuer host root.
+        path(
+            ".well-known/oauth-authorization-server",
+            OAuthServerMetadataView.as_view(),
+            name="oauth-server-metadata",
+        ),
+        # RFC 9728 protected-resource metadata — the MCP host (the view 404s
+        # elsewhere). Single-tenant shapes; a connector adds its scoped patterns.
+        *mcp_metadata_urlpatterns(metadata_view),
+        # The transport — the MCP host. A tenancy-aware connector adds its scoped
+        # routes (e.g. mcp/t/<slug>) pointing at the same view.
+        path("mcp", endpoint_view, name="mcp_endpoint"),
+    ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

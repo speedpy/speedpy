@@ -16,13 +16,17 @@ and one-click connection from ChatGPT and Claude are live; the public directory
 directory listing follows automatically from a working connector.)
 
 > **Status of this document (read first).**
-> This is a **design draft + checklist**, not yet a frozen set of copy-paste
-> templates. The generic pieces described in §3 are being ported into
-> `speedpycom/` under a plan (see `specs/` if present, or the withfeedback
-> `specs/plans/hosted-mcp.md`). Until that port lands and withfeedback is
-> rewired onto it, treat the code sketches here as **shape, not final API** —
-> the module paths and signatures are the target, and the invariants in §2 are
-> already firm. The verification checklist in §7 is usable today.
+> The generic core described in §3 has **landed** in `speedpycom/api/`:
+> `mcp_resource.py` (ResourceCodec), `mcp_host.py`, `checks.py`,
+> `mcp_audience.py`, `oauth_validator.py`, `oauth_consent.py`, `mcp_catalogue.py`
+> (Tool / ToolCatalogue), `mcp.py` (MCPEndpointView) and `mcp_metadata.py`, plus
+> the MCP OAuth hardening and URL mounting, all gated on `MCP_ENABLED`. The base
+> is a working **single-tenant, deny-all** connector: turn on `MCP_ENABLED` +
+> `MCP_BASE_URL`, point `MCP_ENDPOINT_VIEW` at a `ToolCatalogue`-configured
+> subclass, and it serves. What stays a **recipe** here (not shipped code) is the
+> app-coupled layer: your tool rows and handlers, a tenancy-aware `ResourceCodec`
+> + `fill_bound_arguments`, and the `authorize` gate. The invariants in §2 are
+> firm and enforced; the verification checklist in §7 is the acceptance test.
 
 Read it before designing anything MCP-shaped. The order of the sections is the
 order of the decisions.
@@ -101,10 +105,13 @@ left to your handlers — but you must not undo them:
    repeated resources, foreign absolute URLs, and a grant→token resource upgrade.
 2. **Fail-closed consent.** The consent screen names the client by the **host of
    its `client_id` URL**, not by its self-asserted `client_name` (a CIMD client
-   can claim any name). It must **block**, not merely display, an unknown,
-   repeated, or foreign resource and any non-connector scope. *(The current
-   withfeedback reference view displays these rather than blocking; the port must
-   harden it — see §3.)*
+   can claim any name). It **refuses** (400) a request that does not name the
+   application or the access it wants, one it cannot validate at all, and a
+   **foreign, unknown, or repeated resource** — never an Authorize button over
+   blanks. *(Refusing a non-connector scope such as `admin` at consent lands with
+   the tool catalogue in Phase C, which defines the connector scope set; until
+   then the audience validator and DOT's `invalid_target` hold the resource
+   boundary at issuance.)*
 3. **Resource-aware re-prompt.** Approving a client for one resource must not
    silently grant it another. DOT's skip compares user+app+scopes, not the
    resource — the shipped consent view overrides that.
@@ -134,11 +141,10 @@ left to your handlers — but you must not undo them:
 
 ## 3. What the boilerplate ships vs what you write
 
-**The port will add (as code) the pure core and every security invariant to
-`speedpycom/api/`.** These modules **do not exist in `speedpycom/` yet** — the
-paths and APIs below are the target the port implements; until it lands, the
-working reference is the withfeedback code cited in §8. Rows marked *(new)* are
-not in the withfeedback build either; they are fresh design the port introduces.
+**The boilerplate ships (as code) the pure core and every security invariant in
+`speedpycom/api/`** — the modules below now exist. Rows marked *(new)* are fresh
+design not in the withfeedback build. The audit and throttle hooks are declared
+seams (no-op defaults) rather than a built pipeline.
 
 | Shipped | Module | What it is |
 |---|---|---|

@@ -454,6 +454,15 @@ MCP_CIMD_PUBLIC_DOWNGRADE_CLIENT_IDS = env.list(
         "https://claude.ai/.well-known/oauth-client-metadata.json",
     ],
 )
+# Dotted paths to the MCP transport and RFC 9728 metadata views mounted when
+# MCP_ENABLED. Point them at your ToolCatalogue-configured subclasses (see
+# agents_docs/working_with_hosted_mcp.md). The defaults are a working
+# single-tenant, deny-all connector (authenticates, offers no tools). A
+# tenancy-aware connector also adds its scoped routes in project/urls.py.
+MCP_ENDPOINT_VIEW = env("MCP_ENDPOINT_VIEW", default="speedpycom.api.mcp.MCPEndpointView")
+MCP_METADATA_VIEW = env(
+    "MCP_METADATA_VIEW", default="speedpycom.api.mcp_metadata.MCPProtectedResourceMetadataView"
+)
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
