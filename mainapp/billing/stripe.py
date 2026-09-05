@@ -40,6 +40,23 @@ def _ts(value):
     return datetime.fromtimestamp(value, tz=dt_timezone.utc)
 
 
+def _to_plain(obj, *, for_json=False):
+    """Convert a Stripe SDK object to a plain, nested ``dict``.
+
+    Stripe Python v15 stopped subclassing ``dict``: ``StripeObject`` no longer
+    offers ``.get()``/``.items()`` and ``dict(obj)`` no longer works. Convert at
+    the boundary (webhook parse, subscription retrieve) so the rest of the adapter
+    keeps using ordinary dict access. ``for_json=True`` coerces non-JSON values
+    (e.g. ``Decimal`` -> ``str``) so the result is safe to persist in a JSONField.
+
+    Plain dicts (used by unit tests) pass through unchanged.
+    """
+    to_dict = getattr(obj, "to_dict", None)
+    if callable(to_dict):
+        return to_dict(for_json=for_json)
+    return obj
+
+
 class StripeAdapter(BillingAdapter):
     provider = "stripe"
 
@@ -116,7 +133,9 @@ class StripeAdapter(BillingAdapter):
             )
         except (ValueError, stripe.SignatureVerificationError):
             return None
-        return event
+        # v15 returns a StripeObject (not a dict); flatten to plain JSON-safe data
+        # so downstream dict access and JSONField persistence keep working.
+        return _to_plain(event, for_json=True)
 
     def get_event_id(self, event):
         return event.get("id") or ""
@@ -133,7 +152,9 @@ class StripeAdapter(BillingAdapter):
             if not subscription_id:
                 return
             try:
-                subscription = self._client().Subscription.retrieve(subscription_id)
+                subscription = _to_plain(
+                    self._client().Subscription.retrieve(subscription_id)
+                )
             except stripe.StripeError as exc:
                 logger.error("stripe_subscription_retrieve_error", error=str(exc))
                 return
@@ -184,8 +205,19 @@ class StripeAdapter(BillingAdapter):
             "interval": interval,
             "status": _STRIPE_STATUS_MAP.get(raw_status),
             "raw_provider_status": raw_status,
-            "current_period_starts_at": _ts(subscription.get("current_period_start")),
-            "current_period_ends_at": _ts(subscription.get("current_period_end")),
+            # Since API 2025-03-31.basil the billing period moved from the
+            # Subscription onto each SubscriptionItem. Read it from the item, but
+            # fall back to the subscription level for legacy webhook endpoints
+            # still configured on an older API version. (Single-item assumption:
+            # checkout creates exactly one line item; the adapter reads items[0].)
+            "current_period_starts_at": _ts(
+                item.get("current_period_start")
+                or subscription.get("current_period_start")
+            ),
+            "current_period_ends_at": _ts(
+                item.get("current_period_end")
+                or subscription.get("current_period_end")
+            ),
             "trial_starts_at": _ts(subscription.get("trial_start")),
             "trial_ends_at": _ts(subscription.get("trial_end")),
             "canceled_at": _ts(subscription.get("canceled_at")),

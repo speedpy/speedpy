@@ -51,7 +51,8 @@ class UserAdmin(DefaultUserAdmin):
         (
             None,
             {
-                'classes': ('wide',),
+                # The admin 'wide' CSS class was removed in Django 6.1 (obsoleted
+                # by the new form layout).
                 'fields': ('email', 'password1', 'password2'),
             }
         ),
