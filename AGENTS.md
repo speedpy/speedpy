@@ -115,7 +115,7 @@ Django templates + crispy forms + Alpine.js. Ad-hoc `JsonResponse`s in
 
 ### Technology Stack
 
-- **Backend**: Django 6.0.3 with PostgreSQL
+- **Backend**: Django 6.1.1 with PostgreSQL
 - **Frontend**: Tailwind CSS 3.4.0 with Alpine.js
 - **Authentication**: django-allauth with custom email-based user model
 - **Background Tasks**: Celery with Redis
