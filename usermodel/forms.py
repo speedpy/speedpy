@@ -39,6 +39,21 @@ def attach_recaptcha(form):
     return [Field("captcha")]
 
 
+def captcha_passed(form):
+    """True when the form has no CAPTCHA field, or the field verified.
+
+    Only meaningful from ``clean()``. Field cleaners run in field order and the
+    CAPTCHA is attached LAST, so a ``clean_<field>`` method cannot ask this.
+
+    ``"captcha" in form.cleaned_data`` is the Django-native signal: a field
+    whose cleaner raised is removed from ``cleaned_data``. That covers every
+    handled failure of ``ReCaptchaField.validate`` — a missing token, an HTTP
+    error from Google, an invalid / wrong-action / low-score answer — without
+    importing any of them.
+    """
+    return "captcha" not in form.fields or "captcha" in form.cleaned_data
+
+
 class UsermodelSignupForm(SignupForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -85,29 +100,47 @@ class UsermodelSignupForm(SignupForm):
             ),
         )
 
-    def clean_email(self):
-        """Blocklists and deliverability, both from the shared validator.
-
-        This used to be an inline blocklist check plus an inline MX lookup, which
-        meant signup was the ONLY door either one covered — a strange place to
-        draw the line, since an address can also arrive through an invitation, a
-        public form or a CSV import. The logic now lives in
-        ``speedpycom.services.email_deliverability`` and every door calls the
-        same thing. See that module for why it fails open on a timeout, why it
-        caches per domain, and why MX-only is the default.
-        """
-        email = super().clean_email()
-        if email:
-            email_deliverability.validate(email)
-        return email
-
     def clean(self):
+        # FIRST, before allauth's clean(): a refused address must already be out
+        # of cleaned_data when allauth builds a dummy user from
+        # cleaned_data["email"] and validates the password against it — exactly
+        # what happened when this check raised from clean_email. Run it after
+        # super().clean() and UserAttributeSimilarityValidator gets to compare
+        # the password with a refused address and add a second, new error.
+        # (Order among the field cleaners is irrelevant here: by the time
+        # clean() runs, every field has been cleaned.)
+        self._check_deliverability()
         super().clean()
         if settings.REQUIRE_TOS_ACCEPTANCE and not self.cleaned_data.get("tos"):
             self.add_error("tos", _("You must agree to the terms to sign up"))
         if settings.REQUIRE_DPA_ACCEPTANCE and not self.cleaned_data.get("dpa"):
             self.add_error("dpa", _("You must agree to the privacy policy to sign up"))
         return self.cleaned_data
+
+    def _check_deliverability(self):
+        """Blocklists and deliverability, from the shared validator — but only
+        once the CAPTCHA (if any) has passed.
+
+        This used to be ``clean_email``. A field cleaner runs whether or not the
+        CAPTCHA verified, and Django renders every field error together, so the
+        page answered "is this domain blocked?" to anyone, token or no token —
+        one domain per request rebuilds the whole list. Withholding the verdict
+        until the CAPTCHA passed is the only fix; the message is already generic.
+
+        The validator itself lives in ``speedpycom.services.email_deliverability``;
+        the other doors that check — team invitations, the public forms, the CSV
+        import — call the same thing. See that module for why it fails open on a
+        timeout, caches per domain, and is MX-only by default.
+        """
+        if not captcha_passed(self):
+            return
+        email = self.cleaned_data.get("email")
+        if not email:
+            return
+        try:
+            email_deliverability.validate(email)
+        except forms.ValidationError as exc:
+            self.add_error("email", exc)
 
 
 class UsermodelLoginForm(LoginForm):

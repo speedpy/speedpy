@@ -1,10 +1,16 @@
 """Is this address worth sending to? (spec §3.19)
 
-One validator, called from every place an email address enters the system:
-signup, team invitations, public forms, CSV imports. Before this, the check
-lived inline in ``usermodel/forms.py`` and therefore covered signup and nothing
-else — which is a strange place to draw the line, because signup was never the
-only door.
+One validator, called from the places an email address enters the system:
+signup, team invitations, public forms, CSV imports. (``UsermodelAddEmailForm``
+does not call it — a known gap, so this is "the doors that check", not "every
+door".) Before this, the check lived inline in ``usermodel/forms.py`` and
+therefore covered signup and nothing else — which is a strange place to draw the
+line, because signup was never the only door.
+
+On the signup form the caller is ``clean()``, not a field cleaner, and only once
+the CAPTCHA has passed: Django runs every field cleaner and shows every field
+error, so a ``clean_email`` check would answer "is this domain blocked?" to
+anyone with no token. See ``usermodel/forms.py::captcha_passed``.
 
 **Why bother at all.** A bounce is not free. Amazon SES tracks a bounce rate per
 account and suspends sending above roughly 5%, so a handful of undeliverable

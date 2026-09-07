@@ -293,9 +293,14 @@ class ValidatorTests(TestCase):
         self.assertEqual(deliver.validate(""), "")
 
 
-@override_settings(**ON)
+@override_settings(**ON, RECAPTCHA_PUBLIC_KEY="", RECAPTCHA_PRIVATE_KEY="")
 class EveryDoorTests(TestCase):
     """The point of the whole exercise: the check used to cover signup ALONE.
+
+    Keys are pinned empty (stacked under ON, not widening it): the signup form
+    only runs the deliverability check once the CAPTCHA has passed, so with a
+    field present the two signup cases below would fail on a machine that has
+    reCAPTCHA keys in its env. See usermodel/tests/test_signup_captcha_gate.py.
 
     An address can also arrive through an invitation, and it is the same kind of
     liability — an invitation is a piece of mail, so an undeliverable address is

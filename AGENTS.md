@@ -674,10 +674,11 @@ in a private app.
 
 ## Email addresses: blocklists and deliverability
 
-**Every door that takes an email address calls the same validator.** Signup,
-team invitations, public forms, CSV imports. It used to live inline in
-`usermodel/forms.py`, which meant it covered signup and nothing else — a strange
-place to draw the line, because signup was never the only door.
+**The doors that take an email address call the same validator:** signup, team
+invitations, public forms, CSV imports. (Not *every* door — `UsermodelAddEmailForm`
+does not call it, a known gap.) It used to live inline in `usermodel/forms.py`,
+which meant it covered signup and nothing else — a strange place to draw the
+line, because signup was never the only door.
 
 ```python
 from speedpycom.services import email_deliverability
@@ -714,6 +715,13 @@ Rules, each of which was a defect in the inline version:
 - **Two messages, and do not merge them.** A blocklist refusal must not say
   "check for typos" — that tells somebody probing the filter that their domain is
   fine and the problem is elsewhere.
+- **On the signup form the verdict waits for the CAPTCHA.** Django runs every
+  field cleaner and shows every field error, so a `clean_email` check answered
+  "is this domain blocked?" to anyone with no token — one domain per request
+  rebuilds the whole list. The check runs from `clean()` and only when
+  `usermodel/forms.py::captcha_passed(self)`; do not move it back into a field
+  cleaner. (The hosted collection page and public API have the same shape of leak
+  with no CAPTCHA to gate behind — a separate, open product decision.)
 
 **It does NOT catch a typo with a valid MX.** `gmail.co` resolves perfectly well.
 Suggesting a correction for near-misses is a separate idea.
@@ -729,7 +737,10 @@ Two different jobs, two different tools. Do not use one for the other.
 
 **Auth forms** (signup, login, password reset) use `django-recaptcha`'s form
 field via `usermodel/forms.py::attach_recaptcha`. A login either passes or it
-does not, so a field that raises a validation error is exactly right.
+does not, so a field that raises a validation error is exactly right. On the
+**signup** form the email blocklist / deliverability check is deliberately held
+until the CAPTCHA passes (see the deliverability section's gate rule), so the
+page cannot answer "is this domain blocked?" to a caller who never passed it.
 
 **Public, unauthenticated forms** use `speedpycom/services/captcha.py`, because
 a public form needs a distinction the form field cannot make: reCAPTCHA v3

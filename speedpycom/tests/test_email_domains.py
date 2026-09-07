@@ -169,8 +169,16 @@ class SwitchTests(TestCase):
                 self.assertFalse(email_domains.is_blocked(value))
 
 
+@override_settings(RECAPTCHA_PUBLIC_KEY="", RECAPTCHA_PRIVATE_KEY="")
 class SignupFormTests(TestCase):
-    """The refusal has to reach the form, and say nothing useful."""
+    """The refusal has to reach the form, and say nothing useful.
+
+    Keys are pinned empty: with a reCAPTCHA field present the signup form now
+    withholds the email verdict until the CAPTCHA passes (see
+    usermodel/tests/test_signup_captcha_gate.py), so on a machine that has keys
+    in its env this refusal test would otherwise fail — and look like a
+    regression in the blocklist rather than the intended gate.
+    """
 
     def setUp(self):
         email_domains.clear_cache()
