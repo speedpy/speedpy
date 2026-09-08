@@ -715,13 +715,18 @@ Rules, each of which was a defect in the inline version:
 - **Two messages, and do not merge them.** A blocklist refusal must not say
   "check for typos" — that tells somebody probing the filter that their domain is
   fine and the problem is elsewhere.
-- **On the signup form the verdict waits for the CAPTCHA.** Django runs every
-  field cleaner and shows every field error, so a `clean_email` check answered
-  "is this domain blocked?" to anyone with no token — one domain per request
-  rebuilds the whole list. The check runs from `clean()` and only when
-  `usermodel/forms.py::captcha_passed(self)`; do not move it back into a field
-  cleaner. (The hosted collection page and public API have the same shape of leak
-  with no CAPTCHA to gate behind — a separate, open product decision.)
+- **On the signup form the verdict waits for the CAPTCHA — when reCAPTCHA is
+  configured.** Django runs every field cleaner and shows every field error, so a
+  `clean_email` check answered "is this domain blocked?" to anyone with no token
+  — one domain per request rebuilds the whole list. The check runs from `clean()`
+  and only when `usermodel/forms.py::captcha_passed(self)`; do not move it back
+  into a field cleaner. The gate closes the oracle only where **both** reCAPTCHA
+  keys are set (as in production): with no keys there is no CAPTCHA field,
+  `captcha_passed()` is `True`, and the verdict is given as before — that is the
+  intended behaviour on a keyless checkout, which has no bot protection to gate
+  behind anyway. (The hosted collection page and public API have the same shape
+  of leak with no CAPTCHA to gate behind even when keys are set — a separate,
+  open product decision.)
 
 **It does NOT catch a typo with a valid MX.** `gmail.co` resolves perfectly well.
 Suggesting a correction for near-misses is a separate idea.

@@ -10,7 +10,10 @@ line, because signup was never the only door.
 On the signup form the caller is ``clean()``, not a field cleaner, and only once
 the CAPTCHA has passed: Django runs every field cleaner and shows every field
 error, so a ``clean_email`` check would answer "is this domain blocked?" to
-anyone with no token. See ``usermodel/forms.py::captcha_passed``.
+anyone with no token. See ``usermodel/forms.py::captcha_passed``. That gate only
+bites where reCAPTCHA is configured (both keys set); with no keys there is no
+CAPTCHA field and the verdict is given as before — the intended behaviour on a
+keyless checkout.
 
 **Why bother at all.** A bounce is not free. Amazon SES tracks a bounce rate per
 account and suspends sending above roughly 5%, so a handful of undeliverable

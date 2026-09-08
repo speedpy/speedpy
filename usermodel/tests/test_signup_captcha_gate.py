@@ -116,10 +116,13 @@ class FailedCaptchaWithholdsTheVerdict(TestCase):
     def test_blocked_and_clean_domains_are_indistinguishable_when_the_captcha_fails(self):
         # The direct oracle test: the two responses must be byte-identical in
         # what they say about the email.
-        with _submit(is_valid=False):
+        with _submit(is_valid=False) as submit_blocked:
             blocked = self.client.post("/accounts/signup/", _body(BLOCKED))
-        with _submit(is_valid=False):
+        with _submit(is_valid=False) as submit_clean:
             clean = self.client.post("/accounts/signup/", _body(CLEAN))
+        # Not vacuous: the token really reached the field in both requests.
+        submit_blocked.assert_called()
+        submit_clean.assert_called()
         self.assertEqual(
             blocked.context["form"].errors, clean.context["form"].errors
         )
