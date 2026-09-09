@@ -9,11 +9,12 @@ import time
 import uuid
 
 import structlog
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import serializers, status
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import APIException, NotFound, PermissionDenied
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -22,9 +23,28 @@ from rest_framework.views import APIView
 from mainapp.models import Team, TeamMembership
 from mainapp.models.webhooks import WebhookDelivery, WebhookEndpoint
 from mainapp.webhooks.events import WebhookEvent
+from mainapp.webhooks.lifecycle import (
+    billing_blocks_new_records,
+    deactivate_endpoint,
+    max_active_endpoints_per_team,
+    team_at_endpoint_cap,
+    team_is_eligible,
+)
 from speedpycom.api.permissions import HasScope
 
 logger = structlog.get_logger(__name__)
+
+
+class _BillingBlocked(APIException):
+    """402 for a record-creating mutation while billing is not active."""
+
+    status_code = status.HTTP_402_PAYMENT_REQUIRED
+    default_detail = {
+        "code": "billing_blocked",
+        "detail": "Billing is not active for this team; new content cannot be "
+        "created until billing is restored.",
+    }
+    default_code = "billing_blocked"
 
 
 # ---------------------------------------------------------------------------
@@ -58,6 +78,73 @@ def _get_endpoint(team, webhook_id):
         return WebhookEndpoint.objects.get(id=webhook_id, team=team)
     except WebhookEndpoint.DoesNotExist:
         raise NotFound()
+
+
+def _is_token_client(request) -> bool:
+    """True for API-token clients (PAT/OAuth/JWT); False for session/browser."""
+    return getattr(request, "auth", None) is not None
+
+
+def _require_team_eligible(request, team):
+    """Plan-feature gate for token clients; session (browser) users bypass.
+
+    A downstream project gates webhooks on its own plan feature by setting
+    ``SPEEDPY_WEBHOOK_TEAM_ELIGIBLE`` (see ``mainapp/webhooks/lifecycle.py``);
+    the 403 message is ``SPEEDPY_WEBHOOK_FEATURE_DENIED_DETAIL``. With neither
+    set, every active team is eligible.
+    """
+    if not _is_token_client(request):
+        return
+    if not team_is_eligible(team):
+        raise PermissionDenied(
+            getattr(
+                settings,
+                "SPEEDPY_WEBHOOK_FEATURE_DENIED_DETAIL",
+                "This team's plan does not include webhook access.",
+            )
+        )
+
+
+def _check_billing_mutation(team):
+    """402 while billing is enabled but not in the ENABLED state (grace/disabled)."""
+    if billing_blocks_new_records(team):
+        raise _BillingBlocked()
+
+
+def _resolve_origin(request):
+    """Return ``(origin, application, token_family)`` from the request credential.
+
+    - No credential (session/browser) → ``dashboard``.
+    - An OAuth2 access token (carries ``.application``) → ``oauth`` with its
+      application and refresh-token family, so dispatch can fail closed when the
+      connection is revoked.
+    - Any other token (PAT/JWT) → ``api_token``.
+    """
+    auth = getattr(request, "auth", None)
+    if auth is None:
+        return WebhookEndpoint.Origin.DASHBOARD, None, None
+
+    application = getattr(auth, "application", None)
+    if application is None:
+        return WebhookEndpoint.Origin.API_TOKEN, None, None
+
+    # The paired (current) refresh token carries the family id; a reverse
+    # OneToOne raises when absent, so guard it.
+    token_family = None
+    try:
+        refresh_token = auth.refresh_token
+    except Exception:
+        refresh_token = getattr(auth, "source_refresh_token", None)
+    if refresh_token is not None:
+        token_family = getattr(refresh_token, "token_family", None)
+
+    # An OAuth grant with no refresh-token family (e.g. client-credentials, or an
+    # access-token-only issuance) has no connection to bind lifecycle to. Rather
+    # than create an endpoint that fails the OAuth-family check forever, treat it
+    # as a plain API token: gated on the creating member, not the token family.
+    if token_family is None:
+        return WebhookEndpoint.Origin.API_TOKEN, None, None
+    return WebhookEndpoint.Origin.OAUTH, application, token_family
 
 
 # ---------------------------------------------------------------------------
@@ -94,10 +181,13 @@ class WebhookEndpointCreateSerializer(serializers.Serializer):
 
 
 class WebhookEndpointUpdateSerializer(serializers.Serializer):
+    # NOTE: ``is_active`` is deliberately NOT updatable here. Reactivation would
+    # bypass the compare-and-set deactivation (410/reconcile/DELETE), the plan
+    # feature gate, the billing gate and the active-endpoint cap. Turning an
+    # endpoint off is DELETE; turning it back on is creating a new one.
     name = serializers.CharField(max_length=255, required=False)
     url = serializers.URLField(max_length=2048, required=False)
     events = serializers.ListField(child=serializers.CharField(), min_length=1, required=False)
-    is_active = serializers.BooleanField(required=False)
 
     def validate_url(self, value):
         if not value.startswith("https://"):
@@ -194,6 +284,7 @@ class TeamWebhookEndpointListCreateView(APIView):
     )
     def get(self, request, team_id):
         membership = _get_membership(request.user, team_id)
+        _require_team_eligible(request, membership.team)
         endpoints = WebhookEndpoint.objects.filter(team=membership.team).order_by("-created_at")
         paginator = PageNumberPagination()
         page = paginator.paginate_queryset(endpoints, request)
@@ -214,9 +305,10 @@ class TeamWebhookEndpointListCreateView(APIView):
         request=WebhookEndpointCreateSerializer,
         responses={
             201: WebhookEndpointCreateResponseSerializer,
-            400: OpenApiResponse(description="Validation error."),
+            400: OpenApiResponse(description="Validation error, or the active-endpoint cap is reached."),
             401: OpenApiResponse(description="Authentication required."),
-            403: OpenApiResponse(description="Insufficient role."),
+            402: OpenApiResponse(description="Billing is not active for this team."),
+            403: OpenApiResponse(description="Insufficient role or the plan does not include API access."),
             404: OpenApiResponse(description="Team not found or no access."),
         },
         examples=[
@@ -250,17 +342,40 @@ class TeamWebhookEndpointListCreateView(APIView):
         self.required_scopes = ["write:webhooks"]
         membership = _get_membership(request.user, team_id)
         _require_write_role(membership)
+        # §3.7 gating chain: billing (record-creating mutation) → plan feature.
+        _check_billing_mutation(membership.team)
+        _require_team_eligible(request, membership.team)
 
         serializer = WebhookEndpointCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        origin, application, token_family = _resolve_origin(request)
 
-        endpoint = WebhookEndpoint(
-            team=membership.team,
-            name=serializer.validated_data.get("name", ""),
-            url=serializer.validated_data["url"],
-            events=serializer.validated_data["events"],
-        )
-        endpoint.save()
+        # Lock the team row so the cap check and the insert are one critical
+        # section; two concurrent creates cannot both pass a stale count.
+        with transaction.atomic():
+            Team.objects.select_for_update().get(pk=membership.team_id)
+            if team_at_endpoint_cap(membership.team):
+                return Response(
+                    {
+                        "detail": (
+                            f"This team has reached its limit of "
+                            f"{max_active_endpoints_per_team()} active webhook "
+                            "endpoints. Delete one before creating another."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            endpoint = WebhookEndpoint(
+                team=membership.team,
+                name=serializer.validated_data.get("name", ""),
+                url=serializer.validated_data["url"],
+                events=serializer.validated_data["events"],
+                origin=origin,
+                created_by=request.user,
+                application=application,
+                token_family=token_family,
+            )
+            endpoint.save()
 
         response_data = WebhookEndpointListSerializer(endpoint).data
         response_data["signing_secret"] = endpoint.secret
@@ -307,6 +422,7 @@ class TeamWebhookEndpointDetailView(APIView):
     )
     def get(self, request, team_id, webhook_id):
         membership = _get_membership(request.user, team_id)
+        _require_team_eligible(request, membership.team)
         endpoint = _get_endpoint(membership.team, webhook_id)
         return Response(WebhookEndpointListSerializer(endpoint).data)
 
@@ -345,14 +461,22 @@ class TeamWebhookEndpointDetailView(APIView):
     def _update(self, request, team_id, webhook_id):
         membership = _get_membership(request.user, team_id)
         _require_write_role(membership)
+        _require_team_eligible(request, membership.team)
         endpoint = _get_endpoint(membership.team, webhook_id)
 
         serializer = WebhookEndpointUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        for field, value in serializer.validated_data.items():
-            setattr(endpoint, field, value)
-        endpoint.save()
+        # Field-limited UPDATE rather than load-then-save: a full ``save()`` would
+        # write back the ``is_active`` this row was loaded with, undoing a
+        # compare-and-set deactivation (a 410 or reconcile) that committed
+        # between the load and the save. The API never mutates ``is_active`` here.
+        fields = dict(serializer.validated_data)
+        fields.pop("is_active", None)  # defensive: never reactivate via update
+        if fields:
+            fields["updated_at"] = timezone.now()
+            WebhookEndpoint.objects.filter(pk=endpoint.pk).update(**fields)
+            endpoint.refresh_from_db()
 
         logger.info(
             "api_webhook_endpoint_updated",
@@ -382,9 +506,10 @@ class TeamWebhookEndpointDetailView(APIView):
         _require_write_role(membership)
         endpoint = _get_endpoint(membership.team, webhook_id)
 
-        endpoint.is_active = False
-        endpoint.events = []
-        endpoint.save(update_fields=["is_active", "events", "updated_at"])
+        # One deactivation path (compare-and-set); clears events as before. A
+        # customer can always turn an endpoint off, so this is not plan- or
+        # billing-gated.
+        deactivate_endpoint(endpoint, reason="api_delete", clear_events=True)
 
         logger.info(
             "api_webhook_endpoint_soft_deleted",
@@ -422,6 +547,7 @@ class TeamWebhookEndpointRotateSecretView(APIView):
     def post(self, request, team_id, webhook_id):
         membership = _get_membership(request.user, team_id)
         _require_write_role(membership)
+        _require_team_eligible(request, membership.team)
         endpoint = _get_endpoint(membership.team, webhook_id)
 
         endpoint.rotate_secret()
@@ -462,7 +588,8 @@ class TeamWebhookEndpointTestView(APIView):
         responses={
             201: WebhookDeliveryDetailSerializer,
             400: OpenApiResponse(description="Endpoint inactive or invalid event type."),
-            403: OpenApiResponse(description="Insufficient role."),
+            402: OpenApiResponse(description="Billing is not active for this team."),
+            403: OpenApiResponse(description="Insufficient role or the plan does not include API access."),
             404: OpenApiResponse(description="Not found."),
         },
         examples=[
@@ -476,6 +603,9 @@ class TeamWebhookEndpointTestView(APIView):
     def post(self, request, team_id, webhook_id):
         membership = _get_membership(request.user, team_id)
         _require_write_role(membership)
+        # A test delivery creates a delivery record → billing- and feature-gated.
+        _check_billing_mutation(membership.team)
+        _require_team_eligible(request, membership.team)
         endpoint = _get_endpoint(membership.team, webhook_id)
 
         if not endpoint.is_active:
@@ -554,6 +684,7 @@ class TeamWebhookDeliveryListView(ListAPIView):
 
     def get_queryset(self):
         membership = _get_membership(self.request.user, self.kwargs["team_id"])
+        _require_team_eligible(self.request, membership.team)
         endpoint = _get_endpoint(membership.team, self.kwargs["webhook_id"])
         return WebhookDelivery.objects.filter(endpoint=endpoint).order_by("-created_at")
 
@@ -595,6 +726,7 @@ class TeamWebhookDeliveryDetailView(APIView):
     )
     def get(self, request, team_id, webhook_id, delivery_id):
         membership = _get_membership(request.user, team_id)
+        _require_team_eligible(request, membership.team)
         endpoint = _get_endpoint(membership.team, webhook_id)
         try:
             delivery = WebhookDelivery.objects.get(pk=delivery_id, endpoint=endpoint)
@@ -622,19 +754,33 @@ class TeamWebhookDeliveryRetryView(APIView):
         responses={
             200: WebhookDeliveryDetailSerializer,
             400: OpenApiResponse(description="Delivery is not in FAILED status."),
-            403: OpenApiResponse(description="Insufficient role."),
+            403: OpenApiResponse(description="Insufficient role or the plan does not include API access."),
             404: OpenApiResponse(description="Not found."),
+            409: OpenApiResponse(description="Delivery was redacted by retention, or is no longer retryable."),
         },
     )
     def post(self, request, team_id, webhook_id, delivery_id):
         membership = _get_membership(request.user, team_id)
         _require_write_role(membership)
+        _require_team_eligible(request, membership.team)
         endpoint = _get_endpoint(membership.team, webhook_id)
 
         try:
             delivery = WebhookDelivery.objects.get(pk=delivery_id, endpoint=endpoint)
         except WebhookDelivery.DoesNotExist:
             raise NotFound()
+
+        if delivery.status == WebhookDelivery.Status.REDACTED:
+            # The payload was redacted by the retention purge; there is nothing
+            # left to re-send, and sending the redaction marker would be wrong.
+            return Response(
+                {
+                    "code": "delivery_redacted",
+                    "detail": "This delivery's payload was redacted by the "
+                    "retention policy and can no longer be retried.",
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
 
         if delivery.status != WebhookDelivery.Status.FAILED:
             return Response(
@@ -644,11 +790,34 @@ class TeamWebhookDeliveryRetryView(APIView):
 
         from mainapp.tasks.webhooks import deliver_webhook
 
-        delivery.status = WebhookDelivery.Status.PENDING
-        delivery.attempts = 0
-        delivery.error_message = ""
-        delivery.save(update_fields=["status", "attempts", "error_message", "updated_at"])
+        # Compare-and-set FAILED → PENDING so a concurrent retention purge that
+        # redacted this row (FAILED → REDACTED) cannot be overwritten and then
+        # re-sent as the redaction marker.
+        updated = WebhookDelivery.objects.filter(
+            pk=delivery.pk, status=WebhookDelivery.Status.FAILED
+        ).update(
+            status=WebhookDelivery.Status.PENDING,
+            attempts=0,
+            error_message="",
+            updated_at=timezone.now(),
+        )
+        if not updated:
+            delivery.refresh_from_db()
+            if delivery.status == WebhookDelivery.Status.REDACTED:
+                return Response(
+                    {
+                        "code": "delivery_redacted",
+                        "detail": "This delivery's payload was redacted by the "
+                        "retention policy and can no longer be retried.",
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+            return Response(
+                {"detail": f"Delivery is no longer retryable. Current status: {delivery.status}."},
+                status=status.HTTP_409_CONFLICT,
+            )
 
+        delivery.refresh_from_db()
         transaction.on_commit(lambda pk=delivery.pk: deliver_webhook.delay(pk))
 
         logger.info(
@@ -675,12 +844,17 @@ class UserWebhookEndpointListView(ListAPIView):
 
     def get_queryset(self):
         now = timezone.now()
-        team_ids = TeamMembership.objects.filter(
-            user=self.request.user,
-            team__is_active=True,
-        ).exclude(
-            access_expires_at__lte=now,
-        ).values_list("team_id", flat=True)
+        memberships = (
+            TeamMembership.objects.filter(user=self.request.user, team__is_active=True)
+            .exclude(access_expires_at__lte=now)
+            .select_related("team")
+        )
+        teams = [m.team for m in memberships]
+        # Token clients only see endpoints on teams their plan entitles; session
+        # (browser) users see all their teams' endpoints.
+        if _is_token_client(self.request):
+            teams = [t for t in teams if team_is_eligible(t)]
+        team_ids = [t.id for t in teams]
         return WebhookEndpoint.objects.filter(team_id__in=team_ids).order_by("-created_at")
 
     @extend_schema(

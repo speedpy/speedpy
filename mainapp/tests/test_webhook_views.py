@@ -1,4 +1,4 @@
-from django.test import TestCase, RequestFactory
+from django.test import TestCase, RequestFactory, override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
@@ -9,8 +9,14 @@ from mainapp.models.webhooks import WebhookEndpoint, WebhookDelivery
 User = get_user_model()
 
 
+@override_settings(SPEEDPY_WEBHOOK_TEAM_ELIGIBLE=None)
 class WebhookViewTestBase(TestCase):
-    """Shared setup for webhook view tests."""
+    """Shared setup for webhook view tests.
+
+    The pluggable plan-feature gate is pinned off here (see the note in
+    ``test_api_webhooks``); the dashboard is a session surface and these tests
+    exercise the generic behaviour.
+    """
 
     def setUp(self):
         self.user = User.objects.create_user(

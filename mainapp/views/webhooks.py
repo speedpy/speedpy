@@ -14,6 +14,12 @@ from django.views.generic import DetailView, FormView, ListView
 from mainapp.forms.webhooks import WebhookEndpointForm
 from mainapp.models.webhooks import WebhookDelivery, WebhookEndpoint
 from mainapp.views.teams import TeamViewMixin
+from mainapp.webhooks.lifecycle import (
+    billing_blocks_new_records,
+    deactivate_endpoint,
+    max_active_endpoints_per_team,
+    team_at_endpoint_cap,
+)
 from usermodel.views import _encrypt_token, _decrypt_token
 
 logger = structlog.get_logger(__name__)
@@ -60,13 +66,35 @@ class TeamWebhookCreateView(WebhookWriteMixin, FormView):
     form_class = WebhookEndpointForm
 
     def form_valid(self, form):
-        endpoint = WebhookEndpoint(
-            team=self.team,
-            name=form.cleaned_data.get("name", ""),
-            url=form.cleaned_data["url"],
-            events=form.cleaned_data["events"],
-        )
-        endpoint.save()
+        if billing_blocks_new_records(self.team):
+            messages.error(
+                self.request,
+                "Billing is not active for this team; new webhook endpoints "
+                "cannot be created until billing is restored.",
+            )
+            return redirect(reverse("team_webhooks", kwargs={"team_id": self.team.pk}))
+        # Lock the team row so the cap check and insert are one critical section,
+        # the same guard the API create uses (two dashboard requests, or a
+        # dashboard request racing the API, cannot both pass a stale count).
+        with transaction.atomic():
+            type(self.team).objects.select_for_update().get(pk=self.team.pk)
+            if team_at_endpoint_cap(self.team):
+                messages.error(
+                    self.request,
+                    f"This team has reached its limit of {max_active_endpoints_per_team()} "
+                    "active webhook endpoints. Delete one before creating another.",
+                )
+                return redirect(reverse("team_webhooks", kwargs={"team_id": self.team.pk}))
+
+            endpoint = WebhookEndpoint(
+                team=self.team,
+                name=form.cleaned_data.get("name", ""),
+                url=form.cleaned_data["url"],
+                events=form.cleaned_data["events"],
+                origin=WebhookEndpoint.Origin.DASHBOARD,
+                created_by=self.request.user,
+            )
+            endpoint.save()
 
         self.request.session["new_webhook_encrypted_secret"] = _encrypt_token(endpoint.secret)
         self.request.session["new_webhook_name"] = endpoint.name or endpoint.url
@@ -119,9 +147,7 @@ class TeamWebhookRevokeView(WebhookWriteMixin, View):
             id=self.kwargs["webhook_id"],
             team=self.team,
         )
-        endpoint.is_active = False
-        endpoint.events = []
-        endpoint.save(update_fields=["is_active", "events", "updated_at"])
+        deactivate_endpoint(endpoint, reason="dashboard_revoke", clear_events=True)
 
         logger.info(
             "webhook_endpoint_revoked",
@@ -145,6 +171,19 @@ class TeamWebhookTestView(WebhookWriteMixin, View):
 
         if not endpoint.is_active:
             messages.error(request, "Cannot send test delivery to an inactive endpoint.")
+            return redirect(
+                reverse("team_webhook_detail", kwargs={
+                    "team_id": self.team.pk,
+                    "webhook_id": endpoint.pk,
+                })
+            )
+
+        if billing_blocks_new_records(self.team):
+            messages.error(
+                request,
+                "Billing is not active for this team; test deliveries cannot be "
+                "sent until billing is restored.",
+            )
             return redirect(
                 reverse("team_webhook_detail", kwargs={
                     "team_id": self.team.pk,

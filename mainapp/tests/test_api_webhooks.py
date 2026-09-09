@@ -14,8 +14,15 @@ from mainapp.webhooks.events import WebhookEvent
 from usermodel.models import User
 
 
+@override_settings(SPEEDPY_WEBHOOK_TEAM_ELIGIBLE=None)
 class WebhookAPITestBase(TestCase):
-    """Shared setup for webhook API tests."""
+    """Shared setup for webhook API tests.
+
+    These exercise the generic webhook surface, so the pluggable plan-feature
+    gate is pinned off — a downstream project that wires
+    ``SPEEDPY_WEBHOOK_TEAM_ELIGIBLE`` globally would otherwise 403 these
+    default-plan teams. The gate itself is covered by ``test_webhook_lifecycle``.
+    """
 
     def setUp(self):
         self.client = APIClient()

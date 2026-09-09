@@ -97,6 +97,55 @@ class WebhookEndpoint(TeamModel):
         help_text=_("Inactive endpoints do not receive deliveries."),
     )
 
+    # -- Origin and connection identity (lifecycle fail-closed) ---------------
+    # These record who created the endpoint and through which credential, so
+    # dispatch can fail closed when that connection is gone (member removed,
+    # OAuth connection revoked, plan downgraded). See
+    # ``mainapp/webhooks/lifecycle.py``.
+
+    class Origin(models.TextChoices):
+        DASHBOARD = "dashboard", _("Dashboard (session)")
+        API_TOKEN = "api_token", _("API token (PAT/JWT)")
+        OAUTH = "oauth", _("OAuth application")
+        # Rows that predate connection-identity tracking. Grandfathered: the
+        # lifecycle only checks team eligibility for them (no creator/OAuth
+        # binding is recoverable). A deliberate migration exception, not
+        # fail-closed enforcement — see migration 0013 and lifecycle.py.
+        LEGACY = "legacy", _("Legacy (pre-connection-identity)")
+
+    origin = models.CharField(
+        max_length=16,
+        choices=Origin.choices,
+        default=Origin.DASHBOARD,
+        db_index=True,
+        help_text=_("How this endpoint was created (session, API token, or OAuth app)."),
+    )
+    created_by = models.ForeignKey(
+        django_settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text=_("User who created the endpoint. Null once that user is deleted."),
+    )
+    application = models.ForeignKey(
+        django_settings.OAUTH2_PROVIDER_APPLICATION_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text=_("OAuth application the endpoint was created through, if any."),
+    )
+    token_family = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            "OAuth refresh-token family identifying one connection; deliveries "
+            "stop when the family is revoked or expires."
+        ),
+    )
+
     class Meta:
         verbose_name = _("Webhook Endpoint")
         verbose_name_plural = _("Webhook Endpoints")
@@ -167,6 +216,9 @@ class WebhookDelivery(models.Model):
         SUCCESS = "success", _("Success")
         FAILED = "failed", _("Failed")
         DISABLED = "disabled", _("Disabled")
+        # Terminal: payload/response redacted by the retention purge. The row is
+        # kept for audit but can never be retried (its payload is gone).
+        REDACTED = "redacted", _("Redacted")
 
     endpoint = models.ForeignKey(
         WebhookEndpoint,

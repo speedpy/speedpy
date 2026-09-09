@@ -17,6 +17,7 @@ from mainapp.webhooks.events import WebhookEvent
 from usermodel.models import User
 
 
+@override_settings(SPEEDPY_WEBHOOK_TEAM_ELIGIBLE=None)
 class TeamMemberAddedSignalTests(TestCase):
     """Verify ``team.member.added`` fires when a TeamMembership is created."""
 
@@ -104,6 +105,7 @@ class TeamMemberAddedSignalTests(TestCase):
         self.assertEqual(WebhookDelivery.objects.count(), 0)
 
 
+@override_settings(SPEEDPY_WEBHOOK_TEAM_ELIGIBLE=None)
 class TeamInvitationCreatedSignalTests(TestCase):
     """Verify ``team.invitation.created`` fires when a TeamInvitation is created."""
 
@@ -212,6 +214,7 @@ class TeamInvitationCreatedSignalTests(TestCase):
         )
 
 
+@override_settings(SPEEDPY_WEBHOOK_TEAM_ELIGIBLE=None)
 class UserProfileUpdatedAPITests(TestCase):
     """Verify ``user.profile.updated`` dispatches from the API PATCH endpoint."""
 
@@ -369,6 +372,7 @@ class UserProfileUpdatedAPITests(TestCase):
         self.assertEqual(deliveries[0].endpoint.team_id, self.team.id)
 
 
+@override_settings(SPEEDPY_WEBHOOK_TEAM_ELIGIBLE=None)
 class UserProfileUpdatedFormTests(TestCase):
     """Verify ``user.profile.updated`` dispatches from the HTML profile edit view."""
 

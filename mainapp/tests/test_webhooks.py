@@ -397,7 +397,7 @@ class WebhookSigningTests(TestCase):
         self.assertFalse(verify("mysecret", "99999", b"payload", sig))
 
 
-@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True)
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True, SPEEDPY_WEBHOOK_TEAM_ELIGIBLE=None)
 class WebhookDeliverTaskTests(TestCase):
     def setUp(self):
         self.team = Team.objects.create(name="Acme", slug="acme")
@@ -529,7 +529,7 @@ class WebhookDeliverTaskTests(TestCase):
         deliver_webhook(999999)  # should log warning and return
 
 
-@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True)
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True, SPEEDPY_WEBHOOK_TEAM_ELIGIBLE=None)
 class WebhookDispatchTests(TestCase):
     def setUp(self):
         self.team = Team.objects.create(name="Acme", slug="acme")

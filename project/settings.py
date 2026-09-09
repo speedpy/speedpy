@@ -423,6 +423,13 @@ OAUTH2_PROVIDER = {
     "OAUTH2_VALIDATOR_CLASS": "oauth2_provider.oauth2_validators.OAuth2Validator",
 }
 
+# Declared explicitly (to its default value) so models outside oauth2_provider
+# may hold a ForeignKey to the swappable Application model: Django's migration
+# autodetector resolves such a dependency through this setting. Webhook
+# endpoints created through OAuth carry an `application` FK for the lifecycle
+# fail-closed check (mainapp/webhooks/lifecycle.py).
+OAUTH2_PROVIDER_APPLICATION_MODEL = "oauth2_provider.Application"
+
 DCR_ENABLED = env.bool("DCR_ENABLED", default=DEBUG)
 
 # --- Hosted MCP (inert until MCP_ENABLED) ---
@@ -785,6 +792,19 @@ SPEEDPY_BILLING_PROVIDER = env.str("SPEEDPY_BILLING_PROVIDER", default="")  # "s
 SPEEDPY_BILLING_GRACE_PERIOD_DAYS = env.int("SPEEDPY_BILLING_GRACE_PERIOD_DAYS", default=30)
 
 # Stripe
+# --- Outbound webhooks (REST Hooks) --------------------------------------
+# A project may gate webhook endpoints on a plan feature by pointing
+# SPEEDPY_WEBHOOK_TEAM_ELIGIBLE at a "(team) -> bool" callable and setting the
+# 403 message in SPEEDPY_WEBHOOK_FEATURE_DENIED_DETAIL. Unset = every active
+# team may hold endpoints (the default).
+SPEEDPY_WEBHOOK_TEAM_ELIGIBLE = None
+SPEEDPY_WEBHOOK_FEATURE_DENIED_DETAIL = "This team's plan does not include webhook access."
+WEBHOOK_MAX_ACTIVE_ENDPOINTS_PER_TEAM = 50
+# Delivery-log retention: redact payload/response after RETENTION_DAYS, delete
+# the row after DELETE_DAYS. Delivery payloads can carry third-party PII.
+WEBHOOK_DELIVERY_RETENTION_DAYS = 30
+WEBHOOK_DELIVERY_DELETE_DAYS = 90
+
 STRIPE_SECRET_KEY = env.str("STRIPE_SECRET_KEY", default="")
 STRIPE_PUBLISHABLE_KEY = env.str("STRIPE_PUBLISHABLE_KEY", default="")
 STRIPE_WEBHOOK_SECRET = env.str("STRIPE_WEBHOOK_SECRET", default="")

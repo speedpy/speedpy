@@ -1,9 +1,13 @@
 import time
 import uuid
 
+import structlog
 from django.db import transaction
 
 from mainapp.models.webhooks import WebhookDelivery, WebhookEndpoint
+from mainapp.webhooks.lifecycle import endpoint_is_deliverable
+
+logger = structlog.get_logger(__name__)
 
 
 def dispatch_event(team, event_type: str, data: dict) -> list[int]:
@@ -22,6 +26,19 @@ def dispatch_event(team, event_type: str, data: dict) -> list[int]:
 
     for endpoint in endpoints:
         if not endpoint.subscribes_to(event_type):
+            continue
+
+        # Fail closed: only deliver while the connection behind the endpoint is
+        # still valid (team entitled, creating member present, OAuth link live).
+        deliverable, reason = endpoint_is_deliverable(endpoint)
+        if not deliverable:
+            logger.info(
+                "webhook_endpoint_skipped_lifecycle",
+                endpoint_id=str(endpoint.pk),
+                team_id=str(team.pk),
+                event_type=event_type,
+                reason=reason,
+            )
             continue
 
         event_id = f"evt_{uuid.uuid4().hex}"

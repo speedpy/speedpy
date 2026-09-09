@@ -114,6 +114,22 @@ app.conf.beat_schedule = {
             "queue": "default",
         },
     },
+    "reconcile-webhook-endpoints": {
+        "task": "webhooks.reconcile_endpoints",
+        "schedule": crontab(hour=4, minute=15),  # nightly, before the purge
+        "options": {
+            "ignore_result": True,
+            "queue": "default",
+        },
+    },
+    "purge-webhook-deliveries": {
+        "task": "webhooks.purge_deliveries",
+        "schedule": crontab(hour=4, minute=45),  # daily, redact/delete old logs
+        "options": {
+            "ignore_result": True,
+            "queue": "default",
+        },
+    },
 }
 
 @setup_logging.connect
