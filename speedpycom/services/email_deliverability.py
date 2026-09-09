@@ -1,11 +1,14 @@
 """Is this address worth sending to? (spec §3.19)
 
-One validator, called from the places an email address enters the system:
-signup, team invitations, public forms, CSV imports. (``UsermodelAddEmailForm``
-does not call it — a known gap, so this is "the doors that check", not "every
-door".) Before this, the check lived inline in ``usermodel/forms.py`` and
-therefore covered signup and nothing else — which is a strange place to draw the
-line, because signup was never the only door.
+One validator, called from every self-service door an email address enters
+through: signup, adding an address to an existing account
+(``UsermodelAddEmailForm``), team invitations, public forms, CSV imports. Before
+this, the check lived inline in ``usermodel/forms.py`` and therefore covered
+signup and nothing else — which is a strange place to draw the line, because
+signup was never the only door. Not the operator doors — the Django admin can
+set ``User.email`` and ``EmailAddress`` rows directly, and allauth headless
+builds on ``AddEmailForm`` while ignoring ``ACCOUNT_FORMS``; wire the validator
+yourself if you enable it.
 
 On the signup form the caller is ``clean()``, not a field cleaner, and only once
 the CAPTCHA has passed: Django runs every field cleaner and shows every field

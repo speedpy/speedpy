@@ -674,11 +674,15 @@ in a private app.
 
 ## Email addresses: blocklists and deliverability
 
-**The doors that take an email address call the same validator:** signup, team
-invitations, public forms, CSV imports. (Not *every* door — `UsermodelAddEmailForm`
-does not call it, a known gap.) It used to live inline in `usermodel/forms.py`,
-which meant it covered signup and nothing else — a strange place to draw the
-line, because signup was never the only door.
+**Every self-service door that takes an email address calls the same
+validator:** signup, adding an address to an existing account, team invitations,
+public forms, CSV imports. Not the operator doors — the Django admin can set
+`User.email` and `EmailAddress` rows directly, and `EmailView.dispatch` syncs
+`User.email` into `EmailAddress` unchecked on the next visit — and not allauth
+headless, which builds on `AddEmailForm` directly and ignores `ACCOUNT_FORMS`;
+wire the validator yourself if you enable it. It used to live inline in
+`usermodel/forms.py`, which meant it covered signup and nothing else — a strange
+place to draw the line, because signup was never the only door.
 
 ```python
 from speedpycom.services import email_deliverability
@@ -1277,19 +1281,21 @@ refreshed, so the edit disappears without a trace. Project domains go in
 block with no deploy. Both sources are merged, not one-or-the-other.
 
 **The purpose is narrow: these are domains we do not send email to.** Not access
-control, not authorization. So it is enforced at both points where mail would
-otherwise leave:
+control, not authorization. So it is enforced where an address enters and again
+where mail would otherwise leave:
 
 | Where | Effect |
 |---|---|
-| `usermodel/forms.py::clean_email` | signup refused, address never stored |
+| `UsermodelSignupForm.clean()` | signup refused, address never stored |
+| `UsermodelAddEmailForm.clean_email` | add-email refused before it is stored, so no confirmation mail is attempted |
 | `speedpycom/email_backends.py` | recipient dropped before the ESP sees it |
 
-Signup alone is not enough: a hand-typed invitation, a CSV import or a later
-address change all bypass the form. Both call
-`speedpycom/services/email_domains.py::is_blocked`. At signup it runs before the
-MX lookup, because two in-memory set lookups cost nothing next to a DNS call with
-a five-second budget.
+The entry checks are self-service only: an admin who sets `User.email` directly,
+a CSV import, or allauth headless all bypass the forms. Every point calls
+`speedpycom/services/email_domains.py::is_blocked`. At the form doors it runs
+before the MX lookup, because two in-memory set lookups cost nothing next to a
+DNS call with a two-second budget. The send-time guard is the backstop for
+whatever entered another way.
 
 Direct backend construction (`get_connection(...)`) bypasses the send-time guard
 and nothing here can prevent that — catch it in review.

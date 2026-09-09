@@ -211,6 +211,36 @@ class UsermodelAddEmailForm(AddEmailForm):
             Submit("action_add", value=_("Add email"), css_class="btn btn-contained btn-primary"),
         )
 
+    def clean_email(self):
+        """allauth's own checks first, then blocklists and deliverability.
+
+        Same validator as signup, invitations, the public forms and the CSV
+        import (``speedpycom.services.email_deliverability``). Every branch of
+        ``AddEmailForm.save()`` sends mail to this address — a confirmation
+        link, a verification code, or a change-of-address confirmation — so an
+        address we cannot deliver to is a bounce charged against the SES
+        account, not an account setting.
+
+        AFTER ``super().clean_email()`` on purpose, for two reasons. It returns
+        the value allauth will store — lowercased by the field, then passed
+        through ``adapter.clean_email()``, which a project may override to
+        rewrite the address — and the deliverability question has to be asked of
+        THAT value, not the raw submission. And allauth's own refusals (already
+        on this account, taken, over the maximum, blocked for an MFA user) keep
+        their precedence: those are answered from data we already hold, so an
+        address allauth refuses never costs a DNS lookup and never leaks a
+        deliverability verdict.
+
+        A field cleaner is the right place here — the form has no CAPTCHA and
+        sits behind login and allauth's per-user ``manage_email`` rate limit, so
+        the anonymous oracle that moved the signup check into ``clean()`` does
+        not exist on this page. (An authenticated caller can still read the
+        verdict, ten domains a minute; accepted.)
+        """
+        email = super().clean_email()
+        email_deliverability.validate(email)
+        return email
+
 
 class UserProfileForm(forms.ModelForm):
     """Form for editing user profile information."""

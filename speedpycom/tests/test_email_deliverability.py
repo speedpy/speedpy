@@ -353,3 +353,27 @@ class EveryDoorTests(TestCase):
             )
             form.is_valid()
         self.assertNotIn("email", form.errors)
+
+    def test_the_add_email_form_refuses_an_undeliverable_address(self):
+        from usermodel.forms import UsermodelAddEmailForm
+        from usermodel.models import User
+
+        user = User.objects.create_user(email="owner@example.com", password="pw")
+        with failing(dns.resolver.NXDOMAIN()):
+            form = UsermodelAddEmailForm(
+                user=user, data={"email": "a@nope.example"}
+            )
+            self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)
+
+    def test_the_add_email_form_accepts_a_deliverable_one(self):
+        from usermodel.forms import UsermodelAddEmailForm
+        from usermodel.models import User
+
+        user = User.objects.create_user(email="owner@example.com", password="pw")
+        with resolving("mx.example.com."):
+            form = UsermodelAddEmailForm(
+                user=user, data={"email": "a@example.com"}
+            )
+            form.is_valid()
+        self.assertNotIn("email", form.errors)
