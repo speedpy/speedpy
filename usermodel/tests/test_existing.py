@@ -752,7 +752,7 @@ class PersonalAccessTokenAuthTests(TestCase):
 
 
 class PersonalAccessTokenUITests(TestCase):
-    _reauth_patch = "allauth.account.internal.flows.reauthentication.did_recently_authenticate"
+    _reauth_patch = "allauth.account.internal.flows.reauthentication.did_recently_reauthenticate"
 
     def setUp(self):
         self.user = User.objects.create_user(
@@ -863,7 +863,7 @@ class ScopeRegistryTests(TestCase):
 class PersonalAccessTokenFormScopeTests(TestCase):
     """Tests for PAT form scope choices and validation."""
 
-    _reauth_patch = "allauth.account.internal.flows.reauthentication.did_recently_authenticate"
+    _reauth_patch = "allauth.account.internal.flows.reauthentication.did_recently_reauthenticate"
 
     def setUp(self):
         self.user = User.objects.create_user(

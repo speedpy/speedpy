@@ -191,7 +191,7 @@ class PATReauthGateTests(TestCase):
 
     def test_pat_ui_redirects_when_reauth_missing(self):
         with patch(
-            "allauth.account.internal.flows.reauthentication.did_recently_authenticate", return_value=False
+            "allauth.account.internal.flows.reauthentication.did_recently_reauthenticate", return_value=False
         ):
             response = self.client.post(
                 "/accounts/tokens/create/",
@@ -202,7 +202,7 @@ class PATReauthGateTests(TestCase):
 
     def test_pat_ui_creates_token_after_reauth(self):
         with patch(
-            "allauth.account.internal.flows.reauthentication.did_recently_authenticate", return_value=True
+            "allauth.account.internal.flows.reauthentication.did_recently_reauthenticate", return_value=True
         ):
             response = self.client.post(
                 "/accounts/tokens/create/",

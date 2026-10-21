@@ -92,9 +92,9 @@ class PersonalAccessTokenCreateView(LoginRequiredMixin, FormView):
 
         # Gate: recent reauthentication.
         if getattr(settings, "SPEEDPY_PAT_REQUIRE_RECENT_REAUTH", True):
-            from allauth.account.internal.flows.reauthentication import did_recently_authenticate
+            from allauth.account.internal.flows.reauthentication import did_recently_reauthenticate
 
-            if not did_recently_authenticate(self.request):
+            if not did_recently_reauthenticate(self.request):
                 next_url = reverse("account_pat_create")
                 return redirect(f"{reverse('account_reauthenticate')}?next={next_url}")
 

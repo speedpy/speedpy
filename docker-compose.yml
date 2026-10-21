@@ -12,12 +12,12 @@ x-app: &app
     - redis
 services:
   redis:
-    image: redis
+    image: redis:8
   #    ports:
   #      - "6379:6379"
 
   db:
-    image: postgres
+    image: postgres:18
     environment:
       - POSTGRES_USER=speedpycom
       - POSTGRES_PASSWORD=speedpycom

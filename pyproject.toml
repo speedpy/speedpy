@@ -3,37 +3,36 @@ name = "speedupgrade"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
-    "Django==6.1.1",
-    "Pillow==12.3.0",
-    "black==26.5.1",
+    "Django==6.1.2",
+    "Pillow==13.0.0",
+    "black==26.10.1",
     "celery-redbeat==2.4.2",
     "celery[redis]==5.6.3",
     "crispy-tailwind==1.0.3",
-    "django-allauth[socialaccount]==65.19.2",
+    "django-allauth[socialaccount]==65.20.1",
     "django-crispy-forms==2.7",
     "django-debug-toolbar==8.0.0",
     "django-environ==0.14.0",
     "django-extensions==4.1",
-    "django-post_office==3.11.3",
-    "django-stubs[compatible-mypy]==6.1.0",
+    "django-post_office==3.12.0",
+    "django-stubs[compatible-mypy]==6.1.2",
     "djangoql==0.19.1",
     "gunicorn==26.2.0",
-    "psycopg[binary]==3.3.5",
-    "pyjwt[crypto]==2.13.0",
+    "psycopg[binary]==3.3.6",
+    "pyjwt[crypto]==2.15.1",
     "requests==2.34.2",
     "whitenoise==6.12.0",
     "django-structlog[commands,celery]==10.1.0",
     "django-recaptcha==4.1.0",
-    "djangorestframework==3.18.0",
+    "djangorestframework==3.18.3",
     "drf-spectacular==0.30.0",
-    "django-otp==1.7.2",
+    "django-otp==1.7.5",
     "qrcode==8.2",
     "fido2==2.2.1",
     "django-fernet-encrypted-fields==0.4.0",
     "httpx==0.28.1",
-    "dnspython==2.8.0",
-    "stripe==15.6.1",
-    "python-slugify==8.0.4",
+    "dnspython==2.9.0",
+    "stripe==16.0.0",
     "djangorestframework-simplejwt>=5.5.1",
     "django-oauth-toolkit>=3.4.1,<4.0",
     "django-cors-headers>=4.9.0",
@@ -43,8 +42,8 @@ dependencies = [
     # a Bleichenbacher oracle in PKCS#7, exponential cert-path building), and
     # nothing that depends on it asks for a new enough version. Pinned here so
     # the floor is explicit rather than whatever the resolver happens to pick.
-    "cryptography==50.0.1",
-    "pillow-heif>=1.6.0",
+    "cryptography==50.0.2",
+    "pillow-heif>=1.8.1",
 ]
 
 # Object storage is opt-in: boto3 and botocore are large, and most projects start
@@ -52,5 +51,5 @@ dependencies = [
 [project.optional-dependencies]
 s3 = [
     "django-storages[s3]==1.14.6",
-    "boto3==1.43.89",
+    "boto3==1.43.117",
 ]
