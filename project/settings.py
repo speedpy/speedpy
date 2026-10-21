@@ -346,8 +346,6 @@ except Exception:  # pragma: no cover - HEIC support is best-effort
     pass
 STATICFILES_DIRS = [
     BASE_DIR / "static",
-    ("floating-core", BASE_DIR / "node_modules" / "@floating-ui" / "core" / "dist"),
-    ("floating-ui", BASE_DIR / "node_modules" / "@floating-ui" / "dom" / "dist"),
 ]
 CRISPY_TEMPLATE_PACK = "tailwind"
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"

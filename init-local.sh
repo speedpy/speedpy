@@ -52,6 +52,7 @@ echo " * Copied .local.env to .env"
 
 WEB_PORT=$((9000 + RANDOM % 501))
 echo " * Using random port for Django: $WEB_PORT"
+echo "SITE_URL=http://127.0.0.1:$WEB_PORT" >> .env
 
 cat > dev.sh <<EOF
 #!/usr/bin/env bash

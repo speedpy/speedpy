@@ -114,6 +114,7 @@ fi
 echo "USE_TTY=${USE_TTY}"
 
 cp .docker.env .env
+echo "SITE_URL=http://127.0.0.1:$WEB_PORT" >> .env
 echo " * docker compose down -v --remove-orphans"
 docker compose down -v --remove-orphans
 echo " * Building the Docker image for the project (might take a while)"
