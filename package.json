@@ -1,4 +1,6 @@
 {
+  "name": "speedpy",
+  "private": true,
   "scripts": {
     "tailwind:build": "tailwindcss -i static/mainapp/input.css -o static/mainapp/styles.css",
     "tailwind:watch": "tailwindcss --watch -i static/mainapp/input.css -o static/mainapp/styles.css"
