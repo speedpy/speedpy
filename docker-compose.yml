@@ -25,6 +25,10 @@ services:
       - POSTGRES_USER=speedpycom
       - POSTGRES_PASSWORD=speedpycom
       - POSTGRES_DB=speedpycom
+    # Named volume: an anonymous one is replaced by an empty database on every
+    # `docker compose down` + `up`. init-docker.sh still starts clean (down -v).
+    volumes:
+      - db_data:/var/lib/postgresql
   #    ports:
   #      - "5432:5432"
   web:
@@ -76,3 +80,5 @@ services:
 #      - redis
 ##      - rabbitmq
 
+volumes:
+  db_data:
