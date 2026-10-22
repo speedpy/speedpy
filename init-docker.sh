@@ -75,6 +75,10 @@ fi
 # never allocate a TTY for them.
 USE_TTY="-T"
 
+# Create media/ as the current user. If it is missing, Docker creates it as
+# root for the bind mount and the web container cannot save uploads.
+mkdir -p media
+
 cp .docker.env .env
 {
   echo "SITE_URL=http://127.0.0.1:$WEB_PORT"

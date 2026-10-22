@@ -2,6 +2,7 @@ local_password.txt
 AGENTS-local.md
 dev.sh
 /media/*
+!/media/.gitkeep
 ### VisualStudioCode template
 .vscode/*
 
