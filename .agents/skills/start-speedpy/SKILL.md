@@ -29,7 +29,7 @@ After the user completes a graphical installer, restarts the computer, opens Doc
 `init-docker.sh` replaces local configuration, removes this project's Docker volumes, creates local credentials, and makes an initial Git commit. Before running it:
 
 1. Confirm the current directory is the intended SpeedPy clone and contains `init-docker.sh` and `docker-compose.yml`.
-2. Inspect `git status --short`, `git log -3 --oneline`, and whether `AGENTS-local.md` or `docker-compose.yml.bak` already exists.
+2. Inspect `git status --short`, `git log -3 --oneline`, and whether `AGENTS-local.md` or `.env` already exists.
 3. Treat the project as already initialized if either generated file exists. Do not rerun initialization unless the user explicitly asks to reset it and accepts that this removes local Docker data.
 4. If there are unexpected uncommitted changes, explain them and stop before initialization.
 

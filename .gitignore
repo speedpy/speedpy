@@ -299,6 +299,8 @@ cython_debug/
 
 /env/
 /tailwindcss
+# Generated per machine by `manage.py generate_tailwind_directories` (absolute paths).
+/tailwind_directories.json
 
 node_modules/
 /staticfiles/*

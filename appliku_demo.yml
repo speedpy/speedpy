@@ -1,7 +1,7 @@
 # SPEEDPY_DEMO: demo deployment config — delete before production (use appliku.yml instead)
 build_settings:
   build_image: python-3.14-node-25.6
-  build_command: npm i && npm run tailwind:build
+  build_command: npm ci && python manage.py generate_tailwind_directories && npm run tailwind:build
   environment_variables:
     - name: APPLIKU
       value: 'true'

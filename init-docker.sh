@@ -19,53 +19,18 @@ if git rev-parse --verify master >/dev/null 2>&1; then
   echo "Unset upstream tracking for 'master' branch"
 fi
 
-# Backup docker-compose.yml before modifications
-if [ ! -f "docker-compose.yml.bak" ]; then
-  cp docker-compose.yml docker-compose.yml.bak
-  echo "Created backup: docker-compose.yml.bak"
-else
-  # Restore from backup for clean slate
-  cp docker-compose.yml.bak docker-compose.yml
-  echo "Restored docker-compose.yml from backup"
-fi
-
-# Generate unique suffix based on directory path for Docker image names
-# This prevents image name conflicts when running multiple instances in different directories
-UNIQUE_SUFFIX="_$(pwd | md5sum | cut -c1-8)"
-echo " * Using unique image suffix: $UNIQUE_SUFFIX"
-
-# Replace the placeholder image name in docker-compose.yml with unique suffix
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  # macOS sed syntax
-  sed -i '' "s/-image-suffix/speedpy${UNIQUE_SUFFIX}/g" docker-compose.yml
-else
-  # Linux sed syntax
-  sed -i "s/-image-suffix/speedpy${UNIQUE_SUFFIX}/g" docker-compose.yml
-fi
-
-# Generate random port between 9000 and 9999
-
+# Per-checkout values. They go into .env (gitignored), which docker compose
+# reads for variable substitution, so docker-compose.yml stays as committed.
+# The image suffix keeps image names apart across checkouts in different
+# directories (cksum: available on Linux and macOS, unlike md5sum).
+IMAGE_SUFFIX="_$(pwd | cksum | cut -d' ' -f1)"
+echo " * Using unique image suffix: $IMAGE_SUFFIX"
 
 WEB_PORT=$((9000 + RANDOM % 501))
 echo " * Using random port for Django: $WEB_PORT"
 
-# Update docker-compose.yml with the random port
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  sed -i '' "s/9000/$WEB_PORT/g" docker-compose.yml
-else
-  sed -i "s/9000/$WEB_PORT/g" docker-compose.yml
-fi
-
-# Generate random port between 9501 and 9999
-NGINX_PORT=$((9501 + RANDOM % 499))
-echo " * Using random port for nginx: $NGINX_PORT"
-
-# Update docker-compose.yml with the random port
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  sed -i '' "s/127.0.0.1:9001:80/127.0.0.1:$NGINX_PORT:80/g" docker-compose.yml
-else
-  sed -i "s/127.0.0.1:9001:80/127.0.0.1:$NGINX_PORT:80/g" docker-compose.yml
-fi
+MEDIA_PORT=$((9501 + RANDOM % 499))
+echo " * Using random port for nginx: $MEDIA_PORT"
 
 # Write dev.sh with the chosen port. docker-compose.yml's web.command runs
 # `bash dev.sh`, so this is what the web container actually executes.
@@ -106,15 +71,17 @@ if [ -f "./pre_check.sh" ]; then
   . ./pre_check.sh
 fi
 
-# Configure TTY for docker compose
-USE_TTY=""
-if [ -t 1 ]; then
-  USE_TTY="-T"
-fi
-echo "USE_TTY=${USE_TTY}"
+# The init commands below are not interactive and some write to files, so
+# never allocate a TTY for them.
+USE_TTY="-T"
 
 cp .docker.env .env
-echo "SITE_URL=http://127.0.0.1:$WEB_PORT" >> .env
+{
+  echo "SITE_URL=http://127.0.0.1:$WEB_PORT"
+  echo "WEB_PORT=$WEB_PORT"
+  echo "MEDIA_PORT=$MEDIA_PORT"
+  echo "IMAGE_SUFFIX=$IMAGE_SUFFIX"
+} >> .env
 echo " * docker compose down -v --remove-orphans"
 docker compose down -v --remove-orphans
 echo " * Building the Docker image for the project (might take a while)"

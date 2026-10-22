@@ -101,7 +101,7 @@ else
   fail "Docker Compose is not available. Docker Desktop includes it; Linux users need the Docker Compose plugin."
 fi
 
-if [ -e "$project_root/AGENTS-local.md" ] || [ -e "$project_root/docker-compose.yml.bak" ]; then
+if [ -e "$project_root/AGENTS-local.md" ] || [ -e "$project_root/.env" ]; then
   warn "This project appears to have been initialized already. Do not run init-docker.sh again without reviewing local data and changes."
 else
   ok "No generated initialization files were found."

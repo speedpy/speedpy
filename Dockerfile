@@ -11,8 +11,9 @@ RUN apt-get update \
 ENV NODE_VERSION=24.22.1
 ENV NVM_DIR=/usr/local/nvm
 RUN apt install -y curl
-RUN mkdir -p $NVM_DIR && curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.40.4/install.sh | bash
-RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
+RUN mkdir -p $NVM_DIR && curl -fsSL --retry 5 --retry-all-errors https://raw.githubusercontent.com/creationix/nvm/v0.40.4/install.sh | bash
+# Retry: the Node download is the step most likely to hit a network blip.
+RUN . "$NVM_DIR/nvm.sh" && (nvm install ${NODE_VERSION} || (sleep 5 && nvm install ${NODE_VERSION}) || (sleep 15 && nvm install ${NODE_VERSION}))
 RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
 RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
 ENV PATH="/usr/local/nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
