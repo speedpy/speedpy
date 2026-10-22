@@ -583,7 +583,10 @@ EMAIL_MX_NEGATIVE_CACHE_SECONDS = env.int(
 EMAIL_MX_ALLOW_IMPLICIT_MX = env.bool("EMAIL_MX_ALLOW_IMPLICIT_MX", default=False)
 
 DEBUG_TOOLBAR_CONFIG = {
-    "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG,
+    # Not during tests: the test runner forces DEBUG off at runtime, but this
+    # module-level DEBUG still reads .env, and tests with their own ROOT_URLCONF
+    # cannot resolve the toolbar's reverse_lazy() settings.
+    "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG and not _RUNNING_TESTS,
 }
 _EMAIL_URL_DEFAULT = "smtp://user:password@localhost:25"
 # If EMAIL_URL is set but empty, remove it so the default is used.
