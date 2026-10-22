@@ -92,7 +92,7 @@ cat local_password.txt
 # Initial commit (mirrors init-docker.sh behavior).
 # ---------------------------------------------------------------------------
 git add .
-git commit -q -m "Initial commit"
+git commit -q --allow-empty -m "Initial commit"
 
 echo ""
 echo "Setup complete."

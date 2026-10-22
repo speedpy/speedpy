@@ -104,7 +104,7 @@ docker compose run --rm ${USE_TTY} web python manage.py makesuperuser >local_pas
 cat local_password.txt
 echo " * Created local superuser credentials are stored in local_password.txt file for your convenience"
 git add .
-git commit -q -m "Initial commit"
+git commit -q --allow-empty -m "Initial commit"
 
 echo " * Starting the project..."
 docker compose up -d
